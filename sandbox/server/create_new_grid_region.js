@@ -2,14 +2,13 @@ var fs = require('fs');
 var path = require('path');
 
 if(process.argv.length < 4) {
-	console.log("To create a new world file, specify the width and the file name as the first two parameters.");
+	console.log("To create a new world file, specify the width and the full path as the first two parameters.");
 } else {
 	createWorldFile(process.argv[2], process.argv[3]);
 }
 
-function createWorldFile(width, filename) {
-	var outputPath = path.join('world_files', filename);
-	fs.open(outputPath, 'w', function (err, fd) {
+function createWorldFile(width, outputPath) {
+	fs.open(outputPath, 'w', function (err) {
 		if (err) {
 			console.log(err);
 		} else {

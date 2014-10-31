@@ -1,0 +1,12 @@
+html
+    head(lang='en')
+        meta(charset='UTF-8')
+        title= title
+        script(type='text/javascript', src='http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js')
+        script(type='text/javascript', src='/javascripts/setup_canvases.js')
+        script(type='text/javascript', src='/javascripts/level_renderers.js')
+        script(type='text/javascript', src='/javascripts/create_footprint.js')
+        script(type='text/javascript', src='/javascripts/settle_sand.js')
+    body
+        canvas#sand_grid_region(height='512', width='512')
+        canvas#lit_sand_grid_region(height='512', width='512')

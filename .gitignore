@@ -1,4 +1,6 @@
 .idea/
-bin/
-npm-debug.log
 sand.iml
+npm-debug.log
+resources/
+public/images/
+public/stylesheets/style.css

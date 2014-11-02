@@ -9,6 +9,8 @@ router.post('/', function(req, res) {
 			console.log(err);
 		}
 	});
+	res.sendStatus(200);
+
 });
 
 module.exports = router;

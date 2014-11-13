@@ -1,21 +1,23 @@
-var sandGlobals = {
-	imprints : {},
-	level : {}
-};
-
-$(document).ready(function() {
+function setupDrawRegions(sandLayer) {
 	$.get("fetch_region", function( data ) {
 		sandGlobals.level.grid = JSON.parse(data);
 		var levelRenderer = sandGlobals.levelRenderer;
 
 		var canvases = {
-			canvas_as_depth_grid : $('#sand_grid_region'),
-			canvas_with_lighting : $('#lit_sand_grid_region'),
-			drawAllCanvases : function() {
+			cocos_gameCanvas: $('#cocos_gameCanvas'),
+			canvas_as_depth_grid: $('#sand_grid_region'),
+			canvas_with_lighting: $('#lit_sand_grid_region'),
+
+			drawAllCanvases: function() {
+				levelRenderer.drawWithCocos2d.call(
+					sandLayer,
+					this.canvas_as_depth_grid[0]);
+
 				levelRenderer.drawGridToCanvas.call(
 					this.canvas_as_depth_grid[0],
 					levelRenderer.chooseColorFromDepthValue,
 					sandGlobals.level.grid);
+
 				levelRenderer.drawGridToCanvas.call(
 					this.canvas_with_lighting[0],
 					levelRenderer.chooseColorWithPrimitiveLighting,
@@ -46,29 +48,7 @@ $(document).ready(function() {
 
 				canvases.drawAllCanvases();
 			});
-		}(canvases.canvas_as_depth_grid));
+		}(canvases.cocos_gameCanvas));
 
 	});
-});
-
-sandGlobals.level.postToServer = function() {
-	$.ajax({
-		url: "write_to_region",
-		type: "POST",
-		data: JSON.stringify(this.grid),
-		contentType: "application/json"
-	});
-};
-
-sandGlobals.level.update = function(relativePositionOnCanvas, canvas) {
-	var blockWidth = canvas.width / this.grid[0].length; // blocks are square
-	var locationOnGrid = {
-		"x": Math.floor(relativePositionOnCanvas.x / blockWidth),
-		"y": Math.floor(relativePositionOnCanvas.y / blockWidth)};
-
-//	createSquareFootprint(locationOnGrid, this.grid);
-//	createCircularFootprint(locationOnGrid, 4, this.grid);
-	sandGlobals.imprints.sphere(locationOnGrid, 7, this.grid);
-
-	sandGlobals.level.settle();
-};
+}

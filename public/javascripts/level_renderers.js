@@ -64,5 +64,10 @@ sandGlobals.levelRenderer = {
 			data[index + 2] = color; // blue
 			data[index + 3] = 255;   // alpha
 		}
+	},
+
+	drawWithCocos2d: function (canvas) {
+		this.canvasTextureToDrawFrom.initWithElement(canvas);
+		this.canvasTextureToDrawFrom.handleLoadedTexture();
 	}
 };

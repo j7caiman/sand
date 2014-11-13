@@ -4,16 +4,16 @@ html
 		title= title
 		link(rel='stylesheet', href='/stylesheets/style.css')
 		script(src='http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js')
-		script(src='/javascripts/setup_canvases.js')
+		script(src='/javascripts/setup_global_state.js')
 		script(src='/javascripts/level_renderers.js')
 		script(src='/javascripts/create_footprint.js')
 		script(src='/javascripts/settle_sand.js')
 
 		// the 'cocos' attribute is needed because the cocos2d library searches for the project.json file
 		// in the same directory as the 'src' attribute of this script tag
-		script(cocos src='/javascripts/cocos2d-components/cocos2d-js-v3.1-lite.js')
+		script(cocos src='/javascripts/cocos2d-components/cocos2d-js-v3.1.js')
 		script(src='/javascripts/cocos2d-components/src/cocos2d_startup_preload.js')
 	body
-		canvas#sand_grid_region(width='512', height='512')
-		canvas#lit_sand_grid_region(width='512', height='512')
 		canvas#cocos_gameCanvas(width='512' height='512')
+		canvas#sand_grid_region(width='512', height='512' style='display: none;')
+		canvas#lit_sand_grid_region(width='512', height='512')

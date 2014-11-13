@@ -31,5 +31,5 @@ var SandLayer = cc.Layer.extend({
 		this.addChild(sprite);
 	},
 
-	canvasTextureToDrawFrom: null
+	canvasTextureToDrawFrom: {}
 });

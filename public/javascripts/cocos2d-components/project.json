@@ -1,0 +1,10 @@
+{
+    "debugMode"     : 1,
+    "frameRate"     : 60,
+    "id"            : "cocos_gameCanvas",
+    "renderMode"    : 1,
+    "jsList" : [
+        "javascripts/cocos2d-components/src/cocos2d_image_resources.js",
+        "javascripts/cocos2d-components/src/cocos2d_player_layer.js"
+    ]
+}

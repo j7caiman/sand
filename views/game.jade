@@ -1,13 +1,19 @@
 html
-    head(lang='en')
-        meta(charset='UTF-8')
-        title= title
-        link(rel='stylesheet', href='/stylesheets/style.css')
-        script(type='text/javascript', src='http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js')
-        script(type='text/javascript', src='/javascripts/setup_canvases.js')
-        script(type='text/javascript', src='/javascripts/level_renderers.js')
-        script(type='text/javascript', src='/javascripts/create_footprint.js')
-        script(type='text/javascript', src='/javascripts/settle_sand.js')
-    body
-        canvas#sand_grid_region(height='512', width='512')
-        canvas#lit_sand_grid_region(height='512', width='512')
+	head(lang='en')
+		meta(charset='UTF-8')
+		title= title
+		link(rel='stylesheet', href='/stylesheets/style.css')
+		script(src='http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js')
+		script(src='/javascripts/setup_canvases.js')
+		script(src='/javascripts/level_renderers.js')
+		script(src='/javascripts/create_footprint.js')
+		script(src='/javascripts/settle_sand.js')
+
+		// the 'cocos' attribute is needed because the cocos2d library searches for the project.json file
+		// in the same directory as the 'src' attribute of this script tag
+		script(cocos src='/javascripts/cocos2d-components/cocos2d-js-v3.1-lite.js')
+		script(src='/javascripts/cocos2d-components/src/cocos2d_startup_preload.js')
+	body
+		canvas#sand_grid_region(width='512', height='512')
+		canvas#lit_sand_grid_region(width='512', height='512')
+		canvas#cocos_gameCanvas(width='512' height='512')

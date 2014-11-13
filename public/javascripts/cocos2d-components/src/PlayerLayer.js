@@ -1,11 +1,6 @@
-var GameScene = cc.Scene.extend({
-	onEnter:function () {
-		this._super();
-		var layer = new PlayerMovementLayer();
-		this.addChild(layer);
-	}
-});
-
+/**
+ * Layer which listens for the mouse and moves / animates the player character.
+ */
 var PlayerMovementLayer = cc.Layer.extend({
 	ctor: function() {
 		this._super();

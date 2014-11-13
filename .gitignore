@@ -4,3 +4,5 @@ npm-debug.log
 resources/
 public/images/
 public/stylesheets/style.css
+
+sandbox/client/sand-cocos2d-src/

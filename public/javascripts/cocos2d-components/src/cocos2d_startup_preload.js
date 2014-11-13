@@ -8,3 +8,15 @@ cc.game.onStart = function(){
 };
 
 cc.game.run();
+
+var GameScene = cc.Scene.extend({
+    onEnter:function () {
+        this._super();
+
+        var sandLayer = new SandLayer();
+        this.addChild(sandLayer);
+        setupDrawRegions(sandLayer);
+
+        this.addChild(new PlayerMovementLayer());
+    }
+});

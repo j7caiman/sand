@@ -1,9 +1,17 @@
 var sandGlobals = {
-	imprints : {},
-	level : {}
+	imprints: {},
+	level: {},
+	canvases: {},
+	canvasWidth: 0
 };
 
+var counter = 0;
 sandGlobals.level.postToServer = function() {
+	if(counter++ < 10) {
+		counter = 0;
+		return;
+	}
+
 	$.ajax({
 		url: "write_to_region",
 		type: "POST",
@@ -12,13 +20,16 @@ sandGlobals.level.postToServer = function() {
 	});
 };
 
-sandGlobals.level.update = function(relativePositionOnCanvas, canvas) {
-	var blockWidth = canvas.width / this.grid[0].length; // blocks are square
+sandGlobals.level.update = function(relativePositionOnCanvas) {
+	var blockWidth = sandGlobals.canvasWidth / this.grid[0].length; // blocks are square
 	var locationOnGrid = {
 		"x": Math.floor(relativePositionOnCanvas.x / blockWidth),
 		"y": Math.floor(relativePositionOnCanvas.y / blockWidth)};
 
-	sandGlobals.imprints.sphere(locationOnGrid, 7, this.grid);
+	sandGlobals.imprints.sphere(locationOnGrid, 3, this.grid);
 
 	sandGlobals.level.settle();
+	sandGlobals.level.postToServer();
+
+	sandGlobals.canvases.drawAllCanvases();
 };

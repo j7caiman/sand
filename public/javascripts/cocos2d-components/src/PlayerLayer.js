@@ -105,10 +105,10 @@ var PlayerMovementLayer = cc.Layer.extend({
 		// set up listener to trigger animations
 		cc.eventManager.addListener({
 			event: cc.EventListener.MOUSE,
-			onMouseMove: function(event) {},
 
 			onMouseUp: function(event) {
 				sprite.stopAllActions();
+				sprite.unscheduleAllCallbacks();
 
 				var elephantPosition = sprite.getPosition();
 				var mousePosition = event.getLocation();
@@ -161,8 +161,19 @@ var PlayerMovementLayer = cc.Layer.extend({
 				}
 
 				var actionMove = cc.moveTo(duration, mousePosition);
+
+				sprite.schedule(
+					function() {
+						sandGlobals.level.update({
+							x: sprite.getPosition().x,
+							y: sandGlobals.canvasWidth - (sprite.getPosition().y - (sprite.width / 4	))
+						});
+					},
+					0.5);
+
 				var actionMoveDone = cc.callFunc(function() {
 					sprite.stopAllActions();
+					sprite.unscheduleAllCallbacks();
 					sprite.setSpriteFrame(frameAfterMove);
 				}, this);
 

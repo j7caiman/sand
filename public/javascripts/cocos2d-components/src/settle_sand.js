@@ -1,4 +1,4 @@
-sandGlobals.level.settle = function() {
+sand.level.settle = function() {
 	const gridWidth = this.grid[0].length;
 	for (var y = 1; y < gridWidth - 1; y++) {
 		for (var x = 1; x < gridWidth - 1; x++) {
@@ -42,5 +42,5 @@ function testSettleSand() {
 		[1,0,1]
 	];
 
-	sandGlobals.level.settle(level);
+	sand.level.settle(level);
 }

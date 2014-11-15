@@ -164,9 +164,9 @@ var PlayerMovementLayer = cc.Layer.extend({
 
 				sprite.schedule(
 					function() {
-						sandGlobals.level.update({
+						sand.level.update({
 							x: sprite.getPosition().x,
-							y: sandGlobals.canvasWidth - (sprite.getPosition().y - (sprite.width / 4	))
+							y: sand.constants.kCanvasWidth - (sprite.getPosition().y - (sprite.width / 4	))
 						});
 					},
 					0.5);

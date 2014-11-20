@@ -185,11 +185,12 @@ var PlayerLayer = cc.Layer.extend({
 						 * And the player's position relative to the cocos2d sprite texture.
 						 * Finally, the y value has a small amount shaved off to line up the footprints the the player's feet.
 						 */
-						var regionPosition = {
-							x: sand.backgroundSprite.width / 2 + (sprite.getPosition().x - sand.backgroundSprite.x),
-							y: sand.backgroundSprite.height / 2 + (sprite.getPosition().y - sand.backgroundSprite.y - sprite.width / 4)
+						var backgroundSprite = sand.regionGraph.currentRegion.sprite;
+						var globalPosition = {
+							x: backgroundSprite.width / 2 + (sprite.getPosition().x - backgroundSprite.x),
+							y: backgroundSprite.height / 2 + (sprite.getPosition().y - backgroundSprite.y - sprite.width / 4)
 						};
-						sand.level.update(regionPosition);
+						sand.level.update(globalPosition);
 					},
 					0.5);
 

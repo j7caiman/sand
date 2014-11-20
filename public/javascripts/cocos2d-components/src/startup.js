@@ -1,6 +1,6 @@
 var sand = {
 	player: {},
-	backgroundSprite: {},
+	regionGraph: {},
 	level: {},
 	htmlCanvases: {},
 	constants: {
@@ -24,19 +24,21 @@ $(document).ready(function() {
 	sand.htmlCanvases.depthGrid.canvas = createCanvas('sand_grid_region', sand.constants.kCanvasWidth);
 	sand.htmlCanvases.withLighting.canvas = createCanvas('lit_sand_grid_region', sand.constants.kCanvasWidth);
 
-	$.cookie.json = true;
-	var lastPositionFromCookie = $.cookie('lastPosition');
-	var lastPosition;
-	if (lastPositionFromCookie !== undefined) {
-		lastPosition = lastPositionFromCookie;
-	} else {
-		lastPosition = {
-			x: 100,
-			y: 100
-		};
-		$.cookie('lastPosition', lastPosition, {expires: 7});
-	}
-	sand.player.globalCoordinates = lastPosition;
+	sand.player.globalCoordinates = (function() {
+		$.cookie.json = true;
+		var lastPositionFromCookie = $.cookie('lastPosition');
+		var lastPosition;
+		if (lastPositionFromCookie !== undefined) {
+			lastPosition = lastPositionFromCookie;
+		} else {
+			lastPosition = {
+				x: 100,
+				y: 100
+			};
+			$.cookie('lastPosition', lastPosition, {expires: 7});
+		}
+		return lastPosition;
+	})();
 
 	function findOnScreenRegionCoordinates() {
 		/**
@@ -152,16 +154,32 @@ $(document).ready(function() {
 		type: "POST",
 		data: JSON.stringify(onScreenRegionCoordinates),
 		contentType: "application/json",
-		success: function (data) {
-			var region = (function (array, coordinates) {
+		success: function (responseData) {
+			function findObjectFromArray(array, coordinates) {
 				for (var i = 0; i < array.length; i++) {
 					if (array[i].x == coordinates.x && array[i].y == coordinates.y) {
 						return array[i];
 					}
 				}
-			})(data.regions, {x: 0, y: 0});
+			}
 
-			sand.level.grid = region.data;
+			// populate regionGraph with regions in response data
+			regionGraph.currentRegion.data = findObjectFromArray(responseData.regions, regionGraph.currentRegion).data;
+			regionGraph.currentRegion.canvas = createCanvas(regionGraph.currentRegion.x + "_" + regionGraph.currentRegion.y, sand.constants.kCanvasWidth);
+			for (var i = 0; i < regionGraph.adjacentRegions.length; i++) {
+				var region = regionGraph.adjacentRegions[i];
+				if(region !== undefined) { // array is sparse
+					region.data = findObjectFromArray(responseData.regions, region).data;
+					region.canvas = createCanvas(region.x + "_" + region.y, sand.constants.kCanvasWidth);
+				}
+			}
+
+			sand.regionGraph = regionGraph;
+
+
+
+			sand.level.grid = regionGraph.currentRegion.data;
+
 
 			cc.game.run();
 		}
@@ -182,7 +200,20 @@ var GameScene = cc.Scene.extend({
 		this._super();
 
 		var backgroundLayer = new BackgroundLayer();
-		sand.backgroundSprite = backgroundLayer.backgroundSprite;
+		sand.regionGraph.currentRegion.sprite = backgroundLayer.backgroundSprite;
+		backgroundLayer.updateSpriteTexture(
+			sand.regionGraph.currentRegion.sprite,
+			sand.regionGraph.currentRegion.canvas);
+
+		for (var i = 0; i < sand.regionGraph.adjacentRegions.length; i++) {
+			if(sand.regionGraph.adjacentRegions[i] !== undefined) {
+				sand.regionGraph.adjacentRegions[i].sprite = backgroundLayer.adjacentSprites[i];
+				backgroundLayer.updateSpriteTexture(
+					sand.regionGraph.adjacentRegions[i].sprite,
+					sand.regionGraph.adjacentRegions[i].canvas);
+			}
+		}
+
 		this.addChild(backgroundLayer);
 
 		var playerLayer = new PlayerLayer();
@@ -190,11 +221,12 @@ var GameScene = cc.Scene.extend({
 		this.addChild(playerLayer);
 
 		sand.htmlCanvases.drawAllCanvases();
-		backgroundLayer.updateSpriteTextures(sand.htmlCanvases.depthGrid.canvas);
 	}
 });
 
-sand.level.update = function(positionOnRegion) {
+sand.level.update = function(globalPosition) {
+	var positionOnRegion = globalPosition;
+
 	var blockWidth = sand.constants.kCanvasWidth / this.grid[0].length; // blocks are square
 	var locationOnGrid = {
 		"x": Math.floor(positionOnRegion.x / blockWidth),
@@ -238,6 +270,25 @@ sand.htmlCanvases = {
 	drawAllCanvases: function () {
 		sand.htmlCanvases.depthGrid.draw();
 		sand.htmlCanvases.withLighting.draw();
+
+		function drawAsDepthGrid(canvas, data) {
+			sand.htmlCanvases.canvasDrawHelper.call(
+				canvas,
+				function(blockIndex, grid) {
+					return 180 + (grid[blockIndex.y][blockIndex.x] * 20);
+				},
+				data);
+		}
+
+		(function() {
+			drawAsDepthGrid(sand.regionGraph.currentRegion.canvas, sand.regionGraph.currentRegion.data);
+			for (var i = 0; i < sand.regionGraph.adjacentRegions.length; i++) {
+				var region = sand.regionGraph.adjacentRegions[i];
+				if (region !== undefined) { // array is sparse
+					drawAsDepthGrid(region.canvas, region.data);
+				}
+			}
+		})();
 	},
 
 	canvasDrawHelper: function (choosePixelColorFunction, grid) {

@@ -1,11 +1,8 @@
 var sand = {
 	player: {},
+	backgroundSprite: {},
 	level: {},
-	regionsOnScreen: [],
-	canvases: {
-		html: {},
-		cocos2d: {}
-	},
+	htmlCanvases: {},
 	constants: {
 		kCanvasWidth: 512,
 		kViewportWidth: 384,
@@ -23,9 +20,9 @@ $(document).ready(function() {
 		document.body.appendChild(canvas);
 		return canvas;
 	}
-	sand.canvases.cocos2d.canvas = createCanvas('cocos2d_gameCanvas', sand.constants.kViewportWidth);
-	sand.canvases.html.depthGrid.canvas = createCanvas('sand_grid_region', sand.constants.kCanvasWidth);
-	sand.canvases.html.withLighting.canvas = createCanvas('lit_sand_grid_region', sand.constants.kCanvasWidth);
+	createCanvas('cocos2d_gameCanvas', sand.constants.kViewportWidth); // game canvas is referenced in project.json
+	sand.htmlCanvases.depthGrid.canvas = createCanvas('sand_grid_region', sand.constants.kCanvasWidth);
+	sand.htmlCanvases.withLighting.canvas = createCanvas('lit_sand_grid_region', sand.constants.kCanvasWidth);
 
 	$.cookie.json = true;
 	var lastPositionFromCookie = $.cookie('lastPosition');
@@ -41,14 +38,14 @@ $(document).ready(function() {
 	}
 	sand.player.globalCoordinates = lastPosition;
 
-	/**
-	 * camera view port. Centered around the player on startup.
-	 *
-	 * 0,1|1,1
-	 * ---+---
-	 * 0,0|1,0
-	 */
-	function findOnScreenRegions() {
+	function findOnScreenRegionCoordinates() {
+		/**
+		 * camera view port. Centered around the player on startup.
+		 *
+		 * 0,1|1,1
+		 * ---+---
+		 * 0,0|1,0
+		 */
 		var viewPort = [
 			{
 				x: sand.player.globalCoordinates.x + (sand.constants.kViewportWidth / 2),
@@ -93,16 +90,16 @@ $(document).ready(function() {
 
 		return regionCoordinates;
 	}
-	var onScreenRegionCoordinates = findOnScreenRegions();
+	var onScreenRegionCoordinates = findOnScreenRegionCoordinates();
 
-	function findPlayerCurrentRegion() {
+	function findCurrentRegionCoordinates() {
 		return {
 			x: Math.floor(sand.player.globalCoordinates.x / sand.constants.kCanvasWidth),
 			y: Math.floor(sand.player.globalCoordinates.y / sand.constants.kCanvasWidth)
 		};
 	}
 
-	function populateAdjacentRegionCoordinates(currentRegion, allRegions) {
+	function findAdjacentRegionCoordinates(currentRegion, allRegions) {
 		var adjacentRegions = [];
 		for (var i = 0; i < allRegions.length; i++) {
 			if (	   allRegions[i].x == currentRegion.x			// current region
@@ -111,24 +108,31 @@ $(document).ready(function() {
 			} else if (allRegions[i].x == currentRegion.x + 1		// northeast region
 					&& allRegions[i].y == currentRegion.y + 1) {
 				adjacentRegions[0] = allRegions[i];
+
 			} else if (allRegions[i].x == currentRegion.x + 0		// north region
 					&& allRegions[i].y == currentRegion.y + 1) {
 				adjacentRegions[1] = allRegions[i];
+
 			} else if (allRegions[i].x == currentRegion.x - 1		// northwest region
 					&& allRegions[i].y == currentRegion.y + 1) {
 				adjacentRegions[2] = allRegions[i];
+
 			} else if (allRegions[i].x == currentRegion.x - 1		// west region
 					&& allRegions[i].y == currentRegion.y + 0) {
 				adjacentRegions[3] = allRegions[i];
+
 			} else if (allRegions[i].x == currentRegion.x - 1		// southwest region
 					&& allRegions[i].y == currentRegion.y - 1) {
 				adjacentRegions[4] = allRegions[i];
+
 			} else if (allRegions[i].x == currentRegion.x + 0		// south region
 					&& allRegions[i].y == currentRegion.y - 1) {
 				adjacentRegions[5] = allRegions[i];
+
 			} else if (allRegions[i].x == currentRegion.x + 1		// southeast region
 					&& allRegions[i].y == currentRegion.y - 1) {
 				adjacentRegions[6] = allRegions[i];
+
 			} else if (allRegions[i].x == currentRegion.x + 1		// east region
 					&& allRegions[i].y == currentRegion.y + 0) {
 				adjacentRegions[7] = allRegions[i];
@@ -137,10 +141,10 @@ $(document).ready(function() {
 		return adjacentRegions;
 	}
 
-	var playerCurrentRegion = findPlayerCurrentRegion();
+	var currentRegionCoordinates = findCurrentRegionCoordinates();
 	var regionGraph = {
-		currentRegion: playerCurrentRegion,
-		adjacentRegions: populateAdjacentRegionCoordinates(playerCurrentRegion, onScreenRegionCoordinates)
+		currentRegion: currentRegionCoordinates,
+		adjacentRegions: findAdjacentRegionCoordinates(currentRegionCoordinates, onScreenRegionCoordinates)
 	};
 
 	$.ajax({
@@ -149,7 +153,15 @@ $(document).ready(function() {
 		data: JSON.stringify(onScreenRegionCoordinates),
 		contentType: "application/json",
 		success: function (data) {
-			sand.level.grid = data.regions[0].regionData;
+			var region = (function (array, coordinates) {
+				for (var i = 0; i < array.length; i++) {
+					if (array[i].x == coordinates.x && array[i].y == coordinates.y) {
+						return array[i];
+					}
+				}
+			})(data.regions, {x: 0, y: 0});
+
+			sand.level.grid = region.data;
 
 			cc.game.run();
 		}
@@ -169,20 +181,16 @@ var GameScene = cc.Scene.extend({
 	onEnter:function () {
 		this._super();
 
-		var sandLayer = new SandLayer();
-		sand.level.visibleRegion = sandLayer.visibleRegion;
-		this.addChild(sandLayer);
+		var backgroundLayer = new BackgroundLayer();
+		sand.backgroundSprite = backgroundLayer.backgroundSprite;
+		this.addChild(backgroundLayer);
 
 		var playerLayer = new PlayerLayer();
 		sand.player.sprite = playerLayer.player;
 		this.addChild(playerLayer);
 
-		sand.canvases.cocos2d.draw = function (canvasToRead) {
-			sandLayer.canvasTextureToDrawFrom.initWithElement(canvasToRead);
-			sandLayer.canvasTextureToDrawFrom.handleLoadedTexture();
-		};
-
-		sand.canvases.drawAllCanvases();
+		sand.htmlCanvases.drawAllCanvases();
+		backgroundLayer.updateSpriteTextures(sand.htmlCanvases.depthGrid.canvas);
 	}
 });
 
@@ -197,7 +205,7 @@ sand.level.update = function(positionOnRegion) {
 	sand.level.settle();
 	sand.level.savePlayerAndLevel(positionOnRegion);
 
-	sand.canvases.drawAllCanvases();
+	sand.htmlCanvases.drawAllCanvases();
 };
 
 sand.level.savePlayerAndLevel = function(globalPosition) {
@@ -226,7 +234,12 @@ sand.level.savePlayerAndLevel = function(globalPosition) {
 };
 sand.level.savePlayerAndLevel.counter = 4;
 
-sand.canvases.html = {
+sand.htmlCanvases = {
+	drawAllCanvases: function () {
+		sand.htmlCanvases.depthGrid.draw();
+		sand.htmlCanvases.withLighting.draw();
+	},
+
 	canvasDrawHelper: function (choosePixelColorFunction, grid) {
 		var regionWidth = grid[0].length;
 
@@ -264,7 +277,7 @@ sand.canvases.html = {
 
 	depthGrid: {
 		draw: function () {
-			sand.canvases.html.canvasDrawHelper.call(
+			sand.htmlCanvases.canvasDrawHelper.call(
 				this.canvas,
 				function(blockIndex, grid) {
 					return 180 + (grid[blockIndex.y][blockIndex.x] * 20);
@@ -275,7 +288,7 @@ sand.canvases.html = {
 
 	withLighting: {
 		draw: function () {
-			sand.canvases.html.canvasDrawHelper.call(
+			sand.htmlCanvases.canvasDrawHelper.call(
 				this.canvas,
 				function(blockIndex, grid) {
 					var difference = findDepthDifferenceOfBlockToTheLeft(blockIndex, grid);
@@ -306,11 +319,4 @@ sand.canvases.html = {
 				sand.level.grid);
 		}
 	}
-};
-
-sand.canvases.drawAllCanvases = function () {
-	sand.canvases.html.depthGrid.draw();
-	sand.canvases.html.withLighting.draw();
-
-	sand.canvases.cocos2d.draw(sand.canvases.html.depthGrid.canvas);
 };

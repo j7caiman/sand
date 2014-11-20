@@ -186,8 +186,8 @@ var PlayerLayer = cc.Layer.extend({
 						 * Finally, the y value has a small amount shaved off to line up the footprints the the player's feet.
 						 */
 						var regionPosition = {
-							x: sand.level.visibleRegion.width / 2 + (sprite.getPosition().x - sand.level.visibleRegion.x),
-							y: sand.level.visibleRegion.height / 2 + (sprite.getPosition().y - sand.level.visibleRegion.y - sprite.width / 4)
+							x: sand.backgroundSprite.width / 2 + (sprite.getPosition().x - sand.backgroundSprite.x),
+							y: sand.backgroundSprite.height / 2 + (sprite.getPosition().y - sand.backgroundSprite.y - sprite.width / 4)
 						};
 						sand.level.update(regionPosition);
 					},

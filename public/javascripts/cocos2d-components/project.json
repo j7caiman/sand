@@ -7,7 +7,7 @@
         "javascripts/cocos2d-components/src/cocos2d_image_resources.js",
         "javascripts/cocos2d-components/src/settle_sand.js",
         "javascripts/cocos2d-components/src/PlayerLayer.js",
-        "javascripts/cocos2d-components/src/SandLayer.js",
+        "javascripts/cocos2d-components/src/BackgroundLayer.js",
         "javascripts/cocos2d-components/src/create_footprint.js"
     ]
 }

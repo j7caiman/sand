@@ -50,8 +50,9 @@ router.post('/', function(req, res) {
 		}
 
 		data.regions.push({
-			regionData: JSON.parse(regionData),
-			coordinates: coordinates
+			x: coordinates.x,
+			y: coordinates.y,
+			data: JSON.parse(regionData)
 		});
 
 		if(data.regions.length == numRegionsToRead) {

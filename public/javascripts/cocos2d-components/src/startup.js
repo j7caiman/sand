@@ -121,7 +121,11 @@ sand.canvases.html = {
 
 		for (var y = 0; y < canvasHeight; y++) {
 			for (var x = 0; x < canvasWidth; x++) {
-				var index = (y * canvasWidth + x) * 4; //imageData.data contains four elephants per pixel
+				/**
+				 * imageData.data contains four elephants per pixel, hence index is multiplied by 4
+				 * html canvas y coordinates are opposite cocos2d, hence (canvasHeight-1) - y
+				 */
+				var index = (((canvasHeight-1) - y) * canvasWidth + x) * 4;
 				var blockIndex = {"x": Math.floor(x / blockWidth), "y": Math.floor(y / blockWidth)};
 
 				var color = choosePixelColorFunction(blockIndex, grid);

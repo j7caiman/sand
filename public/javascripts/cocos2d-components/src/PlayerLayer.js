@@ -95,7 +95,7 @@ var PlayerMovementLayer = cc.Layer.extend({
 
 		sprite.attr({
 			x: sand.player.locationOnCanvas.x,
-			y: sand.constants.kCanvasWidth - sand.player.locationOnCanvas.y,
+			y: sand.player.locationOnCanvas.y,
 			scaleX: 1.5,
 			scaleY: 1.5
 		});
@@ -165,7 +165,7 @@ var PlayerMovementLayer = cc.Layer.extend({
 					function() {
 						sand.level.update({
 							x: sprite.getPosition().x,
-							y: sand.constants.kCanvasWidth - (sprite.getPosition().y - (sprite.width / 4))
+							y: (sprite.getPosition().y - (sprite.width / 4))
 						});
 					},
 					0.5);

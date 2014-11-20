@@ -24,12 +24,15 @@ var SandLayer = cc.Layer.extend({
 		this.visibleRegion = sprite;
 
 		/**
-		 * coordinates start at the center of the sprite
-		 * The sprite is the size of the html canvas
+		 * Coordinates start at the center of the sprite, and the sprite is the size of the html canvas.
+		 * This does the following:
+		 * 	- (sand.constants.kCanvasWidth / 2) puts the bottom left of the sprite in the bottom left corner
+		 * 	- (sand.constants.kViewportWidth / 2) moves the bottom left of the sprite to the middle of the viewport
+		 * 	- ( -sand.player.globalCoordinates) moves the sprite back down to wherever the player is
 		 */
 		sprite.attr({
-			x: sand.constants.kCanvasWidth / 2,
-			y: sand.constants.kCanvasWidth / 2
+			x: sand.constants.kViewportWidth / 2 + (sand.constants.kCanvasWidth / 2 - sand.player.globalCoordinates.x),
+			y: sand.constants.kViewportWidth / 2 + (sand.constants.kCanvasWidth / 2 - sand.player.globalCoordinates.y)
 		});
 
 		this.addChild(sprite);

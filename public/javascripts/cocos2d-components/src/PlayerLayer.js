@@ -97,8 +97,8 @@ var PlayerLayer = cc.Layer.extend({
 		this.player = sprite;
 
 		sprite.attr({
-			x: sand.player.locationOnCanvas.x,
-			y: sand.player.locationOnCanvas.y,
+			x: sand.constants.kViewportWidth / 2,
+			y: sand.constants.kViewportWidth / 2,
 			scaleX: 1.5,
 			scaleY: 1.5
 		});

@@ -1,16 +1,35 @@
 var sand = {
+	player: {},
 	level: {},
 	canvases: {},
 	constants: {
-		kCanvasWidth: 0
+		kCanvasWidth: 512,
+		kPlayerSpeed: 25
 	}
 };
 
 $(document).ready(function() {
-	sand.canvases.html.depthGrid.canvas = $('#sand_grid_region');
-	sand.canvases.html.withLighting.canvas = $('#lit_sand_grid_region');
+	$.cookie.json = true;
+	var lastPositionFromCookie = $.cookie('lastPosition');
+	var lastPosition;
+	if(lastPositionFromCookie !== undefined) {
+		lastPosition = lastPositionFromCookie;
+	} else {
+		lastPosition = {
+			x: 100,
+			y: 100
+		};
+		$.cookie('lastPosition', lastPosition, { expires: 7 });
+	}
+	sand.player.locationOnCanvas = lastPosition;
 
-	cc.game.run();
+	$.get("fetch_region", function (data) {
+		sand.level.grid = JSON.parse(data);
+		sand.canvases.html.depthGrid.canvas = $('#sand_grid_region');
+		sand.canvases.html.withLighting.canvas = $('#lit_sand_grid_region');
+
+		cc.game.run();
+	});
 });
 
 cc.game.onStart = function() {
@@ -37,12 +56,8 @@ var GameScene = cc.Scene.extend({
 				sandLayer.canvasTextureToDrawFrom.handleLoadedTexture();
 			}
 		};
-		sand.constants.kCanvasWidth = sand.canvases.cocos2d.canvas.width();
 
-		$.get("fetch_region", function (data) {
-			sand.level.grid = JSON.parse(data);
-			sand.canvases.drawAllCanvases();
-		});
+		sand.canvases.drawAllCanvases();
 	}
 });
 
@@ -56,17 +71,17 @@ sand.level.update = function(relativePositionOnCanvas) {
 
 	sand.level.settle();
 	sand.level.postToServer();
+	$.cookie('lastPosition', relativePositionOnCanvas, { expires: 7 });
 
 	sand.canvases.drawAllCanvases();
 };
 
-var counter = 0;
 sand.level.postToServer = function() {
-	counter++;
-	if (counter < 10) {
+	sand.level.postToServer.counter++;
+	if (sand.level.postToServer.counter < 5) {
 		return;
 	}
-	counter = 0;
+	sand.level.postToServer.counter = 0;
 
 	$.ajax({
 		url: "write_to_region",
@@ -75,6 +90,7 @@ sand.level.postToServer = function() {
 		contentType: "application/json"
 	});
 };
+sand.level.postToServer.counter = 4;
 
 sand.canvases.html = {
 	canvasDrawHelper: function (choosePixelColorFunction, grid) {

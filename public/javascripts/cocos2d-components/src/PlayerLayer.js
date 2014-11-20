@@ -6,7 +6,7 @@ var PlayerMovementLayer = cc.Layer.extend({
 		this._super();
 		this.init();
 	},
-	
+
 	init: function() {
 		this._super();
 
@@ -94,8 +94,8 @@ var PlayerMovementLayer = cc.Layer.extend({
 		var sprite = new cc.Sprite("#elephant_sprite_sheet_01.png");
 
 		sprite.attr({
-			x: this.getContentSize().width / 2,
-			y: this.getContentSize().height / 2,
+			x: sand.player.locationOnCanvas.x,
+			y: sand.constants.kCanvasWidth - sand.player.locationOnCanvas.y,
 			scaleX: 1.5,
 			scaleY: 1.5
 		});
@@ -125,8 +125,7 @@ var PlayerMovementLayer = cc.Layer.extend({
 					return Math.sqrt( (xDelta * xDelta) + (yDelta * yDelta) );
 				})(elephantPosition, mousePosition);
 
-				const speed = 25;
-				var duration = distance / speed;
+				var duration = distance / sand.constants.kPlayerSpeed;
 
 				var moveAnimation;
 				var frameAfterMove;
@@ -166,7 +165,7 @@ var PlayerMovementLayer = cc.Layer.extend({
 					function() {
 						sand.level.update({
 							x: sprite.getPosition().x,
-							y: sand.constants.kCanvasWidth - (sprite.getPosition().y - (sprite.width / 4	))
+							y: sand.constants.kCanvasWidth - (sprite.getPosition().y - (sprite.width / 4))
 						});
 					},
 					0.5);

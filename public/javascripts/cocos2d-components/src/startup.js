@@ -7,6 +7,7 @@ var sand = {
 	},
 	constants: {
 		kCanvasWidth: 512,
+		kViewportWidth: 384,
 		kPlayerSpeed: 25
 	}
 };
@@ -20,7 +21,7 @@ $(document).ready(function() {
 		document.body.appendChild(canvas);
 		return canvas;
 	}
-	sand.canvases.cocos2d.canvas = createCanvas('cocos2d_gameCanvas', sand.constants.kCanvasWidth);
+	sand.canvases.cocos2d.canvas = createCanvas('cocos2d_gameCanvas', sand.constants.kViewportWidth);
 	sand.canvases.html.depthGrid.canvas = createCanvas('sand_grid_region', sand.constants.kCanvasWidth);
 	sand.canvases.html.withLighting.canvas = createCanvas('lit_sand_grid_region', sand.constants.kCanvasWidth);
 

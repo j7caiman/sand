@@ -23,9 +23,12 @@ var SandLayer = cc.Layer.extend({
 		this.canvasTextureToDrawFrom = new cc.Texture2D();
 		var sprite = new cc.Sprite(this.canvasTextureToDrawFrom);
 
+		/**
+		 * coordinates start at the center of the sprite, which is the size of the html canvas
+		 */
 		sprite.attr({
-			x: this.getContentSize().width / 2,
-			y: this.getContentSize().height / 2
+			x: sand.constants.kCanvasWidth / 2,
+			y: sand.constants.kCanvasWidth / 2
 		});
 
 		this.addChild(sprite);

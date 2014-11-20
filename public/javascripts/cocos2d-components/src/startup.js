@@ -12,23 +12,29 @@ $(document).ready(function() {
 	$.cookie.json = true;
 	var lastPositionFromCookie = $.cookie('lastPosition');
 	var lastPosition;
-	if(lastPositionFromCookie !== undefined) {
+	if (lastPositionFromCookie !== undefined) {
 		lastPosition = lastPositionFromCookie;
 	} else {
 		lastPosition = {
 			x: 100,
 			y: 100
 		};
-		$.cookie('lastPosition', lastPosition, { expires: 7 });
+		$.cookie('lastPosition', lastPosition, {expires: 7});
 	}
 	sand.player.locationOnCanvas = lastPosition;
 
-	$.get("fetch_region", function (data) {
-		sand.level.grid = JSON.parse(data);
-		sand.canvases.html.depthGrid.canvas = $('#sand_grid_region');
-		sand.canvases.html.withLighting.canvas = $('#lit_sand_grid_region');
+	$.ajax({
+		url: "fetch_region",
+		type: "POST",
+		data: JSON.stringify([{x: 0, y: 0}]),
+		contentType: "application/json",
+		success: function (data) {
+			sand.level.grid = data.regions[0].regionData;
+			sand.canvases.html.depthGrid.canvas = $('#sand_grid_region');
+			sand.canvases.html.withLighting.canvas = $('#lit_sand_grid_region');
 
-		cc.game.run();
+			cc.game.run();
+		}
 	});
 });
 
@@ -83,10 +89,18 @@ sand.level.postToServer = function() {
 	}
 	sand.level.postToServer.counter = 0;
 
+	var data = {
+		grid: this.grid,
+		regionCoordinates: {
+			x: 0,
+			y: 0
+		}
+	};
+
 	$.ajax({
 		url: "write_to_region",
 		type: "POST",
-		data: JSON.stringify(this.grid),
+		data: JSON.stringify(data),
 		contentType: "application/json"
 	});
 };

@@ -3,14 +3,19 @@ var router = express.Router();
 var fs = require('fs');
 
 router.post('/', function(req, res) {
-	var data = JSON.stringify(req.body);
-	fs.writeFile('../resources/world_datastore/world_256x256.json', data, function (err) {
+	var data = JSON.stringify(req.body.grid);
+	var path = '../resources/world_datastore/world_256x256_'
+		+ req.body.regionCoordinates.x + '_'
+		+ req.body.regionCoordinates.y
+		+ '.json';
+
+	fs.writeFile(path, data, function (err) {
 		if (err) {
-			console.log(err);
+			throw err;
 		}
 	});
-	res.sendStatus(200);
 
+	res.sendStatus(200);
 });
 
 module.exports = router;

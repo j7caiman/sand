@@ -1,16 +1,24 @@
 /**
- * The canvas that renders the sand is edited directly, without cocos2d,
- * by manipulating the pixels in the imageData in the canvas DOM element itself.
+ * The canvases that render the sand are edited directly, without cocos2d,
+ * by manipulating the pixels in their imageData.
+
+ * Up to four of those canvases may be partially visible at one time, such
+ * as when approaching the corner of a region.
  *
- * This Layer puts that canvas into a Texture2D, and the texture is then
+ * Each canvas's imageData is put into a Texture2D, which is then
  * rendered inside a Sprite.
- * It's as close to a wrapper as I could figure out.
  *
- * I couldn't determine an efficient way of doing it with only cocos2d calls,
+ * There are, however, 9 sprites that form a 3x3 grid of regions, centered
+ * around the region that the player is currently on. However, only 1-4
+ * are active at a given time.
+ *
+ * I couldn't determine an efficient way of drawing with only cocos2d calls,
  * since calling drawRect() 30,000 times was taking too long, and I couldn't can't find
- * a way to edit the pixels with cocos2d directly.
+ * a way to edit the pixels with cocos2d directly. I suspect drawing 30,000 Sprites would
+ * also take too long.
+
  */
-var SandLayer = cc.Layer.extend({
+var BackgroundLayer = cc.Layer.extend({
 	ctor: function () {
 		this._super();
 		this.init();
@@ -21,7 +29,7 @@ var SandLayer = cc.Layer.extend({
 
 		this.canvasTextureToDrawFrom = new cc.Texture2D();
 		var sprite = new cc.Sprite(this.canvasTextureToDrawFrom);
-		this.visibleRegion = sprite;
+		this.backgroundSprite = sprite;
 
 		/**
 		 * Coordinates start at the center of the sprite, and the sprite is the size of the html canvas.
@@ -66,6 +74,11 @@ var SandLayer = cc.Layer.extend({
 		}, this);
 	},
 
+	updateSpriteTextures: function (canvasToRead) {
+		this.canvasTextureToDrawFrom.initWithElement(canvasToRead);
+		this.canvasTextureToDrawFrom.handleLoadedTexture();
+	},
+
 	canvasTextureToDrawFrom: {},
-	visibleRegion: {}
+	backgroundSprite: {}
 });

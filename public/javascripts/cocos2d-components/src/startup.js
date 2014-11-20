@@ -8,7 +8,8 @@ var sand = {
 	constants: {
 		kCanvasWidth: 512,
 		kViewportWidth: 384,
-		kPlayerSpeed: 25
+		kPlayerSpeed: 25,
+		kScrollSpeed: 100
 	}
 };
 
@@ -66,8 +67,12 @@ var GameScene = cc.Scene.extend({
 		this._super();
 
 		var sandLayer = new SandLayer();
+		sand.level.visibleRegion = sandLayer.visibleRegion;
 		this.addChild(sandLayer);
-		this.addChild(new PlayerMovementLayer());
+
+		var playerLayer = new PlayerLayer();
+		sand.player.sprite = playerLayer.player;
+		this.addChild(playerLayer);
 
 		sand.canvases.cocos2d.draw = function (canvasToRead) {
 			sandLayer.canvasTextureToDrawFrom.initWithElement(canvasToRead);
@@ -78,27 +83,28 @@ var GameScene = cc.Scene.extend({
 	}
 });
 
-sand.level.update = function(relativePositionOnCanvas) {
+sand.level.update = function(positionOnRegion) {
 	var blockWidth = sand.constants.kCanvasWidth / this.grid[0].length; // blocks are square
 	var locationOnGrid = {
-		"x": Math.floor(relativePositionOnCanvas.x / blockWidth),
-		"y": Math.floor(relativePositionOnCanvas.y / blockWidth)};
+		"x": Math.floor(positionOnRegion.x / blockWidth),
+		"y": Math.floor(positionOnRegion.y / blockWidth)};
 
 	sand.level.imprintSphere(locationOnGrid, 3);
 
 	sand.level.settle();
-	sand.level.postToServer();
-	$.cookie('lastPosition', relativePositionOnCanvas, { expires: 7 });
+	sand.level.savePlayerAndLevel(positionOnRegion);
 
 	sand.canvases.drawAllCanvases();
 };
 
-sand.level.postToServer = function() {
-	sand.level.postToServer.counter++;
-	if (sand.level.postToServer.counter < 5) {
+sand.level.savePlayerAndLevel = function(globalPosition) {
+	sand.level.savePlayerAndLevel.counter++;
+	if (sand.level.savePlayerAndLevel.counter < 5) {
 		return;
 	}
-	sand.level.postToServer.counter = 0;
+	sand.level.savePlayerAndLevel.counter = 0;
+
+	$.cookie('lastPosition', globalPosition, { expires: 7 });
 
 	var data = {
 		grid: this.grid,
@@ -115,7 +121,7 @@ sand.level.postToServer = function() {
 		contentType: "application/json"
 	});
 };
-sand.level.postToServer.counter = 4;
+sand.level.savePlayerAndLevel.counter = 4;
 
 sand.canvases.html = {
 	canvasDrawHelper: function (choosePixelColorFunction, grid) {

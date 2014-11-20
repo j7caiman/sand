@@ -1,6 +1,7 @@
 var sand = {
 	player: {},
 	level: {},
+	regionsOnScreen: [],
 	canvases: {
 		html: {},
 		cocos2d: {}
@@ -40,10 +41,65 @@ $(document).ready(function() {
 	}
 	sand.player.globalCoordinates = lastPosition;
 
+	/**
+	 * camera view port. Centered around the player on startup.
+	 *
+	 * 0,1|1,1
+	 * ---+---
+	 * 0,0|1,0
+	 */
+	function findOnScreenRegions() {
+		var viewPort = [
+			{
+				x: sand.player.globalCoordinates.x + (sand.constants.kViewportWidth / 2),
+				y: sand.player.globalCoordinates.y + (sand.constants.kViewportWidth / 2)
+			},
+			{
+				x: sand.player.globalCoordinates.x - (sand.constants.kViewportWidth / 2),
+				y: sand.player.globalCoordinates.y + (sand.constants.kViewportWidth / 2)
+			},
+			{
+				x: sand.player.globalCoordinates.x - (sand.constants.kViewportWidth / 2),
+				y: sand.player.globalCoordinates.y - (sand.constants.kViewportWidth / 2)
+			},
+			{
+				x: sand.player.globalCoordinates.x + (sand.constants.kViewportWidth / 2),
+				y: sand.player.globalCoordinates.y - (sand.constants.kViewportWidth / 2)
+			}
+		];
+
+		function contains(array, item) {
+			for (var j = 0; j < array.length; j++) {
+				if (array[j].x == item.x && array[j].y == item.y) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		var regionCoordinates = [];
+		for (var i = 0; i < viewPort.length; i++) {
+			var item = (function (point) {
+				return {
+					x: Math.floor(point.x / sand.constants.kCanvasWidth),
+					y: Math.floor(point.y / sand.constants.kCanvasWidth)
+				};
+			})(viewPort[i]);
+
+			if(!contains(regionCoordinates, item)) {
+				regionCoordinates.push(item);
+			}
+		}
+
+		return regionCoordinates;
+	}
+
+	var regionCoordinates = findOnScreenRegions();
+
 	$.ajax({
 		url: "fetch_region",
 		type: "POST",
-		data: JSON.stringify([{x: 0, y: 0}]),
+		data: JSON.stringify(regionCoordinates),
 		contentType: "application/json",
 		success: function (data) {
 			sand.level.grid = data.regions[0].regionData;

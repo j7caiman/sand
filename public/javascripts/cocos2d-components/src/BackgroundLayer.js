@@ -27,9 +27,15 @@ var BackgroundLayer = cc.Layer.extend({
 	init: function () {
 		this._super();
 
-		this.canvasTextureToDrawFrom = new cc.Texture2D();
-		var sprite = new cc.Sprite(this.canvasTextureToDrawFrom);
+		var sprite = new cc.Sprite(new cc.Texture2D());
+		this.addChild(sprite);
 		this.backgroundSprite = sprite;
+		var adjacentSprites = [];
+		for (var i = 0; i < 8; i++) {
+			adjacentSprites.push(new cc.Sprite(new cc.Texture2D()));
+			this.addChild(adjacentSprites[i]);
+		}
+		this.adjacentSprites = adjacentSprites;
 
 		/**
 		 * Coordinates start at the center of the sprite, and the sprite is the size of the html canvas.
@@ -43,7 +49,40 @@ var BackgroundLayer = cc.Layer.extend({
 			y: sand.constants.kViewportWidth / 2 + (sand.constants.kCanvasWidth / 2 - sand.player.globalCoordinates.y)
 		});
 
-		this.addChild(sprite);
+		(function setAdjacentSpriteCoordinates(sprites, mainSprite, offset) {
+			sprites[0].attr({                                    // northeast region
+				x: mainSprite.x + offset,
+				y: mainSprite.y + offset
+			});
+			sprites[1].attr({                                    // north region
+				x: mainSprite.x + 0,
+				y: mainSprite.y + offset
+			});
+			sprites[2].attr({                                    // northwest region
+				x: mainSprite.x - offset,
+				y: mainSprite.y + offset
+			});
+			sprites[3].attr({                                    // west region
+				x: mainSprite.x - offset,
+				y: mainSprite.y + 0
+			});
+			sprites[4].attr({                                    // southwest region
+				x: mainSprite.x - offset,
+				y: mainSprite.y - offset
+			});
+			sprites[5].attr({                                    // south region
+				x: mainSprite.x + 0,
+				y: mainSprite.y - offset
+			});
+			sprites[6].attr({                                    // southeast region
+				x: mainSprite.x + offset,
+				y: mainSprite.y - offset
+			});
+			sprites[7].attr({                                    // east region
+				x: mainSprite.x + offset,
+				y: mainSprite.y + 0
+			});
+		})(this.adjacentSprites, this.backgroundSprite, sand.constants.kCanvasWidth);
 
 		//set up custom listener to react to scroll commands
 		cc.eventManager.addListener({
@@ -51,6 +90,9 @@ var BackgroundLayer = cc.Layer.extend({
 			eventName: "scrollTrigger",
 			callback: function(event) {
 				sprite.stopAllActions();
+				for (var i = 0; i < adjacentSprites.length; i++) {
+					adjacentSprites[i].stopAllActions();
+				}
 				sand.player.sprite.stopActionByTag("scrollPlayer");
 
 				var delta = {
@@ -67,6 +109,10 @@ var BackgroundLayer = cc.Layer.extend({
 				var duration = distance / sand.constants.kScrollSpeed;
 
 				sprite.runAction(cc.moveBy(duration, cc.p(delta.x, delta.y)));
+				for (var j = 0; j < adjacentSprites.length; j++) {
+					adjacentSprites[j].runAction(cc.moveBy(duration, cc.p(delta.x, delta.y)));
+				}
+
 				var scrollPlayerAction = cc.moveBy(duration, cc.p(delta.x, delta.y));
 				scrollPlayerAction.setTag("scrollPlayer");
 				sand.player.sprite.runAction(scrollPlayerAction);
@@ -74,11 +120,11 @@ var BackgroundLayer = cc.Layer.extend({
 		}, this);
 	},
 
-	updateSpriteTextures: function (canvasToRead) {
-		this.canvasTextureToDrawFrom.initWithElement(canvasToRead);
-		this.canvasTextureToDrawFrom.handleLoadedTexture();
+	updateSpriteTexture: function (sprite, canvasToRead) {
+		sprite.getTexture().initWithElement(canvasToRead);
+		sprite.getTexture().handleLoadedTexture();
 	},
 
-	canvasTextureToDrawFrom: {},
-	backgroundSprite: {}
+	backgroundSprite: {},
+	adjacentSprites: []
 });

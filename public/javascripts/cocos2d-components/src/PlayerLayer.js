@@ -1,11 +1,13 @@
 /**
  * Layer which listens for the mouse and moves / animates the player character.
  */
-var PlayerMovementLayer = cc.Layer.extend({
+var PlayerLayer = cc.Layer.extend({
 	ctor: function() {
 		this._super();
 		this.init();
 	},
+
+	player: {},
 
 	init: function() {
 		this._super();
@@ -92,6 +94,7 @@ var PlayerMovementLayer = cc.Layer.extend({
 
 		// add player to scene
 		var sprite = new cc.Sprite("#elephant_sprite_sheet_01.png");
+		this.player = sprite;
 
 		sprite.attr({
 			x: sand.player.locationOnCanvas.x,
@@ -107,8 +110,21 @@ var PlayerMovementLayer = cc.Layer.extend({
 			event: cc.EventListener.MOUSE,
 
 			onMouseUp: function(event) {
-				sprite.stopAllActions();
-				sprite.unscheduleAllCallbacks();
+				// debug: right click to scroll
+				if(event.getButton() == 2) {
+					var customEvent = new cc.EventCustom("scrollTrigger");
+					customEvent.setUserData(event.getLocation());
+					cc.eventManager.dispatchEvent(customEvent);
+					return;
+				}
+
+				function stopPlayerMovement() {
+					sprite.stopActionByTag("animatePlayer");
+					sprite.stopActionByTag("movePlayer");
+					sprite.unscheduleAllCallbacks();
+				}
+				stopPlayerMovement();
+
 
 				var elephantPosition = sprite.getPosition();
 				var mousePosition = event.getLocation();
@@ -163,21 +179,33 @@ var PlayerMovementLayer = cc.Layer.extend({
 
 				sprite.schedule(
 					function() {
-						sand.level.update({
-							x: sprite.getPosition().x,
-							y: (sprite.getPosition().y - (sprite.width / 4))
-						});
+						/**
+						 * An aggregate of:
+						 * The sprite texture's coordinates relative to the level region's coordinates.
+						 * And the player's position relative to the cocos2d sprite texture.
+						 * Finally, the y value has a small amount shaved off to line up the footprints the the player's feet.
+						 */
+						var regionPosition = {
+							x: sand.level.visibleRegion.width / 2 + (sprite.getPosition().x - sand.level.visibleRegion.x),
+							y: sand.level.visibleRegion.height / 2 + (sprite.getPosition().y - sand.level.visibleRegion.y - sprite.width / 4)
+						};
+						sand.level.update(regionPosition);
 					},
 					0.5);
 
 				var actionMoveDone = cc.callFunc(function() {
-					sprite.stopAllActions();
-					sprite.unscheduleAllCallbacks();
+					stopPlayerMovement();
 					sprite.setSpriteFrame(frameAfterMove);
 				}, this);
 
-				sprite.runAction(cc.animate(moveAnimation).repeatForever());
-				sprite.runAction(cc.sequence(actionMove, actionMoveDone));
+				var animatePlayerAction = cc.animate(moveAnimation).repeatForever();
+				var movePlayerAction = cc.sequence(actionMove, actionMoveDone);
+
+				animatePlayerAction.setTag("animatePlayer");
+				movePlayerAction.setTag("movePlayer");
+
+				sprite.runAction(animatePlayerAction);
+				sprite.runAction(movePlayerAction);
 			}
 		}, this);
 	}

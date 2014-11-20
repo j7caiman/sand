@@ -93,13 +93,60 @@ $(document).ready(function() {
 
 		return regionCoordinates;
 	}
+	var onScreenRegionCoordinates = findOnScreenRegions();
 
-	var regionCoordinates = findOnScreenRegions();
+	function findPlayerCurrentRegion() {
+		return {
+			x: Math.floor(sand.player.globalCoordinates.x / sand.constants.kCanvasWidth),
+			y: Math.floor(sand.player.globalCoordinates.y / sand.constants.kCanvasWidth)
+		};
+	}
+
+	function populateAdjacentRegionCoordinates(currentRegion, allRegions) {
+		var adjacentRegions = [];
+		for (var i = 0; i < allRegions.length; i++) {
+			if (	   allRegions[i].x == currentRegion.x			// current region
+					&& allRegions[i].y == currentRegion.y) {
+				// do nothing
+			} else if (allRegions[i].x == currentRegion.x + 1		// northeast region
+					&& allRegions[i].y == currentRegion.y + 1) {
+				adjacentRegions[0] = allRegions[i];
+			} else if (allRegions[i].x == currentRegion.x + 0		// north region
+					&& allRegions[i].y == currentRegion.y + 1) {
+				adjacentRegions[1] = allRegions[i];
+			} else if (allRegions[i].x == currentRegion.x - 1		// northwest region
+					&& allRegions[i].y == currentRegion.y + 1) {
+				adjacentRegions[2] = allRegions[i];
+			} else if (allRegions[i].x == currentRegion.x - 1		// west region
+					&& allRegions[i].y == currentRegion.y + 0) {
+				adjacentRegions[3] = allRegions[i];
+			} else if (allRegions[i].x == currentRegion.x - 1		// southwest region
+					&& allRegions[i].y == currentRegion.y - 1) {
+				adjacentRegions[4] = allRegions[i];
+			} else if (allRegions[i].x == currentRegion.x + 0		// south region
+					&& allRegions[i].y == currentRegion.y - 1) {
+				adjacentRegions[5] = allRegions[i];
+			} else if (allRegions[i].x == currentRegion.x + 1		// southeast region
+					&& allRegions[i].y == currentRegion.y - 1) {
+				adjacentRegions[6] = allRegions[i];
+			} else if (allRegions[i].x == currentRegion.x + 1		// east region
+					&& allRegions[i].y == currentRegion.y + 0) {
+				adjacentRegions[7] = allRegions[i];
+			}
+		}
+		return adjacentRegions;
+	}
+
+	var playerCurrentRegion = findPlayerCurrentRegion();
+	var regionGraph = {
+		currentRegion: playerCurrentRegion,
+		adjacentRegions: populateAdjacentRegionCoordinates(playerCurrentRegion, onScreenRegionCoordinates)
+	};
 
 	$.ajax({
 		url: "fetch_region",
 		type: "POST",
-		data: JSON.stringify(regionCoordinates),
+		data: JSON.stringify(onScreenRegionCoordinates),
 		contentType: "application/json",
 		success: function (data) {
 			sand.level.grid = data.regions[0].regionData;

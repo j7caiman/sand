@@ -1,7 +1,10 @@
 var sand = {
 	player: {},
 	level: {},
-	canvases: {},
+	canvases: {
+		html: {},
+		cocos2d: {}
+	},
 	constants: {
 		kCanvasWidth: 512,
 		kPlayerSpeed: 25
@@ -9,6 +12,18 @@ var sand = {
 };
 
 $(document).ready(function() {
+	function createCanvas(id, span) {
+		var canvas = document.createElement('canvas');
+		canvas.id = id;
+		canvas.width = span;
+		canvas.height = span;
+		document.body.appendChild(canvas);
+		return canvas;
+	}
+	sand.canvases.cocos2d.canvas = createCanvas('cocos2d_gameCanvas', sand.constants.kCanvasWidth);
+	sand.canvases.html.depthGrid.canvas = createCanvas('sand_grid_region', sand.constants.kCanvasWidth);
+	sand.canvases.html.withLighting.canvas = createCanvas('lit_sand_grid_region', sand.constants.kCanvasWidth);
+
 	$.cookie.json = true;
 	var lastPositionFromCookie = $.cookie('lastPosition');
 	var lastPosition;
@@ -30,8 +45,6 @@ $(document).ready(function() {
 		contentType: "application/json",
 		success: function (data) {
 			sand.level.grid = data.regions[0].regionData;
-			sand.canvases.html.depthGrid.canvas = $('#sand_grid_region');
-			sand.canvases.html.withLighting.canvas = $('#lit_sand_grid_region');
 
 			cc.game.run();
 		}
@@ -55,12 +68,9 @@ var GameScene = cc.Scene.extend({
 		this.addChild(sandLayer);
 		this.addChild(new PlayerMovementLayer());
 
-		sand.canvases.cocos2d = {
-			canvas: $('#cocos2d_gameCanvas'),
-			draw: function (canvasToRead) {
-				sandLayer.canvasTextureToDrawFrom.initWithElement(canvasToRead);
-				sandLayer.canvasTextureToDrawFrom.handleLoadedTexture();
-			}
+		sand.canvases.cocos2d.draw = function (canvasToRead) {
+			sandLayer.canvasTextureToDrawFrom.initWithElement(canvasToRead);
+			sandLayer.canvasTextureToDrawFrom.handleLoadedTexture();
 		};
 
 		sand.canvases.drawAllCanvases();
@@ -145,7 +155,7 @@ sand.canvases.html = {
 	depthGrid: {
 		draw: function () {
 			sand.canvases.html.canvasDrawHelper.call(
-				this.canvas[0],
+				this.canvas,
 				function(blockIndex, grid) {
 					return 180 + (grid[blockIndex.y][blockIndex.x] * 20);
 				},
@@ -156,7 +166,7 @@ sand.canvases.html = {
 	withLighting: {
 		draw: function () {
 			sand.canvases.html.canvasDrawHelper.call(
-				this.canvas[0],
+				this.canvas,
 				function(blockIndex, grid) {
 					var difference = findDepthDifferenceOfBlockToTheLeft(blockIndex, grid);
 					return chooseColor(difference);
@@ -192,5 +202,5 @@ sand.canvases.drawAllCanvases = function () {
 	sand.canvases.html.depthGrid.draw();
 	sand.canvases.html.withLighting.draw();
 
-	sand.canvases.cocos2d.draw(sand.canvases.html.depthGrid.canvas[0]);
+	sand.canvases.cocos2d.draw(sand.canvases.html.depthGrid.canvas);
 };

@@ -38,7 +38,7 @@ $(document).ready(function() {
 		};
 		$.cookie('lastPosition', lastPosition, {expires: 7});
 	}
-	sand.player.locationOnCanvas = lastPosition;
+	sand.player.globalCoordinates = lastPosition;
 
 	$.ajax({
 		url: "fetch_region",

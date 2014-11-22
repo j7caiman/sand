@@ -27,17 +27,6 @@ var BackgroundLayer = cc.Layer.extend({
 	init: function () {
 		this._super();
 
-		var allRegions = sand.allRegions;
-		for (var regionName in allRegions) {
-			if(allRegions.hasOwnProperty(regionName)) {
-				var sprite = new cc.Sprite(new cc.Texture2D());
-				sprite.getTexture().initWithElement(allRegions[regionName].getCanvas());
-				sprite.getTexture().handleLoadedTexture();
-				this.addChild(sprite);
-				allRegions[regionName].setSprite(sprite);
-			}
-		}
-
 		this.initializeSpriteLocations();
 
 		//set up custom listener to react to scroll commands
@@ -45,6 +34,7 @@ var BackgroundLayer = cc.Layer.extend({
 			event: cc.EventListener.CUSTOM,
 			eventName: "scrollTrigger",
 			callback: function(event) {
+				var allRegions = sand.allRegions;
 				var allSprites = [];
 				for (var regionName in allRegions) {
 					if(allRegions.hasOwnProperty(regionName)) {
@@ -90,7 +80,11 @@ var BackgroundLayer = cc.Layer.extend({
 	 * 	- ( -sand.player.globalCoordinates) moves the sprite back down to wherever the player is
 	 */
 	initializeSpriteLocations: function() {
+		this.removeAllChildren();
+
 		var centerSprite = sand.currentRegion.getSprite();
+		this.addChild(centerSprite);
+
 		centerSprite.attr({
 			x: sand.constants.kViewportWidth / 2 + sand.constants.kCanvasWidth / 2 - sand.player.globalCoordinates.x + (sand.currentRegion.x * sand.constants.kCanvasWidth),
 			y: sand.constants.kViewportWidth / 2 + sand.constants.kCanvasWidth / 2 - sand.player.globalCoordinates.y + (sand.currentRegion.y * sand.constants.kCanvasWidth)
@@ -98,11 +92,13 @@ var BackgroundLayer = cc.Layer.extend({
 
 		var adjacentSprites = sand.currentRegion.getAdjacentNodes().map(function (region) {
 			if(region !== undefined) {
-				return region.getSprite();
+				var sprite = region.getSprite();
+				this.addChild(sprite);
+				return sprite;
 			} else {
 				return undefined;
 			}
-		});
+		}, this);
 		(function setAdjacentSpriteCoordinates(sprites, center, offset) {
 			if(sprites[0] !== undefined) { sprites[0].attr({x: center.x + offset, y: center.y + offset});}	// northeast region
 			if(sprites[1] !== undefined) { sprites[1].attr({x: center.x + 0,      y: center.y + offset});}	// north region

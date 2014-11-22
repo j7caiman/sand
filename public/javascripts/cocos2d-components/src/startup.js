@@ -123,7 +123,7 @@ sand.level.savePlayerAndLevel = function(globalPosition, region) {
 
 
 sand.globalFunctions = {
-	addMoreRegions: function addMoreRegions(callback) {
+	addMoreRegions: function (callback) {
 		var allRegions = sand.allRegions;
 
 		var regionNamesInViewport = sand.globalFunctions.findRegionsInViewport();
@@ -152,11 +152,16 @@ sand.globalFunctions = {
 			contentType: "application/json",
 			success: function (responseData) {
 				var allRegions = sand.allRegions;
-				var newRegions = responseData.regions;
-				for (var regionName in newRegions) {
-					if (newRegions.hasOwnProperty(regionName)) {
-						allRegions[regionName].setData(newRegions[regionName]);
+				var dataForNewRegions = responseData.regions;
+				for (var regionName in dataForNewRegions) {
+					if (dataForNewRegions.hasOwnProperty(regionName)) {
+						allRegions[regionName].setData(dataForNewRegions[regionName]);
 						allRegions[regionName].setCanvas(sand.globalFunctions.createCanvas(regionName, sand.constants.kCanvasWidth));
+
+						var sprite = new cc.Sprite(new cc.Texture2D());
+						sprite.getTexture().initWithElement(allRegions[regionName].getCanvas());
+						sprite.getTexture().handleLoadedTexture();
+						allRegions[regionName].setSprite(sprite);
 					}
 				}
 

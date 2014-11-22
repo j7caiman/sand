@@ -179,18 +179,7 @@ var PlayerLayer = cc.Layer.extend({
 
 				sprite.schedule(
 					function() {
-						/**
-						 * An aggregate of:
-						 * The sprite texture's coordinates relative to the level region's coordinates.
-						 * And the player's position relative to the cocos2d sprite texture.
-						 * Finally, the y value has a small amount shaved off to line up the footprints the the player's feet.
-						 */
-						var backgroundSprite = sand.regionGraph.currentRegion.sprite;
-						var globalPosition = {
-							x: backgroundSprite.width / 2 + (sprite.getPosition().x - backgroundSprite.x),
-							y: backgroundSprite.height / 2 + (sprite.getPosition().y - backgroundSprite.y - sprite.width / 4)
-						};
-						sand.level.update(globalPosition);
+						sand.level.update();
 					},
 					0.5);
 

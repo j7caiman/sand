@@ -27,77 +27,40 @@ var BackgroundLayer = cc.Layer.extend({
 	init: function () {
 		this._super();
 
-		var sprite = new cc.Sprite(new cc.Texture2D());
-		this.addChild(sprite);
-		this.backgroundSprite = sprite;
-		var adjacentSprites = [];
-		for (var i = 0; i < 8; i++) {
-			adjacentSprites.push(new cc.Sprite(new cc.Texture2D()));
-			this.addChild(adjacentSprites[i]);
+		var allRegions = sand.allRegions;
+		for (var regionName in allRegions) {
+			if(allRegions.hasOwnProperty(regionName)) {
+				var sprite = new cc.Sprite(new cc.Texture2D());
+				sprite.getTexture().initWithElement(allRegions[regionName].getCanvas());
+				sprite.getTexture().handleLoadedTexture();
+				this.addChild(sprite);
+				allRegions[regionName].setSprite(sprite);
+			}
 		}
-		this.adjacentSprites = adjacentSprites;
 
-		/**
-		 * Coordinates start at the center of the sprite, and the sprite is the size of the html canvas.
-		 * This does the following:
-		 * 	- (sand.constants.kCanvasWidth / 2) puts the bottom left of the sprite in the bottom left corner
-		 * 	- (sand.constants.kViewportWidth / 2) moves the bottom left of the sprite to the middle of the viewport
-		 * 	- ( -sand.player.globalCoordinates) moves the sprite back down to wherever the player is
-		 */
-		sprite.attr({
-			x: sand.constants.kViewportWidth / 2 + (sand.constants.kCanvasWidth / 2 - sand.player.globalCoordinates.x),
-			y: sand.constants.kViewportWidth / 2 + (sand.constants.kCanvasWidth / 2 - sand.player.globalCoordinates.y)
-		});
-
-		(function setAdjacentSpriteCoordinates(sprites, mainSprite, offset) {
-			sprites[0].attr({                                    // northeast region
-				x: mainSprite.x + offset,
-				y: mainSprite.y + offset
-			});
-			sprites[1].attr({                                    // north region
-				x: mainSprite.x + 0,
-				y: mainSprite.y + offset
-			});
-			sprites[2].attr({                                    // northwest region
-				x: mainSprite.x - offset,
-				y: mainSprite.y + offset
-			});
-			sprites[3].attr({                                    // west region
-				x: mainSprite.x - offset,
-				y: mainSprite.y + 0
-			});
-			sprites[4].attr({                                    // southwest region
-				x: mainSprite.x - offset,
-				y: mainSprite.y - offset
-			});
-			sprites[5].attr({                                    // south region
-				x: mainSprite.x + 0,
-				y: mainSprite.y - offset
-			});
-			sprites[6].attr({                                    // southeast region
-				x: mainSprite.x + offset,
-				y: mainSprite.y - offset
-			});
-			sprites[7].attr({                                    // east region
-				x: mainSprite.x + offset,
-				y: mainSprite.y + 0
-			});
-		})(this.adjacentSprites, this.backgroundSprite, sand.constants.kCanvasWidth);
+		this.initializeSpriteLocations();
 
 		//set up custom listener to react to scroll commands
 		cc.eventManager.addListener({
 			event: cc.EventListener.CUSTOM,
 			eventName: "scrollTrigger",
 			callback: function(event) {
-				sprite.stopAllActions();
-				for (var i = 0; i < adjacentSprites.length; i++) {
-					adjacentSprites[i].stopAllActions();
+				var allSprites = [];
+				for (var regionName in allRegions) {
+					if(allRegions.hasOwnProperty(regionName)) {
+						allSprites.push(allRegions[regionName].getSprite());
+					}
 				}
+
+				allSprites.map(function(sprite) {
+					sprite.stopAllActions();
+				});
 				sand.player.sprite.stopActionByTag("scrollPlayer");
 
+				var centerSprite = sand.currentRegion.getSprite();
 				var delta = {
-					x: event.getUserData().x - sprite.x,
-					y: event.getUserData().y - sprite.y
+					x: event.getUserData().x - centerSprite.x,
+					y: event.getUserData().y - centerSprite.y
 				};
 
 				var distance = (function(point1, point2) {
@@ -105,13 +68,12 @@ var BackgroundLayer = cc.Layer.extend({
 					var yDelta = point2.y - point1.y;
 
 					return Math.sqrt( (xDelta * xDelta) + (yDelta * yDelta) );
-				})(sprite, event.getUserData());
+				})(centerSprite, event.getUserData());
 				var duration = distance / sand.constants.kScrollSpeed;
 
-				sprite.runAction(cc.moveBy(duration, cc.p(delta.x, delta.y)));
-				for (var j = 0; j < adjacentSprites.length; j++) {
-					adjacentSprites[j].runAction(cc.moveBy(duration, cc.p(delta.x, delta.y)));
-				}
+				allSprites.map(function(sprite) {
+					sprite.runAction(cc.moveBy(duration, cc.p(delta.x, delta.y)));
+				});
 
 				var scrollPlayerAction = cc.moveBy(duration, cc.p(delta.x, delta.y));
 				scrollPlayerAction.setTag("scrollPlayer");
@@ -120,11 +82,36 @@ var BackgroundLayer = cc.Layer.extend({
 		}, this);
 	},
 
-	updateSpriteTexture: function (sprite, canvasToRead) {
-		sprite.getTexture().initWithElement(canvasToRead);
-		sprite.getTexture().handleLoadedTexture();
-	},
+	/**
+	 * Coordinates start at the center of the sprite, and the sprite is the size of the html canvas.
+	 * This does the following:
+	 * 	- (sand.constants.kCanvasWidth / 2) puts the bottom left of the sprite in the bottom left corner
+	 * 	- (sand.constants.kViewportWidth / 2) moves the bottom left of the sprite to the middle of the viewport
+	 * 	- ( -sand.player.globalCoordinates) moves the sprite back down to wherever the player is
+	 */
+	initializeSpriteLocations: function() {
+		var centerSprite = sand.currentRegion.getSprite();
+		centerSprite.attr({
+			x: sand.constants.kViewportWidth / 2 + sand.constants.kCanvasWidth / 2 - sand.player.globalCoordinates.x + (sand.currentRegion.x * sand.constants.kCanvasWidth),
+			y: sand.constants.kViewportWidth / 2 + sand.constants.kCanvasWidth / 2 - sand.player.globalCoordinates.y + (sand.currentRegion.y * sand.constants.kCanvasWidth)
+		});
 
-	backgroundSprite: {},
-	adjacentSprites: []
+		var adjacentSprites = sand.currentRegion.getAdjacentNodes().map(function (region) {
+			if(region !== undefined) {
+				return region.getSprite();
+			} else {
+				return undefined;
+			}
+		});
+		(function setAdjacentSpriteCoordinates(sprites, center, offset) {
+			if(sprites[0] !== undefined) { sprites[0].attr({x: center.x + offset, y: center.y + offset});}	// northeast region
+			if(sprites[1] !== undefined) { sprites[1].attr({x: center.x + 0,      y: center.y + offset});}	// north region
+			if(sprites[2] !== undefined) { sprites[2].attr({x: center.x - offset, y: center.y + offset});}	// northwest region
+			if(sprites[3] !== undefined) { sprites[3].attr({x: center.x - offset, y: center.y + 0});}		// west region
+			if(sprites[4] !== undefined) { sprites[4].attr({x: center.x - offset, y: center.y - offset});}	// southwest region
+			if(sprites[5] !== undefined) { sprites[5].attr({x: center.x + 0,      y: center.y - offset});}	// south region
+			if(sprites[6] !== undefined) { sprites[6].attr({x: center.x + offset, y: center.y - offset});}	// southeast region
+			if(sprites[7] !== undefined) { sprites[7].attr({x: center.x + offset, y: center.y + 0});}		// east region
+		})(adjacentSprites, centerSprite, sand.constants.kCanvasWidth);
+	}
 });

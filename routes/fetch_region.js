@@ -3,27 +3,26 @@ var router = express.Router();
 var fs = require('fs');
 
 router.post('/', function(req, res) {
-	var regionCoordinates = req.body;
-	if(!Array.isArray(regionCoordinates)) {
-		throw "Unsupported parameters: pass an array of region coordinates, e.g: [{ x: 0, y: 0 }, { x: 1, y: 0 }]"
+	var regionNames = req.body;
+	if(!Array.isArray(regionNames)) {
+		throw "Unsupported parameters: pass an array of region names, e.g: [\"0_0\", \"0_-1\"]"
 	}
 
-	var numRegionsToRead = regionCoordinates.length;
+	var numRegionsToRead = regionNames.length;
 	for(var i = 0; i < numRegionsToRead; i++) {
-		var path = '../resources/world_datastore/world_256x256_'
-			+ regionCoordinates[i].x + '_'
-			+ regionCoordinates[i].y + '.json';
+		var path = '../resources/world_datastore/world_256x256_' + regionNames[i] + '.json';
 		(function(index, path) {
 			fs.readFile(path, 'utf8', function(err, regionData) {
-				returnAllRegionsOnLoad(err, regionData, path, regionCoordinates[index]);
+				returnAllRegionsOnLoad(err, regionData, path, regionNames[index]);
 			});
 		})(i, path);
 	}
 
 	var data = {
-		regions: []
+		regions: {}
 	};
-	function returnAllRegionsOnLoad (err, regionData, path, coordinates) {
+	var numLoadedRegions = 0;
+	function returnAllRegionsOnLoad (err, regionData, path, regionName) {
 		if(err == null) {
 			// do nothing
 		} else if(err.code == 'ENOENT') {
@@ -49,13 +48,9 @@ router.post('/', function(req, res) {
 			throw err;
 		}
 
-		data.regions.push({
-			x: coordinates.x,
-			y: coordinates.y,
-			data: JSON.parse(regionData)
-		});
-
-		if(data.regions.length == numRegionsToRead) {
+		data.regions[regionName] = JSON.parse(regionData);
+		numLoadedRegions++;
+		if(numLoadedRegions == numRegionsToRead) {
 			res.send(data);
 		}
 	}

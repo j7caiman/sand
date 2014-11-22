@@ -27,7 +27,23 @@ var BackgroundLayer = cc.Layer.extend({
 	init: function () {
 		this._super();
 
-		this.initializeSpriteLocations();
+		var localPlayerPosition = {
+			x: sand.player.globalCoordinates.x - (sand.currentRegion.x * sand.constants.kCanvasWidth),
+			y: sand.player.globalCoordinates.y - (sand.currentRegion.y * sand.constants.kCanvasWidth)
+		};
+		/**
+		 * The sprite's anchor is located at the center of the sprite,
+		 * which is the size of the html canvas.
+		 * This does the following:
+		 * 	+ (sand.constants.kCanvasWidth / 2) raises the bottom left corner of the sprite
+		 * 	to the bottom left corner the screen
+		 * 	+ (sand.constants.kViewportWidth / 2) raises the bottom left of the sprite to the middle of the viewport
+		 * 	- (localPlayerPosition) moves the sprite back down to wherever the player is
+		 */
+		this.initializeSpriteLocations({
+			x: sand.constants.kViewportWidth / 2 + sand.constants.kCanvasWidth / 2 - localPlayerPosition.x,
+			y: sand.constants.kViewportWidth / 2 + sand.constants.kCanvasWidth / 2 - localPlayerPosition.y
+		});
 
 		//set up custom listener to react to scroll commands
 		cc.eventManager.addListener({
@@ -72,28 +88,25 @@ var BackgroundLayer = cc.Layer.extend({
 		}, this);
 	},
 
-	/**
-	 * Coordinates start at the center of the sprite, and the sprite is the size of the html canvas.
-	 * This does the following:
-	 * 	- (sand.constants.kCanvasWidth / 2) puts the bottom left of the sprite in the bottom left corner
-	 * 	- (sand.constants.kViewportWidth / 2) moves the bottom left of the sprite to the middle of the viewport
-	 * 	- ( -sand.player.globalCoordinates) moves the sprite back down to wherever the player is
-	 */
-	initializeSpriteLocations: function() {
+	initializeSpriteLocations: function(position) {
 		this.removeAllChildren();
 
 		var centerSprite = sand.currentRegion.getSprite();
 		this.addChild(centerSprite);
+		centerSprite.getTexture().initWithElement(sand.currentRegion.getCanvas());
+		centerSprite.getTexture().handleLoadedTexture();
 
 		centerSprite.attr({
-			x: sand.constants.kViewportWidth / 2 + sand.constants.kCanvasWidth / 2 - sand.player.globalCoordinates.x + (sand.currentRegion.x * sand.constants.kCanvasWidth),
-			y: sand.constants.kViewportWidth / 2 + sand.constants.kCanvasWidth / 2 - sand.player.globalCoordinates.y + (sand.currentRegion.y * sand.constants.kCanvasWidth)
+			x: position.x,
+			y: position.y
 		});
 
 		var adjacentSprites = sand.currentRegion.getAdjacentNodes().map(function (region) {
 			if(region !== undefined) {
 				var sprite = region.getSprite();
 				this.addChild(sprite);
+				sprite.getTexture().initWithElement(region.getCanvas());
+				sprite.getTexture().handleLoadedTexture();
 				return sprite;
 			} else {
 				return undefined;

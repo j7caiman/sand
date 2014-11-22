@@ -1,5 +1,6 @@
 var sand = {
 	player: {},
+	backgroundLayer: {},
 	currentRegion: {},
 	allRegions: {},
 	level: {},
@@ -56,7 +57,9 @@ var GameScene = cc.Scene.extend({
 
 		var playerLayer = new PlayerLayer();
 		sand.player.sprite = playerLayer.player;
-		this.addChild(new BackgroundLayer());
+		var backgroundLayer = new BackgroundLayer();
+		sand.backgroundLayer = backgroundLayer;
+		this.addChild(backgroundLayer);
 		this.addChild(playerLayer);
 
 		sand.globalFunctions.updateHtmlCanvases();
@@ -64,17 +67,18 @@ var GameScene = cc.Scene.extend({
 });
 
 sand.level.update = function() {
-	/**
-	 * An aggregate of:
-	 * The sprite texture's coordinates relative to the level region's coordinates.
-	 * And the player's position relative to the cocos2d sprite texture.
-	 * Finally, the y value has a small amount shaved off to line up the footprints the the player's feet.
-	 */
-	var backgroundPosition = sand.currentRegion.getSprite().getPosition();
-	var playerPosition = sand.player.sprite.getPosition();
+	var backgroundPosition = { // bottom left corner of center background sprite
+		x: sand.currentRegion.getSprite().x - sand.constants.kCanvasWidth / 2,
+		y: sand.currentRegion.getSprite().y - sand.constants.kCanvasWidth / 2
+	};
+	var playerPosition = { // player sprite position
+		x: sand.player.sprite.x,
+		y: sand.player.sprite.y - sand.player.sprite.width / 4 // slightly offset footprints from player
+	};
+
 	var positionOnRegion = {
-		x: (sand.constants.kCanvasWidth / 2) + (playerPosition.x - backgroundPosition.x),
-		y: (sand.constants.kCanvasWidth / 2) + (playerPosition.y - backgroundPosition.y - sand.player.sprite.width / 4)
+		x: playerPosition.x - backgroundPosition.x,
+		y: playerPosition.y - backgroundPosition.y
 	};
 
 	var globalPosition = {
@@ -82,11 +86,30 @@ sand.level.update = function() {
 		y: positionOnRegion.y + (sand.currentRegion.y * sand.constants.kCanvasWidth)
 	};
 
-	sand.player.globalCoordinates = globalPosition;
-	var newRegionName = sand.globalFunctions.findRegionNameFromAbsolutePosition(globalPosition);
-	if (!(sand.currentRegion.name == newRegionName)) {
-		sand.currentRegion = sand.allRegions[newRegionName];
+	function isOutOfBounds(position) {
+		return position.x > sand.constants.kCanvasWidth
+			|| position.y > sand.constants.kCanvasWidth
+			|| position.x < 0
+			|| position.y < 0;
 	}
+	if(isOutOfBounds(positionOnRegion)) {
+		function mod(n, mod) { return ((mod % n) + n) % n; }
+		var differenceInLocation = {
+			x: mod(sand.constants.kCanvasWidth, positionOnRegion.x) - positionOnRegion.x,
+			y: mod(sand.constants.kCanvasWidth, positionOnRegion.y) - positionOnRegion.y
+		};
+
+		var newBackgroundPosition = {
+			x: sand.currentRegion.getSprite().x - differenceInLocation.x,
+			y: sand.currentRegion.getSprite().y - differenceInLocation.y
+		};
+
+		var newRegionName = sand.globalFunctions.findRegionNameFromAbsolutePosition(globalPosition);
+		sand.currentRegion = sand.allRegions[newRegionName];
+		sand.backgroundLayer.initializeSpriteLocations(newBackgroundPosition);
+	}
+
+	sand.player.globalCoordinates = globalPosition;
 
 	var regionData = sand.currentRegion.getData();
 	sand.level.imprintSphere(regionData, positionOnRegion, 3);
@@ -94,6 +117,10 @@ sand.level.update = function() {
 	sand.level.savePlayerAndLevel(globalPosition, sand.currentRegion);
 
 	sand.globalFunctions.updateHtmlCanvases();
+
+	sand.globalFunctions.addMoreRegions(function() {
+		sand.backgroundLayer.initializeSpriteLocations(sand.currentRegion.getSprite().getPosition());
+	});
 };
 
 sand.level.savePlayerAndLevel = function(globalPosition, region) {
@@ -143,33 +170,31 @@ sand.globalFunctions = {
 					allRegions[regionName].initializeAdjacentNodes();
 				}
 			}
-		}
 
-		$.ajax({
-			url: "fetch_region",
-			type: "POST",
-			data: JSON.stringify(newRegionNames),
-			contentType: "application/json",
-			success: function (responseData) {
-				var allRegions = sand.allRegions;
-				var dataForNewRegions = responseData.regions;
-				for (var regionName in dataForNewRegions) {
-					if (dataForNewRegions.hasOwnProperty(regionName)) {
-						allRegions[regionName].setData(dataForNewRegions[regionName]);
-						allRegions[regionName].setCanvas(sand.globalFunctions.createCanvas(regionName, sand.constants.kCanvasWidth));
+			$.ajax({
+				url: "fetch_region",
+				type: "POST",
+				data: JSON.stringify(newRegionNames),
+				contentType: "application/json",
+				success: function (responseData) {
+					var allRegions = sand.allRegions;
+					var dataForNewRegions = responseData.regions;
+					for (var regionName in dataForNewRegions) {
+						if (dataForNewRegions.hasOwnProperty(regionName)) {
+							allRegions[regionName].setData(dataForNewRegions[regionName]);
+							allRegions[regionName].setCanvas(sand.globalFunctions.createCanvas(regionName, sand.constants.kCanvasWidth));
 
-						var sprite = new cc.Sprite(new cc.Texture2D());
-						sprite.getTexture().initWithElement(allRegions[regionName].getCanvas());
-						sprite.getTexture().handleLoadedTexture();
-						allRegions[regionName].setSprite(sprite);
+							var sprite = new cc.Sprite(new cc.Texture2D());
+							allRegions[regionName].setSprite(sprite);
+						}
+					}
+
+					if(callback !== undefined) {
+						callback();
 					}
 				}
-
-				if(callback !== undefined) {
-					callback();
-				}
-			}
-		});
+			});
+		}
 	},
 
 	createCanvas: function(id, span) {

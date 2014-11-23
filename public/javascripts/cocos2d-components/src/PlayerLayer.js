@@ -96,6 +96,7 @@ var PlayerLayer = cc.Layer.extend({
 		var sprite = new cc.Sprite("#elephant_sprite_sheet_01.png");
 		this.player = sprite;
 
+		// note: anchor point is at the center of the sprite
 		sprite.attr({
 			x: sand.constants.kViewportWidth / 2,
 			y: sand.constants.kViewportWidth / 2,

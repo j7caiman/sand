@@ -10,6 +10,7 @@ var sand = {
 		kRegionWidth: 256,
 		kViewportWidth: 384,
 		kLoadMoreRegionsThreshold: 500,
+		kAffectedRegionWidth: 40,
 		kPlayerSpeed: 25,
 		kScrollSpeed: 100,
 		kFootprintRadius: 3
@@ -62,17 +63,12 @@ var GameScene = cc.Scene.extend({
 		sand.backgroundLayer = backgroundLayer;
 		this.addChild(backgroundLayer);
 		this.addChild(playerLayer);
-
-		sand.level.updateHtmlCanvases();
 	}
 });
 
 sand.globalFunctions = {
 	update: function() {
-		var backgroundPosition = { // bottom left corner of center background sprite
-			x: sand.currentRegion.getSprite().x - sand.constants.kCanvasWidth / 2,
-			y: sand.currentRegion.getSprite().y - sand.constants.kCanvasWidth / 2
-		};
+		var backgroundPosition = sand.currentRegion.getSprite();
 		var playerPosition = { // player sprite position
 			x: sand.player.sprite.x,
 			y: sand.player.sprite.y - sand.player.sprite.width / 4 // slightly offset footprints from player
@@ -83,10 +79,8 @@ sand.globalFunctions = {
 			y: playerPosition.y - backgroundPosition.y
 		};
 
-		var globalPosition = {
-			x: positionOnCanvas.x + (sand.currentRegion.x * sand.constants.kCanvasWidth),
-			y: positionOnCanvas.y + (sand.currentRegion.y * sand.constants.kCanvasWidth)
-		};
+		var globalPosition = sand.globalFunctions.toGlobalCoordinates(positionOnCanvas);
+		sand.player.globalCoordinates = globalPosition;
 
 		function isOutOfBounds(position) {
 			return position.x > sand.constants.kCanvasWidth
@@ -102,8 +96,8 @@ sand.globalFunctions = {
 			};
 
 			var newBackgroundPosition = {
-				x: sand.currentRegion.getSprite().x - differenceInLocation.x,
-				y: sand.currentRegion.getSprite().y - differenceInLocation.y
+				x: backgroundPosition.x - differenceInLocation.x,
+				y: backgroundPosition.y - differenceInLocation.y
 			};
 
 			var newRegionName = sand.globalFunctions.findRegionNameFromAbsolutePosition(globalPosition);
@@ -111,12 +105,17 @@ sand.globalFunctions = {
 			sand.backgroundLayer.initializeSpriteLocations(newBackgroundPosition);
 		}
 
-		sand.player.globalCoordinates = globalPosition;
-
 		var regionData = sand.currentRegion.getData();
 		sand.level.makeFootprint(regionData, positionOnCanvas);
 		sand.level.settle(regionData);
-		sand.level.updateHtmlCanvases();
+
+		var changedArea = {
+			x: globalPosition.x - sand.constants.kAffectedRegionWidth / 2,
+			y: globalPosition.y - sand.constants.kAffectedRegionWidth / 2,
+			width: sand.constants.kAffectedRegionWidth,
+			height: (sand.constants.kAffectedRegionWidth)
+		};
+		sand.level.updateHtmlCanvases(changedArea);
 		sand.level.savePlayerAndLevel(globalPosition, sand.currentRegion);
 
 		sand.globalFunctions.addMoreRegions(function() {
@@ -127,7 +126,13 @@ sand.globalFunctions = {
 	addMoreRegions: function (callback) {
 		var allRegions = sand.allRegions;
 
-		var visibleRegions = sand.globalFunctions.findRegionsInViewport();
+		var preloadThresholdRect = {
+			x: sand.player.globalCoordinates.x - (sand.constants.kLoadMoreRegionsThreshold / 2),
+			y: sand.player.globalCoordinates.y - (sand.constants.kLoadMoreRegionsThreshold / 2),
+			width: sand.constants.kLoadMoreRegionsThreshold,
+			height: sand.constants.kLoadMoreRegionsThreshold
+		};
+		var visibleRegions = sand.globalFunctions.findRegionsInRect(preloadThresholdRect);
 
 		var newRegionNames = [];
 		for (var i = 0; i < visibleRegions.length; i++) {
@@ -158,8 +163,10 @@ sand.globalFunctions = {
 							allRegions[regionName].setData(dataForNewRegions[regionName]);
 							allRegions[regionName].setCanvas(sand.globalFunctions.createCanvas(regionName, sand.constants.kCanvasWidth));
 							allRegions[regionName].getCanvas().style.display = 'none';
+							sand.level.drawAsDepthGrid(allRegions[regionName]);
 
 							var sprite = new cc.Sprite(new cc.Texture2D());
+							sprite.setAnchorPoint(0, 0);
 							allRegions[regionName].setSprite(sprite);
 						}
 					}
@@ -187,42 +194,48 @@ sand.globalFunctions = {
 		return xCoordinate + "_" + yCoordinate;
 	},
 
-	findRegionsInViewport: function () {
-		/**
-		 * camera view port. Centered around the player on startup.
-		 *
-		 * 0,1|1,1
-		 * ---+---
-		 * 0,0|1,0
-		 */
-		var viewPort = [
-			{
-				x: sand.player.globalCoordinates.x + (sand.constants.kLoadMoreRegionsThreshold / 2),
-				y: sand.player.globalCoordinates.y + (sand.constants.kLoadMoreRegionsThreshold / 2)
+	findRegionsInRect: function (rect) {
+		var coordinates = [
+			{	x: rect.x + rect.width,
+				y: rect.y + rect.height
 			},
-			{
-				x: sand.player.globalCoordinates.x - (sand.constants.kLoadMoreRegionsThreshold / 2),
-				y: sand.player.globalCoordinates.y + (sand.constants.kLoadMoreRegionsThreshold / 2)
+			{	x: rect.x,
+				y: rect.y + rect.height
 			},
-			{
-				x: sand.player.globalCoordinates.x - (sand.constants.kLoadMoreRegionsThreshold / 2),
-				y: sand.player.globalCoordinates.y - (sand.constants.kLoadMoreRegionsThreshold / 2)
+			{	x: rect.x,
+				y: rect.y
 			},
-			{
-				x: sand.player.globalCoordinates.x + (sand.constants.kLoadMoreRegionsThreshold / 2),
-				y: sand.player.globalCoordinates.y - (sand.constants.kLoadMoreRegionsThreshold / 2)
+			{	x: rect.x + rect.width,
+				y: rect.y
 			}
 		];
-
+		
 		var regionNames = [];
-		for (var i = 0; i < viewPort.length; i++) {
-			var item = sand.globalFunctions.findRegionNameFromAbsolutePosition(viewPort[i]);
+		for (var i = 0; i < coordinates.length; i++) {
+			var item = sand.globalFunctions.findRegionNameFromAbsolutePosition(coordinates[i]);
 			if (regionNames.indexOf(item) == -1) {
 				regionNames.push(item);
 			}
 		}
 
 		return regionNames;
+	},
+
+	toLocalCoordinates: function(point, region) {
+		if(region === undefined) { // region is an optional parameter
+			region = sand.currentRegion;
+		}
+		return {
+			x: point.x - (region.x * sand.constants.kCanvasWidth),
+			y: point.y - (region.y * sand.constants.kCanvasWidth)
+		}
+	},
+
+	toGlobalCoordinates: function(point) {
+		return {
+			x: point.x + (sand.currentRegion.x * sand.constants.kCanvasWidth),
+			y: point.y + (sand.currentRegion.y * sand.constants.kCanvasWidth)
+		}
 	}
 };
 
@@ -251,63 +264,128 @@ sand.level.savePlayerAndLevel = function(globalPosition, region) {
 	});
 };
 
-sand.level.updateHtmlCanvases = function () {
-	function drawAsDepthGrid(canvas, data) {
-		sand.level.canvasDrawHelper.call(
-			canvas,
-			function(blockIndex, grid) {
-				var color = 180 + (grid[blockIndex.y][blockIndex.x] * 20);
-				return {
-					red: color + allRegions[canvas.id].x * 20,
-					green: color,
-					blue: color + allRegions[canvas.id].y * 20
-				};
-			},
-			data);
-	}
+/**
+ * note: rectToDraw is in global coordinates
+ */
+sand.level.updateHtmlCanvases = function (rectToDraw) {
+	var regionNames = sand.globalFunctions.findRegionsInRect(rectToDraw);
+	for (var i = 0; i < regionNames.length; i++) {
+		var region = sand.allRegions[regionNames[i]];
+		var rectLocal = sand.globalFunctions.toLocalCoordinates({ x: rectToDraw.x, y: rectToDraw.y }, region);
+		rectLocal.width = rectToDraw.width;
+		rectLocal.height = rectToDraw.height;
 
-	var visibleRegions = sand.globalFunctions.findRegionsInViewport();
-	var allRegions = sand.allRegions;
-	for (var i = 0; i < visibleRegions.length; i++) {
-		var regionName = visibleRegions[i];
-		if (allRegions.hasOwnProperty(regionName)) {
-			drawAsDepthGrid(allRegions[regionName].getCanvas(), allRegions[regionName].getData());
+		var regionLocal = {
+			x: 0,
+			y: 0,
+			width: sand.constants.kCanvasWidth,
+			height: (sand.constants.kCanvasWidth)
+		};
+
+		var intersectRect = (function computeIntersectRect(r1, r2) {
+			var bottomLeft = {
+				x: r1.x > r2.x ? r1.x : r2.x,
+				y: r1.y > r2.y ? r1.y : r2.y
+			};
+
+			var topRight = {
+				x: (r1.x + r1.width) < (r2.x + r2.width) ? (r1.x + r1.width) : (r2.x + r2.width),
+				y: (r1.y + r1.height) < (r2.y + r2.height) ? (r1.y + r1.height) : (r2.y + r2.height)
+			};
+
+			return {
+				x: Math.floor(bottomLeft.x),
+				y: Math.floor(bottomLeft.y),
+				width: Math.ceil(topRight.x - bottomLeft.x),
+				height: Math.ceil(topRight.y - bottomLeft.y)
+			}
+		})(regionLocal, rectLocal);
+
+		sand.level.drawAsDepthGrid(region, intersectRect);
+	}
+};
+
+sand.level.drawAsDepthGrid = function(region, rectToDraw) {
+	var canvas = region.getCanvas();
+	sand.level.canvasDrawHelper(canvas, gradientDraw, region.getData(), rectToDraw);
+
+	function gradientDraw(blockIndex, regionData, canvas) {
+		var color = 180 + (regionData[blockIndex.y][blockIndex.x] * 20);
+		return {
+			red: color + sand.allRegions[canvas.id].x * 20 + blockIndex.x / 2,
+			green: color,
+			blue: color + sand.allRegions[canvas.id].y * 20 + blockIndex.y / 2
+		};
+	}
+};
+
+/**
+ * canvas coordinate system is opposite cocos2d's coordinate system along the y axis
+ *
+ * (0,0)
+ *   +-----> (x,0)
+ *   |
+ *   |
+ *   v
+ * (0,y)
+ *
+ * therefore, the imageData is written upside down here: ((canvasWidth - 1) - y)
+ * so that it is displayed right side up.
+ */
+sand.level.canvasDrawHelper = function (canvas, choosePixelColorFunction, regionData, drawRect) {
+	if(drawRect === undefined) {
+		drawRect = {
+			x: 0,
+			y: 0,
+			width: sand.constants.kCanvasWidth,
+			height: (sand.constants.kCanvasWidth)
 		}
 	}
-	};
+	/**
+	 * invert cocos2d coordinates to html coordinates.
+	 * account for the width of the sprite.
+	 *
+	 * +---------------->
+	 * |
+	 * |  (0, canvasWidth - (y + sprite.height))
+	 * |
+	 * |  +------+
+	 * |  |      |
+	 * |  |      |
+	 * |  +------+
+	 * |  (0,y)
+	 * v
+	 *
+	 */
+	drawRect.invertedY = sand.constants.kCanvasWidth - (drawRect.y + drawRect.height);
 
-sand.level.canvasDrawHelper = function (choosePixelColorFunction, grid) {
-	var regionWidth = grid[0].length;
+	const canvasWidth = sand.constants.kCanvasWidth;
+	var blockWidth = canvasWidth / sand.constants.kRegionWidth; // blocks are square
 
-	var canvasWidth = this.width;
-	var canvasHeight = this.height;
-
-	var blockWidth = canvasWidth / regionWidth; // blocks are square
-
-	var context = this.getContext('2d');
-	//var imageData = context.getImageData(0, 0, canvasWidth, canvasHeight);
-	var imageData = context.createImageData(canvasWidth, canvasHeight);
+	var context = canvas.getContext('2d');
+	var imageData = context.createImageData(drawRect.width, drawRect.height);
 	var data = imageData.data;
 
-	for (var y = 0; y < canvasHeight; y++) {
-		for (var x = 0; x < canvasWidth; x++) {
-			/**
-			 * imageData.data contains four elephants per pixel, hence index is multiplied by 4
-			 * html canvas y coordinates are opposite cocos2d, hence (canvasHeight-1) - y
-			 */
-			var index = (((canvasHeight-1) - y) * canvasWidth + x) * 4;
-			var blockIndex = {"x": Math.floor(x / blockWidth), "y": Math.floor(y / blockWidth)};
+	for (var y = 0; y < drawRect.height; y++) {
+		for (var x = 0; x < drawRect.width; x++) {
+			var regionIndex = {
+				x: Math.floor((x + drawRect.x) / blockWidth),
+				y: Math.floor((y + drawRect.y) / blockWidth)
+			};
 
-			var color = choosePixelColorFunction(blockIndex, grid);
-			if(color != null) {
-				data[index    ] = color.red; // red
-				data[index + 1] = color.green; // green
-				data[index + 2] = color.blue; // blue
-				data[index + 3] = 255;   // alpha
+			// imageData.data contains four elephants per pixel, hence index is multiplied by 4
+			var invertedY = (drawRect.height - 1) - y;
+			var imageDataIndex = (invertedY * drawRect.width + x) * 4;
+
+			var aColor = choosePixelColorFunction(regionIndex, regionData, canvas);
+			if (aColor != null) {
+				data[imageDataIndex] = aColor.red;
+				data[imageDataIndex + 1] = aColor.green;
+				data[imageDataIndex + 2] = aColor.blue;
+				data[imageDataIndex + 3] = 255;
 			}
-			index += 4;
 		}
 	}
 
-	context.putImageData(imageData, 0, 0);
+	context.putImageData(imageData, drawRect.x, drawRect.invertedY);
 };

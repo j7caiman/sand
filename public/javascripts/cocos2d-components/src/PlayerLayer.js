@@ -220,9 +220,12 @@ var PlayerLayer = cc.Layer.extend({
 					}
 					if (distanceToThreshold.y !== undefined) {
 						var timeUntilYThreshold = duration * (distanceToThreshold.y / distance.y);
-						if(timeUntilYThreshold < thresholdCrossTime) {
+						if(thresholdCrossTime === undefined || timeUntilYThreshold < thresholdCrossTime) {
 							thresholdCrossTime = timeUntilYThreshold;
 						}
+					}
+					if(thresholdCrossTime < 0) { // elephant has already passed the threshold, scroll immediately
+						thresholdCrossTime = 0;
 					}
 
 					if (thresholdCrossTime !== undefined) {

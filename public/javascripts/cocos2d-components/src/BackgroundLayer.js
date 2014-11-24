@@ -33,7 +33,10 @@ var BackgroundLayer = cc.Layer.extend({
 			y: sand.constants.kViewportWidth / 2 - localPlayerPosition.y
 		});
 
-		//set up custom listener to react to scroll commands
+		/**
+		 * Custom listener reacts to scroll commands.
+		 * Slides the player and background by (x,y) amount.
+		 */
 		cc.eventManager.addListener({
 			event: cc.EventListener.CUSTOM,
 			eventName: "scrollTrigger",
@@ -51,25 +54,19 @@ var BackgroundLayer = cc.Layer.extend({
 				});
 				sand.player.sprite.stopActionByTag("scrollPlayer");
 
-				var centerSprite = sand.currentRegion.getSprite();
-				var delta = {
-					x: event.getUserData().x - centerSprite.x,
-					y: event.getUserData().y - centerSprite.y
+				var scrollVector = {
+					x: event.getUserData().x,
+					y: event.getUserData().y
 				};
 
-				var distance = (function(point1, point2) {
-					var xDelta = point2.x - point1.x;
-					var yDelta = point2.y - point1.y;
-
-					return Math.sqrt( (xDelta * xDelta) + (yDelta * yDelta) );
-				})(centerSprite, event.getUserData());
+				var distance = (function(v) { return Math.sqrt( (v.x * v.x) + (v.y * v.y) ); })(scrollVector);
 				var duration = distance / sand.constants.kScrollSpeed;
 
 				allSprites.map(function(sprite) {
-					sprite.runAction(cc.moveBy(duration, cc.p(delta.x, delta.y)));
+					sprite.runAction(cc.moveBy(duration, cc.p(scrollVector.x, scrollVector.y)));
 				});
 
-				var scrollPlayerAction = cc.moveBy(duration, cc.p(delta.x, delta.y));
+				var scrollPlayerAction = cc.moveBy(duration, cc.p(scrollVector.x, scrollVector.y));
 				scrollPlayerAction.setTag("scrollPlayer");
 				sand.player.sprite.runAction(scrollPlayerAction);
 			}

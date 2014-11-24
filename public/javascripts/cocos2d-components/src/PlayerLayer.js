@@ -111,14 +111,6 @@ var PlayerLayer = cc.Layer.extend({
 			event: cc.EventListener.MOUSE,
 
 			onMouseUp: function(event) {
-				// debug: right click to scroll
-				if(event.getButton() == 2) {
-					var customEvent = new cc.EventCustom("scrollTrigger");
-					customEvent.setUserData(event.getLocation());
-					cc.eventManager.dispatchEvent(customEvent);
-					return;
-				}
-
 				function stopPlayerMovement() {
 					sprite.stopActionByTag("animatePlayer");
 					sprite.stopActionByTag("movePlayer");
@@ -139,10 +131,14 @@ var PlayerLayer = cc.Layer.extend({
 					var xDelta = point2.x - point1.x;
 					var yDelta = point2.y - point1.y;
 
-					return Math.sqrt( (xDelta * xDelta) + (yDelta * yDelta) );
+					return {
+						total: Math.sqrt( (xDelta * xDelta) + (yDelta * yDelta) ),
+						x: Math.abs(xDelta),
+						y: Math.abs(yDelta)
+					};
 				})(elephantPosition, mousePosition);
 
-				var duration = distance / sand.constants.kPlayerSpeed;
+				var duration = distance.total / sand.constants.kPlayerSpeed;
 
 				var moveAnimation;
 				var frameAfterMove;
@@ -176,27 +172,72 @@ var PlayerLayer = cc.Layer.extend({
 					frameAfterMove = standNorthWest;
 				}
 
-				var actionMove = cc.moveTo(duration, mousePosition);
-
 				sprite.schedule(
 					function() {
 						sand.globalFunctions.update();
 					},
 					0.5);
 
-				var actionMoveDone = cc.callFunc(function() {
+				var moveAction = cc.moveTo(duration, mousePosition);
+				var standAction = cc.callFunc(function() {
 					stopPlayerMovement();
 					sprite.setSpriteFrame(frameAfterMove);
 				}, this);
 
 				var animatePlayerAction = cc.animate(moveAnimation).repeatForever();
-				var movePlayerAction = cc.sequence(actionMove, actionMoveDone);
+				var movePlayerAction = cc.sequence(moveAction, standAction);
 
 				animatePlayerAction.setTag("animatePlayer");
 				movePlayerAction.setTag("movePlayer");
 
 				sprite.runAction(animatePlayerAction);
 				sprite.runAction(movePlayerAction);
+
+				triggerScrolling();
+				function triggerScrolling() {
+					var boundary = {
+						left: sand.constants.kBeginScrollThreshold,
+						right: sand.constants.kViewportWidth - sand.constants.kBeginScrollThreshold,
+						bottom: sand.constants.kBeginScrollThreshold,
+						top: sand.constants.kViewportWidth - sand.constants.kBeginScrollThreshold
+					};
+
+					var distanceToThreshold = {};
+					if (mousePosition.x < boundary.left) {
+						distanceToThreshold.x = elephantPosition.x - boundary.left;
+					} else if (mousePosition.x > boundary.right) {
+						distanceToThreshold.x = boundary.right - elephantPosition.x;
+					}
+					if (mousePosition.y < boundary.bottom) {
+						distanceToThreshold.y = elephantPosition.y - boundary.bottom;
+					} else if (mousePosition.y > boundary.top) {
+						distanceToThreshold.y = boundary.top - elephantPosition.y;
+					}
+
+					var thresholdCrossTime;
+					if (distanceToThreshold.x !== undefined) {
+						thresholdCrossTime = duration * (distanceToThreshold.x / distance.x);
+					}
+					if (distanceToThreshold.y !== undefined) {
+						var timeUntilYThreshold = duration * (distanceToThreshold.y / distance.y);
+						if(timeUntilYThreshold < thresholdCrossTime) {
+							thresholdCrossTime = timeUntilYThreshold;
+						}
+					}
+
+					if (thresholdCrossTime !== undefined) {
+						var scrollVector = {
+							x: sand.constants.kViewportWidth / 2 - mousePosition.x,
+							y: sand.constants.kViewportWidth / 2 - mousePosition.y
+						};
+						function triggerScroll() {
+							var event = new cc.EventCustom("scrollTrigger");
+							event.setUserData(scrollVector);
+							cc.eventManager.dispatchEvent(event);
+						}
+						sprite.scheduleOnce(triggerScroll, thresholdCrossTime);
+					}
+				}
 			}
 		}, this);
 	}

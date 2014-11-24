@@ -6,13 +6,14 @@ var sand = {
 	level: {},
 	htmlCanvases: {},
 	constants: {
-		kCanvasWidth: 512,
-		kRegionWidth: 256,
-		kViewportWidth: 384,
-		kLoadMoreRegionsThreshold: 500,
+		kCanvasWidth: 512, // width of draw canvases
+		kRegionWidth: 256, // number of sand grains in a single row of desert
+		kViewportWidth: 450, // width of cocos2d canvas and viewport dimensions
+		kLoadMoreRegionsThreshold: 500, // distance from player to load more regions
 		kAffectedRegionWidth: 40,
 		kPlayerSpeed: 25,
 		kScrollSpeed: 100,
+		kBeginScrollThreshold: 90, // distance from edge to start scrolling toward player
 		kFootprintRadius: 3
 	}
 };

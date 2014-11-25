@@ -22,7 +22,7 @@ sand.level.settle = function(regionData) {
 
 			var lowestPoint = depths[0];
 
-			if(currentDepth > lowestPoint.depth + 1) {
+			if(currentDepth > lowestPoint.depth + 2) {
 				regionData[currentLocation.y][currentLocation.x] --;
 				switch(lowestPoint.label) {
 					case "top": regionData[currentLocation.y-1][currentLocation.x] ++; break;

@@ -177,7 +177,7 @@ var PlayerLayer = cc.Layer.extend({
 					function() {
 						sand.globalFunctions.update();
 					},
-					0.5);
+					0.25);
 
 				var moveAction = cc.moveTo(duration, mousePosition);
 				var standAction = cc.callFunc(function() {

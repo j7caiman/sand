@@ -4,7 +4,6 @@ var sand = {
 	currentRegion: {},
 	allRegions: {},
 	level: {},
-	htmlCanvases: {},
 	constants: {
 		kCanvasWidth: 512, // width of draw canvases
 		kRegionWidth: 256, // number of sand grains in a single row of desert
@@ -117,7 +116,7 @@ sand.globalFunctions = {
 			height: (sand.constants.kAffectedRegionWidth)
 		};
 		sand.level.updateHtmlCanvases(changedArea);
-		sand.level.savePlayerAndLevel(globalPosition, sand.currentRegion);
+		sand.globalFunctions.savePlayerAndLevel(globalPosition, sand.currentRegion);
 
 		sand.globalFunctions.addMoreRegions(function() {
 			sand.backgroundLayer.initializeSpriteLocations(sand.currentRegion.getSprite().getPosition());
@@ -238,32 +237,32 @@ sand.globalFunctions = {
 			x: point.x + (sand.currentRegion.x * sand.constants.kCanvasWidth),
 			y: point.y + (sand.currentRegion.y * sand.constants.kCanvasWidth)
 		}
-	}
-};
+	},
 
-sand.level.savePlayerAndLevel = function(globalPosition, region) {
-	sand.level.savePlayerAndLevel.counter = ++sand.level.savePlayerAndLevel.counter || 4;
-	if (sand.level.savePlayerAndLevel.counter < 5) {
-		return;
-	}
-	sand.level.savePlayerAndLevel.counter = 0;
-
-	$.cookie('lastPosition', globalPosition, { expires: 7 });
-
-	var data = {
-		regionData: region.getData(),
-		regionCoordinates: {
-			x: region.x,
-			y: region.y
+	savePlayerAndLevel: function (globalPosition, region) {
+		sand.globalFunctions.savePlayerAndLevel.counter = ++sand.globalFunctions.savePlayerAndLevel.counter || 4;
+		if (sand.globalFunctions.savePlayerAndLevel.counter < 5) {
+			return;
 		}
-	};
+		sand.globalFunctions.savePlayerAndLevel.counter = 0;
 
-	$.ajax({
-		url: "write_to_region",
-		type: "POST",
-		data: JSON.stringify(data),
-		contentType: "application/json"
-	});
+		$.cookie('lastPosition', globalPosition, {expires: 7});
+
+		var data = {
+			regionData: region.getData(),
+			regionCoordinates: {
+				x: region.x,
+				y: region.y
+			}
+		};
+
+		$.ajax({
+			url: "write_to_region",
+			type: "POST",
+			data: JSON.stringify(data),
+			contentType: "application/json"
+		});
+	}
 };
 
 /**

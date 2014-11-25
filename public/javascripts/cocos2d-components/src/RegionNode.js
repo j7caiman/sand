@@ -3,7 +3,7 @@ var RegionNode = function (name, allRegions) {
 	var coordinates = name.split("_");
 	this.x = Number(coordinates[0]);
 	this.y = Number(coordinates[1]);
-	this.name = name;
+	this._name = name;
 
 	this._allRegions = allRegions;
 };
@@ -31,19 +31,26 @@ RegionNode.prototype = {
 	setData: function (data) {
 		this._data = data;
 	},
+
 	getCanvas: function () {
 		return this._canvas;
 	},
 	setCanvas: function (canvas) {
 		this._canvas = canvas;
 	},
+
 	getSprite: function () {
 		return this._sprite;
 	},
 	setSprite: function (sprite) {
 		this._sprite = sprite;
 	},
+
 	getAdjacentNodes: function () {
 		return this._adjacentNodes;
+	},
+
+	getName: function () {
+		return this._name;
 	}
 };

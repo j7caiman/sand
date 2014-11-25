@@ -94,6 +94,7 @@ var PlayerLayer = cc.Layer.extend({
 
 		// add player to scene
 		var sprite = new cc.Sprite("#elephant_sprite_sheet_01.png");
+		sprite.setName("player");
 		this.player = sprite;
 
 		// note: anchor point is at the center of the sprite

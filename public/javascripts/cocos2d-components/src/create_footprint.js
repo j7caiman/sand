@@ -5,19 +5,16 @@ sand.level.makeFootprint = function (blankRegionData, centerOfCanvas) {
 /**
  * crater is shaped as follows:
  *
- *      /\                                      ^
- *     /  \                                    /  ,
+ *
  * - -     -                                 -      - ----------
  *          -                              -
  *             ---__              __ --
  *                    ' --------
  *
  * radius: radius of entire element
- * lipHeight: height the crater rises above the ground
  * pointOfImpact: the height at which the sphere which forms the crater is located
  *  - note that in the diagram above, pointOfImpact would be located slightly above the word "follows"
  *
- * TODO: lip has not been created yet
  */
 sand.level.imprintSphere = function(regionData, positionOnCanvas, radius) {
 	const pointOfImpactZ = 4;

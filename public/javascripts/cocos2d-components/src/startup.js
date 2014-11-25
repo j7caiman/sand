@@ -9,7 +9,7 @@ var sand = {
 		kRegionWidth: 256, // number of sand grains in a single row of desert
 		kViewportWidth: 450, // width of cocos2d canvas and viewport dimensions
 		kLoadMoreRegionsThreshold: 500, // distance from player to load more regions
-		kAffectedRegionWidth: 40,
+		kAffectedRegionWidth: 120,
 		kPlayerSpeed: 25,
 		kScrollSpeed: 50,
 		kBeginScrollThreshold: 90, // distance from edge to start scrolling toward player
@@ -163,7 +163,7 @@ sand.globalFunctions = {
 							allRegions[regionName].setData(dataForNewRegions[regionName]);
 							allRegions[regionName].setCanvas(sand.globalFunctions.createCanvas(regionName, sand.constants.kCanvasWidth));
 							allRegions[regionName].getCanvas().style.display = 'none';
-							sand.level.drawAsDepthGrid(allRegions[regionName]);
+							sand.level.drawRegionToCanvas(allRegions[regionName]);
 
 							var sprite = new cc.Sprite(new cc.Texture2D());
 							sprite.setName(regionName);
@@ -302,21 +302,91 @@ sand.level.updateHtmlCanvases = function (rectToDraw) {
 			}
 		})(regionLocal, rectLocal);
 
-		sand.level.drawAsDepthGrid(region, intersectRect);
+		sand.level.drawRegionToCanvas(region, intersectRect);
 	}
 };
 
-sand.level.drawAsDepthGrid = function(region, rectToDraw) {
-	var canvas = region.getCanvas();
-	sand.level.canvasDrawHelper(canvas, gradientDraw, region.getData(), rectToDraw);
+sand.level.drawRegionToCanvas = function (region, rectToDraw) {
+	sand.level.canvasDrawHelper(region, rectToDraw, sand.level.compositeDraw);
+};
 
-	function gradientDraw(blockIndex, regionData, canvas) {
-		var color = 180 + (regionData[blockIndex.y][blockIndex.x] * 20);
+
+sand.level.depthGridGradientDraw = function (blockIndex, region) {
+	var color = 180;
+	var canvas = region.getCanvas();
+	return {
+		red: color + sand.allRegions[canvas.id].x * 20 + blockIndex.x / 2,
+		green: color,
+		blue: color + sand.allRegions[canvas.id].y * 20 + blockIndex.y / 2
+	};
+};
+
+sand.level.localDepthDeltaLightingDraw = function (blockIndex, region) {
+	var difference = findDepthDifferenceOfBlockToTheLeft(blockIndex, region);
+
+	if(difference >= 2) {
+		const dark = 80;
 		return {
-			red: color + sand.allRegions[canvas.id].x * 20 + blockIndex.x / 2,
-			green: color,
-			blue: color + sand.allRegions[canvas.id].y * 20 + blockIndex.y / 2
-		};
+			red: dark,
+			green: dark,
+			blue: dark
+		}
+	} else if(difference >= 1) {
+		const medium = 150;
+		return {
+			red: medium,
+			green: medium,
+			blue: medium
+		}
+	} else {
+		const light = 210;
+		return {
+			red: light,
+			green: light,
+			blue: light
+		}
+	} /*else if(difference >= -4) {
+		const bright = 230;
+		return {
+			red: bright,
+			green: bright,
+			blue: bright
+		}
+	} else {
+		const reallyBright = 240;
+		return {
+			red: reallyBright,
+			green: reallyBright,
+			blue: reallyBright
+		}
+	}*/
+
+	function findDepthDifferenceOfBlockToTheLeft(blockIndex, region) {
+		var data = region.getData();
+		var depthOfCurrentBlock = data[blockIndex.y][blockIndex.x];
+		var depthOfLeftBlock;
+		if(blockIndex.x == 0) {
+			var westRegion = region.getAdjacentNodes()[3];
+			if(westRegion !== undefined && westRegion.getData() !== undefined) {
+				depthOfLeftBlock = westRegion.getData()[sand.constants.kRegionWidth - 1][blockIndex.x - 1];
+			} else {
+				depthOfLeftBlock = 0;
+			}
+		} else {
+			depthOfLeftBlock = data[blockIndex.y][blockIndex.x - 1];
+		}
+		return depthOfLeftBlock - depthOfCurrentBlock;
+	}
+};
+
+sand.level.compositeDraw = function (region, rectToDraw) {
+	var firstColor = sand.level.localDepthDeltaLightingDraw(region, rectToDraw);
+	var secondColor = sand.level.depthGridGradientDraw(region, rectToDraw);
+	
+	return {
+		red: Math.floor((firstColor.red + secondColor.red) / 2),
+		green: Math.floor((firstColor.green + secondColor.green) / 2),
+		blue: Math.floor((firstColor.blue + secondColor.blue) / 2)
 	}
 };
 
@@ -333,7 +403,7 @@ sand.level.drawAsDepthGrid = function(region, rectToDraw) {
  * therefore, the imageData is written upside down here: ((canvasWidth - 1) - y)
  * so that it is displayed right side up.
  */
-sand.level.canvasDrawHelper = function (canvas, choosePixelColorFunction, regionData, drawRect) {
+sand.level.canvasDrawHelper = function (region, drawRect, choosePixelColorFunction) {
 	if(drawRect === undefined) {
 		drawRect = {
 			x: 0,
@@ -363,7 +433,7 @@ sand.level.canvasDrawHelper = function (canvas, choosePixelColorFunction, region
 	const canvasWidth = sand.constants.kCanvasWidth;
 	var blockWidth = canvasWidth / sand.constants.kRegionWidth; // blocks are square
 
-	var context = canvas.getContext('2d');
+	var context = region.getCanvas().getContext('2d');
 	var imageData = context.createImageData(drawRect.width, drawRect.height);
 	var data = imageData.data;
 
@@ -378,7 +448,7 @@ sand.level.canvasDrawHelper = function (canvas, choosePixelColorFunction, region
 			var invertedY = (drawRect.height - 1) - y;
 			var imageDataIndex = (invertedY * drawRect.width + x) * 4;
 
-			var aColor = choosePixelColorFunction(regionIndex, regionData, canvas);
+			var aColor = choosePixelColorFunction(regionIndex, region);
 			if (aColor != null) {
 				data[imageDataIndex] = aColor.red;
 				data[imageDataIndex + 1] = aColor.green;

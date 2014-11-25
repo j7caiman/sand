@@ -44,7 +44,7 @@ var BackgroundLayer = cc.Layer.extend({
 				var allRegions = sand.allRegions;
 				var allSprites = [];
 				for (var regionName in allRegions) {
-					if(allRegions.hasOwnProperty(regionName)) {
+					if(allRegions.hasOwnProperty(regionName) && allRegions[regionName].getSprite() !== undefined) {
 						allSprites.push(allRegions[regionName].getSprite());
 					}
 				}

@@ -12,7 +12,7 @@ var sand = {
 		kLoadMoreRegionsThreshold: 500, // distance from player to load more regions
 		kAffectedRegionWidth: 40,
 		kPlayerSpeed: 25,
-		kScrollSpeed: 100,
+		kScrollSpeed: 50,
 		kBeginScrollThreshold: 90, // distance from edge to start scrolling toward player
 		kFootprintRadius: 3
 	}
@@ -167,6 +167,7 @@ sand.globalFunctions = {
 							sand.level.drawAsDepthGrid(allRegions[regionName]);
 
 							var sprite = new cc.Sprite(new cc.Texture2D());
+							sprite.setName(regionName);
 							sprite.setAnchorPoint(0, 0);
 							allRegions[regionName].setSprite(sprite);
 						}

@@ -74,10 +74,11 @@ var BackgroundLayer = cc.Layer.extend({
 	},
 
 	initializeSpriteLocations: function(position) {
-		this.removeAllChildren();
-
 		var centerSprite = sand.currentRegion.getSprite();
-		this.addChild(centerSprite);
+		if(this.getChildByName(centerSprite.getName()) === null) {
+			this.addChild(centerSprite);
+		}
+		centerSprite.setName(sand.currentRegion.getName());
 		centerSprite.getTexture().initWithElement(sand.currentRegion.getCanvas());
 		centerSprite.getTexture().handleLoadedTexture();
 
@@ -86,7 +87,10 @@ var BackgroundLayer = cc.Layer.extend({
 		var adjacentSprites = sand.currentRegion.getAdjacentNodes().map(function (region) {
 			if(region !== undefined) {
 				var sprite = region.getSprite();
-				this.addChild(sprite);
+				if(this.getChildByName(sprite.getName()) === null) {
+					this.addChild(sprite);
+				}
+				sprite.setName(region.getName());
 				sprite.getTexture().initWithElement(region.getCanvas());
 				sprite.getTexture().handleLoadedTexture();
 				return sprite;

@@ -1,6 +1,8 @@
 var express = require('express');
 var router = express.Router();
 var fs = require('fs');
+var zlib = require('zlib');
+var stream = require('stream');
 
 router.post('/', function(req, res) {
 	var regionNames = req.body;
@@ -51,7 +53,15 @@ router.post('/', function(req, res) {
 		data.regions[regionName] = JSON.parse(regionData);
 		numLoadedRegions++;
 		if(numLoadedRegions == numRegionsToRead) {
-			res.send(data);
+			res.setHeader("Content-Encoding", "gzip");
+			res.setHeader("Content-Type", "application/json");
+
+			var stringStream = new stream.Readable();
+			stringStream.push(JSON.stringify(data));
+			stringStream.push(null);
+
+			var gzip = zlib.createGzip();
+			stringStream.pipe(gzip).pipe(res);
 		}
 	}
 });

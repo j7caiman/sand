@@ -30,7 +30,7 @@ var BackgroundLayer = cc.Layer.extend({
 		var localPlayerPosition = sand.globalFunctions.toLocalCoordinates(sand.player.globalCoordinates);
 		this.initializeSpriteLocations({
 			x: sand.constants.kViewportWidth / 2 - localPlayerPosition.x,
-			y: sand.constants.kViewportWidth / 2 - localPlayerPosition.y
+			y: sand.constants.kViewportHeight / 2 - localPlayerPosition.y
 		});
 
 		/**

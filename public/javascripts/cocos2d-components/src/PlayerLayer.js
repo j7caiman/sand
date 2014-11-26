@@ -100,7 +100,7 @@ var PlayerLayer = cc.Layer.extend({
 		// note: anchor point is at the center of the sprite
 		sprite.attr({
 			x: sand.constants.kViewportWidth / 2,
-			y: sand.constants.kViewportWidth / 2,
+			y: sand.constants.kViewportHeight / 2,
 			scaleX: 1.5,
 			scaleY: 1.5
 		});
@@ -200,7 +200,7 @@ var PlayerLayer = cc.Layer.extend({
 						left: sand.constants.kBeginScrollThreshold,
 						right: sand.constants.kViewportWidth - sand.constants.kBeginScrollThreshold,
 						bottom: sand.constants.kBeginScrollThreshold,
-						top: sand.constants.kViewportWidth - sand.constants.kBeginScrollThreshold
+						top: sand.constants.kViewportHeight - sand.constants.kBeginScrollThreshold
 					};
 
 					var distanceToThreshold = {};
@@ -232,7 +232,7 @@ var PlayerLayer = cc.Layer.extend({
 					if (thresholdCrossTime !== undefined) {
 						var scrollVector = {
 							x: sand.constants.kViewportWidth / 2 - mousePosition.x,
-							y: sand.constants.kViewportWidth / 2 - mousePosition.y
+							y: sand.constants.kViewportHeight / 2 - mousePosition.y
 						};
 						function triggerScroll() {
 							var event = new cc.EventCustom("scrollTrigger");

@@ -7,8 +7,9 @@ var sand = {
 	constants: {
 		kCanvasWidth: 512, // width of draw canvases
 		kRegionWidth: 256, // number of sand grains in a single row of desert
-		kViewportWidth: 450, // width of cocos2d canvas and viewport dimensions
-		kLoadMoreRegionsThreshold: 500, // distance from player to load more regions
+		kViewportWidth: window.innerWidth, // width of cocos2d canvas and viewport dimensions
+		kViewportHeight: window.innerHeight,
+		kLoadMoreRegionsThreshold: Math.max(window.innerWidth, window.innerHeight), // distance from player to load more regions
 		kAffectedRegionWidth: 120,
 		kPlayerSpeed: 25,
 		kScrollSpeed: 50,
@@ -17,11 +18,23 @@ var sand = {
 };
 
 $(document).ready(function() {
-	sand.globalFunctions.createCanvas('cocos2d_gameCanvas', sand.constants.kViewportWidth); // game canvas is referenced in project.json
+	sand.globalFunctions.createCanvas(
+		'cocos2d_gameCanvas', // game canvas is referenced in project.json
+		sand.constants.kViewportWidth,
+		sand.constants.kViewportHeight
+	);
 	cc.game.run();
 });
 
 cc.game.onStart = function() {
+	$(window).resize(function() {
+		// width of cocos2d canvas and viewport dimensions
+		sand.constants.kViewportWidth = window.innerWidth;
+		sand.constants.kViewportHeight = window.innerHeight;
+		sand.constants.kLoadMoreRegionsThreshold = 400 + Math.max(window.innerWidth, window.innerHeight);
+	});
+
+
 	sand.player.globalCoordinates = (function() {
 		$.cookie.json = true;
 		var lastPositionFromCookie = $.cookie('lastPosition');
@@ -43,6 +56,9 @@ cc.game.onStart = function() {
 	var currentRegionName = sand.globalFunctions.findRegionNameFromAbsolutePosition(sand.player.globalCoordinates);
 	sand.currentRegion = sand.allRegions[currentRegionName];
 
+	cc.screen.requestFullScreen();
+	cc.view.setResolutionPolicy(cc.ResolutionPolicy.NO_BORDER);
+	cc.view.resizeWithBrowserSize(true);
 	cc.view.adjustViewPort(true);
 	//load resources
 	function loadAndRunGameScene() {
@@ -179,11 +195,14 @@ sand.globalFunctions = {
 		}
 	},
 
-	createCanvas: function (id, span) {
+	createCanvas: function (id, width, height) {
+		if(height === undefined) { // creates square canvas
+			height = (width);
+		}
 		var canvas = document.createElement('canvas');
 		canvas.id = id;
-		canvas.width = span;
-		canvas.height = span;
+		canvas.width = width;
+		canvas.height = height;
 		document.body.appendChild(canvas);
 		return canvas;
 	},
@@ -195,20 +214,27 @@ sand.globalFunctions = {
 	},
 
 	findRegionsInRect: function (rect) {
-		var coordinates = [
-			{	x: rect.x + rect.width,
-				y: rect.y + rect.height
-			},
-			{	x: rect.x,
-				y: rect.y + rect.height
-			},
-			{	x: rect.x,
-				y: rect.y
-			},
-			{	x: rect.x + rect.width,
-				y: rect.y
+		var xCoordinates = [];
+		for (var x = rect.x; x < rect.x + rect.width; x += sand.constants.kCanvasWidth) {
+			xCoordinates.push(x);
+		}
+		xCoordinates.push(rect.x + rect.width);
+
+		var yCoordinates = [];
+		for (var y = rect.y; y < rect.y + rect.height; y += (sand.constants.kCanvasWidth)) {
+			yCoordinates.push(y);
+		}
+		yCoordinates.push(rect.y + rect.height);
+
+		var coordinates = [];
+		for (x = 0; x < xCoordinates.length; x++) {
+			for (y = 0; y < yCoordinates.length; y++) {
+				coordinates.push({
+					x: xCoordinates[x],
+					y: yCoordinates[y]
+				})
 			}
-		];
+		}
 		
 		var regionNames = [];
 		for (var i = 0; i < coordinates.length; i++) {

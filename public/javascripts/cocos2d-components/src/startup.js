@@ -34,7 +34,6 @@ cc.game.onStart = function() {
 		sand.constants.kLoadMoreRegionsThreshold = 400 + Math.max(window.innerWidth, window.innerHeight);
 	});
 
-
 	sand.player.globalCoordinates = (function() {
 		$.cookie.json = true;
 		var lastPositionFromCookie = $.cookie('lastPosition');
@@ -121,8 +120,6 @@ sand.globalFunctions = {
 		}
 
 		var regionData = sand.currentRegion.getData();
-		sand.level.makeFootprint(regionData, positionOnCanvas);
-		sand.level.settle(regionData);
 
 		var changedArea = {
 			x: globalPosition.x - sand.constants.kAffectedRegionWidth / 2,
@@ -130,6 +127,8 @@ sand.globalFunctions = {
 			width: sand.constants.kAffectedRegionWidth,
 			height: (sand.constants.kAffectedRegionWidth)
 		};
+		sand.level.makeFootprint(changedArea, globalPosition);
+		sand.level.settle(regionData);
 		sand.level.updateHtmlCanvases(changedArea);
 		sand.globalFunctions.savePlayerAndLevel(globalPosition, sand.currentRegion);
 

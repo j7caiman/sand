@@ -1,5 +1,10 @@
-sand.level.makeFootprint = function (blankRegionData, centerOfCanvas) {
-	sand.level.imprintSphere(blankRegionData, centerOfCanvas, 12);
+sand.level.makeFootprint = function (changedArea, globalPosition) {
+	var regionNames = sand.globalFunctions.findRegionsInRect(changedArea);
+	for (var i = 0; i < regionNames.length; i++) {
+		var region = sand.allRegions[regionNames[i]];
+		var localPosition = sand.globalFunctions.toLocalCoordinates(globalPosition, region);
+		sand.level.imprintSphere(region.getData(), localPosition, 12);
+	}
 };
 
 /**

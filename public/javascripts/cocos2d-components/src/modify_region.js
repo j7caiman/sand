@@ -104,5 +104,138 @@ sand.modifyRegion = {
 				}
 			}
 		}
+	},
+
+	generateDunes: function() {
+		(function zeroOutRegion(regionData, width) {
+			for(var y = 0; y < width; y++) {
+				for(var x = 0; x < width; x++) {
+					regionData[y][x] = 0;
+				}
+			}
+		})(sand.currentRegion.getData(), sand.constants.kRegionWidth);
+
+		function createBezierFunction(begin, cp1, cp2, end) {
+			function square(x) { return x * x; }
+			function cube(x) { return x * x * x; }
+
+			// basic functions for the range t in [0,1]
+			function b0_t(t) { return cube(1-t); }
+			function b1_t(t) { return 3 * t * square(1-t); }
+			function b2_t(t) { return 3 * square(t) * (1-t); }
+			function b3_t(t) { return cube(t); }
+
+			return function (t) {
+				return {
+					x: (b0_t(t) * begin.x) + (b1_t(t) * cp1.x) + (b2_t(t) * cp2.x) + (b3_t(t) * end.x),
+					y: (b0_t(t) * begin.y) + (b1_t(t) * cp1.y) + (b2_t(t) * cp2.y) + (b3_t(t) * end.y)
+				}
+			};
+		}
+
+		function getRandomInt(min, max) { // returns a number inclusive of 'min' and exclusive of 'max'
+			return Math.floor(Math.random() * (max - min)) + min;
+		}
+
+		for(var i = 0; i < 9; i++) {
+			var start = {
+				x: getRandomInt(0, 512),
+				y: getRandomInt(0, 512)
+			};
+
+			var controlPoint1 = {
+				x: getRandomInt(0, 512),
+				y: getRandomInt(0, 512)
+			};
+
+			var controlPoint2 = {
+				x: getRandomInt(0, 512),
+				y: getRandomInt(0, 512)
+			};
+
+			var end = {
+				x: getRandomInt(0, 512),
+				y: getRandomInt(0, 512)
+			};
+
+			var bezier = createBezierFunction(start, controlPoint1, controlPoint2, end);
+			sand.modifyRegion.generateDune(bezier);
+		}
+
+		sand.canvasUpdate.drawRegionToCanvas(sand.currentRegion);
+	},
+
+	generateDune: function (dunePath) {
+		function createCone(regionData, positionOnCanvas, highestPoint) {
+			const angleOfRepose = Math.PI / 4;
+			const sandGrainWidth = sand.constants.kCanvasWidth / sand.constants.kRegionWidth; // blocks are square
+			var positionOnRegion = {
+				x: Math.floor(positionOnCanvas.x / sandGrainWidth),
+				y: Math.floor(positionOnCanvas.y / sandGrainWidth),
+				z: highestPoint
+			};
+
+			//optimization: only iterate over the bounding box
+			var radiusOfCone = (highestPoint / Math.tan(angleOfRepose));
+			var bounds = {
+				left: Math.floor(positionOnRegion.x - radiusOfCone),
+				right: Math.ceil(positionOnRegion.x + radiusOfCone),
+				bottom: Math.floor(positionOnRegion.y - radiusOfCone),
+				top: Math.ceil(positionOnRegion.y + radiusOfCone)
+			};
+
+			for (var y = bounds.bottom; y < bounds.top; y++) {
+				for (var x = bounds.left; x < bounds.right; x++) {
+					var lateralDistance = (function(p1, p2) {
+						var xDelta = p2.x - p1.x;
+						var yDelta = p2.y - p1.y;
+						return Math.sqrt( (xDelta * xDelta) + (yDelta * yDelta) );
+					})({x: x, y: y}, positionOnRegion);
+
+					var height = Math.floor(positionOnRegion.z - Math.tan(angleOfRepose) * lateralDistance);
+					if(regionData[y] !== undefined && height > 0 && height > regionData[y][x]) {
+						regionData[y][x] = height;
+					}
+				}
+			}
+		}
+
+
+		/**
+		 * a 3 part function which roughly forms this shape:
+		 *
+		 * f(t)
+		 * ^
+		 * |  _______
+		 * | /       \
+		 * |/         \
+		 * +-------------> h
+		 *
+		 *
+		 * The maximum height of this function is 'maxHeight'.
+		 *
+		 * If the sand dune's path were a straight line, and the position at every sample point was uniformly
+		 * distributed, the slope of the line would be equal to heightDelta / (length of sand dune).
+		 * However, the length of the dune is unknown and points are not uniformly distributed.
+		 *
+		 * So, heightDelta is more of a suggestion on how fast the dune should approach its maximum height
+		 */
+		function determineHeightOfCone(t) {
+			const maxHeight = 60;
+			const heightDelta = 40;
+
+			if(t < 0.5) {
+				return Math.min(maxHeight, heightDelta * t);
+			} else {
+				return Math.min(maxHeight, heightDelta * (1 - t));
+			}
+		}
+
+		const samplePeriod = 0.005;
+		for(var t = 0; t <= 1; t += samplePeriod) {
+			var positionOfCone = dunePath(t);
+			var height = determineHeightOfCone(t);
+			createCone(sand.currentRegion.getData(), positionOfCone, height);
+		}
 	}
 };

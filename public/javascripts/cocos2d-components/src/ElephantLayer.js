@@ -100,6 +100,13 @@ var ElephantLayer = cc.Layer.extend({
 		cc.eventManager.addListener({
 			event: cc.EventListener.MOUSE,
 			onMouseUp: function(event) {
+				// debug: right click to generate dunes
+				if (event.getButton() == 2) {
+					sand.modifyRegion.generateDunes();
+
+					return;
+				}
+
 				var sprite = sand.elephantLayer.playerSprite;
 				sand.elephantLayer.moveElephant(sprite, event.getLocation());
 

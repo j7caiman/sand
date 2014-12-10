@@ -362,12 +362,19 @@ sand.level.localDepthDeltaLightingDraw = function (blockIndex, region) {
 			green: medium,
 			blue: medium
 		}
-	} else {
+	} else if(difference >= 0) {
 		const light = 210;
 		return {
 			red: light,
 			green: light,
 			blue: light
+		}
+	} else {
+		const bright = 230;
+		return {
+			red: bright,
+			green: bright,
+			blue: bright
 		}
 	}
 

@@ -1,6 +1,6 @@
 {
     "debugMode"     : 1,
-    "frameRate"     : 60,
+    "frameRate"     : 24,
     "id"            : "cocos2d_gameCanvas",
     "renderMode"    : 1,
     "jsList" : [

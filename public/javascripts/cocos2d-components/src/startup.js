@@ -14,7 +14,7 @@ var sand = {
 		kAffectedRegionWidth: 120,
 		kPlayerSpeed: 25,
 		kScrollSpeed: 50,
-		kBeginScrollThreshold: 90 // distance from edge to start scrolling toward player
+		kBeginScrollThreshold: 150 // distance from edge to start scrolling toward player
 	}
 };
 

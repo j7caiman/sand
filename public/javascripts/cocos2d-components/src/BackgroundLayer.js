@@ -27,7 +27,7 @@ var BackgroundLayer = cc.Layer.extend({
 	init: function () {
 		this._super();
 
-		var localPlayerPosition = sand.globalFunctions.toLocalCoordinates(sand.player.globalCoordinates);
+		var localPlayerPosition = sand.globalFunctions.toLocalCoordinates(sand.globalCoordinates);
 		this.initializeSpriteLocations({
 			x: sand.constants.kViewportWidth / 2 - localPlayerPosition.x,
 			y: sand.constants.kViewportHeight / 2 - localPlayerPosition.y
@@ -52,7 +52,7 @@ var BackgroundLayer = cc.Layer.extend({
 				allSprites.map(function(sprite) {
 					sprite.stopAllActions();
 				});
-				sand.player.sprite.stopActionByTag("scrollPlayer");
+				sand.elephantLayer.playerSprite.stopActionByTag("scrollPlayer");
 
 				var scrollVector = {
 					x: event.getUserData().x,
@@ -68,7 +68,7 @@ var BackgroundLayer = cc.Layer.extend({
 
 				var scrollPlayerAction = cc.moveBy(duration, cc.p(scrollVector.x, scrollVector.y));
 				scrollPlayerAction.setTag("scrollPlayer");
-				sand.player.sprite.runAction(scrollPlayerAction);
+				sand.elephantLayer.playerSprite.runAction(scrollPlayerAction);
 			}
 		}, this);
 	},

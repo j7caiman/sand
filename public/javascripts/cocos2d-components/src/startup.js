@@ -1,8 +1,9 @@
 var sand = {
-	player: {},
+	elephantLayer: {},
 	backgroundLayer: {},
 	currentRegion: {},
 	allRegions: {},
+	globalCoordinates: {},
 
 	constants: {
 		kCanvasWidth: 512, // width of draw canvases
@@ -34,7 +35,7 @@ cc.game.onStart = function() {
 		sand.constants.kLoadMoreRegionsThreshold = 400 + Math.max(window.innerWidth, window.innerHeight);
 	});
 
-	sand.player.globalCoordinates = (function() {
+	sand.globalCoordinates = (function() {
 		$.cookie.json = true;
 		var lastPositionFromCookie = $.cookie('lastPosition');
 		var lastPosition;
@@ -52,7 +53,7 @@ cc.game.onStart = function() {
 
 	sand.globalFunctions.addMoreRegions(loadAndRunGameScene);
 
-	var currentRegionName = sand.globalFunctions.findRegionNameFromAbsolutePosition(sand.player.globalCoordinates);
+	var currentRegionName = sand.globalFunctions.findRegionNameFromAbsolutePosition(sand.globalCoordinates);
 	sand.currentRegion = sand.allRegions[currentRegionName];
 
 	cc.screen.requestFullScreen();
@@ -70,12 +71,12 @@ cc.game.onStart = function() {
 sand.globalFunctions = {
 	updateRegionsAndDrawCanvases: function() {
 		var changedArea = {
-			x: sand.player.globalCoordinates.x - sand.constants.kAffectedRegionWidth / 2,
-			y: sand.player.globalCoordinates.y - sand.constants.kAffectedRegionWidth / 2,
+			x: sand.globalCoordinates.x - sand.constants.kAffectedRegionWidth / 2,
+			y: sand.globalCoordinates.y - sand.constants.kAffectedRegionWidth / 2,
 			width: sand.constants.kAffectedRegionWidth,
 			height: (sand.constants.kAffectedRegionWidth)
 		};
-		sand.modifyRegion.makeFootprint(changedArea, sand.player.globalCoordinates);
+		sand.modifyRegion.makeFootprint(changedArea, sand.globalCoordinates);
 		sand.modifyRegion.settle();
 
 		sand.canvasUpdate.updateHtmlCanvases(changedArea);
@@ -85,8 +86,8 @@ sand.globalFunctions = {
 		var allRegions = sand.allRegions;
 
 		var preloadThresholdRect = {
-			x: sand.player.globalCoordinates.x - (sand.constants.kLoadMoreRegionsThreshold / 2),
-			y: sand.player.globalCoordinates.y - (sand.constants.kLoadMoreRegionsThreshold / 2),
+			x: sand.globalCoordinates.x - (sand.constants.kLoadMoreRegionsThreshold / 2),
+			y: sand.globalCoordinates.y - (sand.constants.kLoadMoreRegionsThreshold / 2),
 			width: sand.constants.kLoadMoreRegionsThreshold,
 			height: sand.constants.kLoadMoreRegionsThreshold
 		};

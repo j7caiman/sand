@@ -1,9 +1,13 @@
 var sand = {
 	elephantLayer: {},
 	backgroundLayer: {},
+
 	currentRegion: {},
 	allRegions: {},
+
 	globalCoordinates: {},
+	uuid: {},
+	otherPlayers: {},
 
 	constants: {
 		kCanvasWidth: 512, // width of draw canvases
@@ -12,10 +16,11 @@ var sand = {
 		kViewportHeight: window.innerHeight,
 		kLoadMoreRegionsThreshold: Math.max(window.innerWidth, window.innerHeight), // distance from player to load more regions
 		kAffectedRegionWidth: 120,
-		kPlayerSpeed: 25,
+		kElephantSpeed: 25,
 		kScrollSpeed: 50,
 		kBeginScrollThreshold: 150 // distance from edge to start scrolling toward player
-	}
+	},
+	socket: io()
 };
 
 $(document).ready(function() {
@@ -80,6 +85,24 @@ cc.game.onStart = function() {
 		}, this);
 	}
 };
+
+sand.socket.on('playerData', function (playerData) {
+	var localPosition = sand.globalFunctions.toLocalCoordinates(playerData.lastPosition);
+	var currentViewport = sand.currentRegion.getSprite().getPosition();
+	var locationOnPlayerScreen = {
+		x: currentViewport.x + localPosition.x,
+		y: currentViewport.y + localPosition.y
+	};
+
+	if(sand.otherPlayers[playerData.uuid] === undefined) {
+		sand.otherPlayers[playerData.uuid] = sand.elephantLayer.createElephant(locationOnPlayerScreen)
+	} else {
+		var otherPlayerSprite = sand.otherPlayers[playerData.uuid];
+		if(!otherPlayerSprite.getActionByTag("moveElephant")) {
+			sand.elephantLayer.moveElephant(otherPlayerSprite, locationOnPlayerScreen);
+		}
+	}
+});
 
 sand.globalFunctions = {
 	updateRegionsAndDrawCanvases: function() {

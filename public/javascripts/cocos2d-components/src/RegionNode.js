@@ -1,11 +1,8 @@
-
-var RegionNode = function (name, allRegions) {
+var RegionNode = function (name) {
 	var coordinates = name.split("_");
 	this.x = Number(coordinates[0]);
 	this.y = Number(coordinates[1]);
 	this._name = name;
-
-	this._allRegions = allRegions;
 };
 
 RegionNode.prototype = {
@@ -13,14 +10,14 @@ RegionNode.prototype = {
 
 	initializeAdjacentNodes: function () {
 		var adjacentNodes = [];
-		adjacentNodes[0] = this._allRegions[(this.x + 1) + "_" + (this.y + 1)];	// northeast
-		adjacentNodes[1] = this._allRegions[(this.x + 0) + "_" + (this.y + 1)];	// north
-		adjacentNodes[2] = this._allRegions[(this.x - 1) + "_" + (this.y + 1)];	// northwest
-		adjacentNodes[3] = this._allRegions[(this.x - 1) + "_" + (this.y + 0)];	// west
-		adjacentNodes[4] = this._allRegions[(this.x - 1) + "_" + (this.y - 1)];	// southwest
-		adjacentNodes[5] = this._allRegions[(this.x + 0) + "_" + (this.y - 1)];	// south
-		adjacentNodes[6] = this._allRegions[(this.x + 1) + "_" + (this.y - 1)];	// southeast
-		adjacentNodes[7] = this._allRegions[(this.x + 1) + "_" + (this.y + 0)];	// east
+		adjacentNodes[0] = sand.allRegions[(this.x + 1) + "_" + (this.y + 1)];	// northeast
+		adjacentNodes[1] = sand.allRegions[(this.x + 0) + "_" + (this.y + 1)];	// north
+		adjacentNodes[2] = sand.allRegions[(this.x - 1) + "_" + (this.y + 1)];	// northwest
+		adjacentNodes[3] = sand.allRegions[(this.x - 1) + "_" + (this.y + 0)];	// west
+		adjacentNodes[4] = sand.allRegions[(this.x - 1) + "_" + (this.y - 1)];	// southwest
+		adjacentNodes[5] = sand.allRegions[(this.x + 0) + "_" + (this.y - 1)];	// south
+		adjacentNodes[6] = sand.allRegions[(this.x + 1) + "_" + (this.y - 1)];	// southeast
+		adjacentNodes[7] = sand.allRegions[(this.x + 1) + "_" + (this.y + 0)];	// east
 
 		this._adjacentNodes = adjacentNodes;
 	},

@@ -3,7 +3,7 @@ var sand = {
 	backgroundLayer: {},
 	currentRegion: {},
 	allRegions: {},
-	level: {},
+
 	constants: {
 		kCanvasWidth: 512, // width of draw canvases
 		kRegionWidth: 256, // number of sand grains in a single row of desert
@@ -68,6 +68,19 @@ cc.game.onStart = function() {
 };
 
 sand.globalFunctions = {
+	updateRegionsAndDrawCanvases: function() {
+		var changedArea = {
+			x: sand.player.globalCoordinates.x - sand.constants.kAffectedRegionWidth / 2,
+			y: sand.player.globalCoordinates.y - sand.constants.kAffectedRegionWidth / 2,
+			width: sand.constants.kAffectedRegionWidth,
+			height: (sand.constants.kAffectedRegionWidth)
+		};
+		sand.modifyRegion.makeFootprint(changedArea, sand.player.globalCoordinates);
+		sand.modifyRegion.settle();
+
+		sand.canvasUpdate.updateHtmlCanvases(changedArea);
+	},
+
 	addMoreRegions: function (callback) {
 		var allRegions = sand.allRegions;
 
@@ -83,7 +96,7 @@ sand.globalFunctions = {
 		for (var i = 0; i < visibleRegions.length; i++) {
 			var regionName = visibleRegions[i];
 			if (!allRegions.hasOwnProperty(regionName)) {
-				allRegions[regionName] = new RegionNode(regionName, allRegions);
+				allRegions[regionName] = new RegionNode(regionName);
 				newRegionNames.push(regionName);
 			}
 		}
@@ -108,7 +121,7 @@ sand.globalFunctions = {
 							allRegions[regionName].setData(dataForNewRegions[regionName]);
 							allRegions[regionName].setCanvas(sand.globalFunctions.createCanvas(regionName, sand.constants.kCanvasWidth));
 							allRegions[regionName].getCanvas().style.display = 'none';
-							sand.level.drawRegionToCanvas(allRegions[regionName]);
+							sand.canvasUpdate.drawRegionToCanvas(allRegions[regionName]);
 
 							var sprite = new cc.Sprite(new cc.Texture2D());
 							sprite.setName(regionName);

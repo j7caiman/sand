@@ -174,9 +174,7 @@ var PlayerLayer = cc.Layer.extend({
 				}
 
 				sprite.schedule(
-					function() {
-						sand.level.update();
-					},
+					sand.globalFunctions.updateRegionsAndDrawCanvases,
 					0.25);
 
 				var moveAction = cc.moveTo(duration, mousePosition);

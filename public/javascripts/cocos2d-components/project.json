@@ -5,12 +5,12 @@
     "renderMode"    : 1,
     "jsList" : [
         "javascripts/cocos2d-components/src/cocos2d_image_resources.js",
-        "javascripts/cocos2d-components/src/settle_sand.js",
         "javascripts/cocos2d-components/src/GameScene.js",
-        "javascripts/cocos2d-components/src/level.js",
         "javascripts/cocos2d-components/src/PlayerLayer.js",
         "javascripts/cocos2d-components/src/BackgroundLayer.js",
+
         "javascripts/cocos2d-components/src/RegionNode.js",
-        "javascripts/cocos2d-components/src/create_footprint.js"
+        "javascripts/cocos2d-components/src/modify_region.js",
+        "javascripts/cocos2d-components/src/canvas_update.js"
     ]
 }

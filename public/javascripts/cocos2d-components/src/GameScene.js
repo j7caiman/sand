@@ -30,7 +30,13 @@ var GameScene = cc.Scene.extend({
 
 			sand.globalCoordinates = globalCoordinates;
 
-			this.savePlayerAndLevel(sand.globalCoordinates, sand.currentRegion);
+			var playerData = {
+				uuid: sand.uuid,
+				lastPosition: sand.globalCoordinates
+			};
+			$.cookie('playerData', playerData, {expires: 7});
+
+			this.savePlayerAndLevel();
 		}
 
 		function isOutOfBounds(position) {
@@ -97,20 +103,18 @@ var GameScene = cc.Scene.extend({
 		}
 	},
 
-	savePlayerAndLevel: function (globalPosition, region) {
+	savePlayerAndLevel: function () {
 		this.savePlayerAndLevel.counter = ++ this.savePlayerAndLevel.counter || 0;
 		if (this.savePlayerAndLevel.counter < 60) {
 			return;
 		}
 		this.savePlayerAndLevel.counter = 0;
 
-		$.cookie('lastPosition', globalPosition, {expires: 7});
-
 		var data = {
-			regionData: region.getData(),
+			regionData: sand.currentRegion.getData(),
 			regionCoordinates: {
-				x: region.x,
-				y: region.y
+				x: sand.currentRegion.x,
+				y: sand.currentRegion.y
 			}
 		};
 

@@ -31,6 +31,10 @@ var GameScene = cc.Scene.extend({
 				}
 			}
 		});
+
+		sand.socket.on('footprint', function (footprintData) {
+			sand.batchedFootprints.push(footprintData);
+		});
 	},
 
 	update: function() {
@@ -86,6 +90,33 @@ var GameScene = cc.Scene.extend({
 		sand.globalFunctions.addMoreRegions(function() {
 			sand.backgroundLayer.initializeSpriteLocations(sand.currentRegion.getSprite().getPosition());
 		});
+
+		if(sand.batchedFootprints.length != 0) {
+			function determineAffectedArea(position) {
+				return {
+					x: position.x - sand.constants.kAffectedRegionWidth / 2,
+					y: position.y - sand.constants.kAffectedRegionWidth / 2,
+					width: sand.constants.kAffectedRegionWidth,
+					height: (sand.constants.kAffectedRegionWidth)
+				};
+			}
+
+			sand.batchedFootprints.forEach(function(printLocation) {
+				var area = determineAffectedArea(printLocation);
+				sand.modifyRegion.makeFootprint(area, printLocation);
+			});
+
+			sand.modifyRegion.settle();
+
+			sand.batchedFootprints.forEach(function(printLocation) {
+				var area = determineAffectedArea(printLocation);
+				sand.canvasUpdate.updateHtmlCanvases(area);
+			});
+
+			sand.batchedFootprints = [];
+		}
+
+
 
 		this.triggerScrolling();
 	},

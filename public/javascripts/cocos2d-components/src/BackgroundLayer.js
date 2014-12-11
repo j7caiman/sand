@@ -40,35 +40,44 @@ var BackgroundLayer = cc.Layer.extend({
 		cc.eventManager.addListener({
 			event: cc.EventListener.CUSTOM,
 			eventName: "scrollTrigger",
-			callback: function(event) {
-				var allRegions = sand.allRegions;
-				var allSprites = [];
-				for (var regionName in allRegions) {
-					if(allRegions.hasOwnProperty(regionName) && allRegions[regionName].getSprite() !== undefined) {
-						allSprites.push(allRegions[regionName].getSprite());
+			callback: function (event) {
+				var spritesToScroll = (function getAllScrollableSprites() {
+					var allSprites = [];
+					var allRegions = sand.allRegions;
+					for (var regionName in allRegions) {
+						if (allRegions.hasOwnProperty(regionName) && allRegions[regionName].getSprite() !== undefined) {
+							allSprites.push(allRegions[regionName].getSprite());
+						}
 					}
-				}
+					var otherPlayers = sand.otherPlayers;
+					for (var uuid in otherPlayers) {
+						if (otherPlayers.hasOwnProperty(uuid)) {
+							allSprites.push(otherPlayers[uuid]);
+						}
+					}
+					allSprites.push(sand.elephantLayer.playerSprite);
+					return allSprites;
+				})();
 
-				allSprites.map(function(sprite) {
-					sprite.stopAllActions();
+				spritesToScroll.forEach(function (sprite) {
+					sprite.stopActionByTag("scroll");
 				});
-				sand.elephantLayer.playerSprite.stopActionByTag("scrollPlayer");
 
 				var scrollVector = {
 					x: event.getUserData().x,
 					y: event.getUserData().y
 				};
 
-				var distance = (function(v) { return Math.sqrt( (v.x * v.x) + (v.y * v.y) ); })(scrollVector);
+				var distance = (function (v) {
+					return Math.sqrt((v.x * v.x) + (v.y * v.y));
+				})(scrollVector);
 				var duration = distance / sand.constants.kScrollSpeed;
 
-				allSprites.map(function(sprite) {
-					sprite.runAction(cc.moveBy(duration, cc.p(scrollVector.x, scrollVector.y)));
+				spritesToScroll.forEach(function (sprite) {
+					var scrollAction = cc.moveBy(duration, cc.p(scrollVector.x, scrollVector.y));
+					scrollAction.setTag("scroll");
+					sprite.runAction(scrollAction);
 				});
-
-				var scrollPlayerAction = cc.moveBy(duration, cc.p(scrollVector.x, scrollVector.y));
-				scrollPlayerAction.setTag("scrollPlayer");
-				sand.elephantLayer.playerSprite.runAction(scrollPlayerAction);
 			}
 		}, this);
 	},

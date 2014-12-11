@@ -123,7 +123,7 @@ var GameScene = cc.Scene.extend({
 
 	triggerScrolling: function() {
 		// if already scrolling, don't attempt to scroll more
-		if(sand.elephantLayer.playerSprite.getActionByTag("scrollPlayer")) {
+		if(sand.elephantLayer.playerSprite.getActionByTag("scroll")) {
 			return;
 		}
 

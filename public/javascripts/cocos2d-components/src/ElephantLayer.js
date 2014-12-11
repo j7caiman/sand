@@ -122,13 +122,6 @@ var ElephantLayer = cc.Layer.extend({
 	},
 
 	moveElephant: function(sprite, destination) {
-		function stopElephantMovement() {
-			sprite.stopActionByTag("animateElephant");
-			sprite.stopActionByTag("moveElephant");
-			sprite.unscheduleAllCallbacks();
-		}
-		stopElephantMovement();
-
 		var elephantPosition = sprite.getPosition();
 		var mousePosition = destination;
 
@@ -150,55 +143,98 @@ var ElephantLayer = cc.Layer.extend({
 
 		var duration = distance.total / sand.constants.kElephantSpeed;
 
+		var animationTag;
 		var moveAnimation;
 		var frameAfterMove;
-		if(Math.abs(angle) > 7 * Math.PI / 8) {				// west
+		if (Math.abs(angle) > 7 * Math.PI / 8) {
+			animationTag = "animate_west";
 			moveAnimation = this.animations.walkWest;
 			frameAfterMove = this.animations.standWest;
 			sprite.flippedX = false;
-		} else if(angle < -5 * Math.PI / 8) {				// southwest
+		} else if (angle < -5 * Math.PI / 8) {
+			animationTag = "animate_southwest";
 			moveAnimation = this.animations.walkSouthWest;
 			frameAfterMove = this.animations.standSouthWest;
 			sprite.flippedX = false;
-		} else if(angle < -3 * Math.PI / 8) {				// south
+		} else if (angle < -3 * Math.PI / 8) {
+			animationTag = "animate_south";
 			moveAnimation = this.animations.walkSouth;
 			frameAfterMove = this.animations.standSouth;
 			sprite.flippedX = false;
-		} else if(angle < -Math.PI / 8) {					// southeast
+		} else if (angle < -Math.PI / 8) {
+			animationTag = "animate_southeast";
 			moveAnimation = this.animations.walkSouthWest;
 			frameAfterMove = this.animations.standSouthWest;
 			sprite.flippedX = true;
-		} else if(angle < Math.PI / 8) {					// east
+		} else if (angle < Math.PI / 8) {
+			animationTag = "animate_east";
 			moveAnimation = this.animations.walkWest;
 			frameAfterMove = this.animations.standWest;
 			sprite.flippedX = true;
-		} else if(angle < 3 * Math.PI / 8) {				// northeast
+		} else if (angle < 3 * Math.PI / 8) {
+			animationTag = "animate_northeast";
 			moveAnimation = this.animations.walkNorthWest;
 			frameAfterMove = this.animations.standNorthWest;
 			sprite.flippedX = true;
-		} else if(angle < 5 * Math.PI / 8) {				// north
+		} else if (angle < 5 * Math.PI / 8) {
+			animationTag = "animate_north";
 			moveAnimation = this.animations.walkNorth;
 			frameAfterMove = this.animations.standNorth;
 			sprite.flippedX = false;
-		} else {											// northwest
+		} else {
+			animationTag = "animate_northwest";
 			moveAnimation = this.animations.walkNorthWest;
 			frameAfterMove = this.animations.standNorthWest;
 			sprite.flippedX = false;
 		}
 
+		function stopAllAnimations() {
+			sprite.stopActionByTag("animate_west");
+			sprite.stopActionByTag("animate_southwest");
+			sprite.stopActionByTag("animate_south");
+			sprite.stopActionByTag("animate_southeast");
+			sprite.stopActionByTag("animate_east");
+			sprite.stopActionByTag("animate_northeast");
+			sprite.stopActionByTag("animate_north");
+			sprite.stopActionByTag("animate_northwest");
+		}
+
+		if(!sprite.getActionByTag(animationTag)) {
+			stopAllAnimations();
+			var animateElephantAction = cc.animate(moveAnimation).repeatForever();
+			animateElephantAction.setTag(animationTag);
+			sprite.runAction(animateElephantAction);
+		} else {
+			/**
+			 * It would be preferable to only unschedule the callback
+			 * which is added with scheduleOnce below.
+			 * However the moveElephant function gets called more than
+			 * once, and therefore the callback is overwritten with a
+			 * new reference to itself. thus when trying to remove it,
+			 * it will fail.
+			 */
+			sprite.unscheduleAllCallbacks();
+		}
+
+		sprite.stopActionByTag("moveElephant");
+
 		var moveAction = cc.moveTo(duration, mousePosition);
 		var standAction = cc.callFunc(function() {
-			stopElephantMovement();
-			sprite.setSpriteFrame(frameAfterMove);
+			sprite.stopActionByTag("moveElephant");
+			if(sprite.getName() === "player") {
+				sprite.unscheduleAllCallbacks(); // ensures no more footprints are created
+				stopAllAnimations();
+				sprite.setSpriteFrame(frameAfterMove);
+			} else {
+				sprite.scheduleOnce(function() {
+					stopAllAnimations();
+					sprite.setSpriteFrame(frameAfterMove);
+				}, 0.5);
+			}
 		}, this);
 
-		var animateElephantAction = cc.animate(moveAnimation).repeatForever();
 		var moveElephantAction = cc.sequence(moveAction, standAction);
-
-		animateElephantAction.setTag("animateElephant");
 		moveElephantAction.setTag("moveElephant");
-
-		sprite.runAction(animateElephantAction);
 		sprite.runAction(moveElephantAction);
 	}
 });

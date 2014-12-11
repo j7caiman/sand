@@ -1,6 +1,6 @@
 /**
  * Contains the update loop that maintains global state.
- * Called once per frame.
+ * Called once per frame. frame rate is configured in project.json
  */
 var GameScene = cc.Scene.extend({
 	onEnter:function () {
@@ -13,6 +13,24 @@ var GameScene = cc.Scene.extend({
 		this.addChild(sand.elephantLayer);
 
 		this.scheduleUpdate();
+
+		sand.socket.on('playerData', function (playerData) {
+			var localPosition = sand.globalFunctions.toLocalCoordinates(playerData.lastPosition);
+			var currentViewport = sand.currentRegion.getSprite().getPosition();
+			var locationOnPlayerScreen = {
+				x: currentViewport.x + localPosition.x,
+				y: currentViewport.y + localPosition.y
+			};
+
+			if(sand.otherPlayers[playerData.uuid] === undefined) {
+				sand.otherPlayers[playerData.uuid] = sand.elephantLayer.createElephant(locationOnPlayerScreen)
+			} else {
+				var otherPlayerSprite = sand.otherPlayers[playerData.uuid];
+				if(!otherPlayerSprite.getActionByTag("moveElephant")) {
+					sand.elephantLayer.moveElephant(otherPlayerSprite, locationOnPlayerScreen);
+				}
+			}
+		});
 	},
 
 	update: function() {
@@ -30,14 +48,16 @@ var GameScene = cc.Scene.extend({
 
 			sand.globalCoordinates = globalCoordinates;
 
-			var playerData = {
-				uuid: sand.uuid,
-				lastPosition: sand.globalCoordinates
-			};
-			sand.socket.emit('playerData', playerData);
-			$.cookie('playerData', playerData, {expires: 7});
-
-			this.savePlayerAndLevel();
+			function updateCookiesAndEmitPosition() {
+				var playerData = {
+					uuid: sand.uuid,
+					lastPosition: sand.globalCoordinates
+				};
+				sand.socket.emit('playerData', playerData);
+				$.cookie('playerData', playerData, {expires: 7});
+				this.savePlayerAndLevel();
+			}
+			sand.globalFunctions.throttle(100, updateCookiesAndEmitPosition, this);
 		}
 
 		function isOutOfBounds(position) {
@@ -105,12 +125,6 @@ var GameScene = cc.Scene.extend({
 	},
 
 	savePlayerAndLevel: function () {
-		this.savePlayerAndLevel.counter = ++ this.savePlayerAndLevel.counter || 0;
-		if (this.savePlayerAndLevel.counter < 60) {
-			return;
-		}
-		this.savePlayerAndLevel.counter = 0;
-
 		var data = {
 			regionData: sand.currentRegion.getData(),
 			regionCoordinates: {

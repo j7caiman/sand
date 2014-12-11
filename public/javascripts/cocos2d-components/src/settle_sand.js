@@ -1,4 +1,6 @@
-sand.level.settle = function(regionData) {
+sand.level.settle = function() {
+	var regionData = sand.currentRegion.getData();
+
 	const gridWidth = regionData[0].length;
 	for (var y = 1; y < gridWidth - 1; y++) {
 		for (var x = 1; x < gridWidth - 1; x++) {

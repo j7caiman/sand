@@ -175,7 +175,7 @@ var PlayerLayer = cc.Layer.extend({
 
 				sprite.schedule(
 					function() {
-						sand.globalFunctions.update();
+						sand.level.update();
 					},
 					0.25);
 

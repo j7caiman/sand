@@ -6,6 +6,8 @@
     "jsList" : [
         "javascripts/cocos2d-components/src/cocos2d_image_resources.js",
         "javascripts/cocos2d-components/src/settle_sand.js",
+        "javascripts/cocos2d-components/src/GameScene.js",
+        "javascripts/cocos2d-components/src/level.js",
         "javascripts/cocos2d-components/src/PlayerLayer.js",
         "javascripts/cocos2d-components/src/BackgroundLayer.js",
         "javascripts/cocos2d-components/src/RegionNode.js",

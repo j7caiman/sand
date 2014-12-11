@@ -13,19 +13,11 @@ var ElephantLayer = cc.Layer.extend({
 		// read sprite sheet from file system
 		cc.spriteFrameCache.addSpriteFrames(res.elephant_sprite_plist);
 
-		// add player to scene
-		this.playerSprite = new cc.Sprite("#elephant_sprite_sheet_01.png");
-		this.playerSprite.setName("player");
-
-		// note: anchor point is at the center of the sprite
-		this.playerSprite.attr({
+		this.playerSprite = this.createElephant({
 			x: sand.constants.kViewportWidth / 2,
-			y: sand.constants.kViewportHeight / 2,
-			scaleX: 1.5,
-			scaleY: 1.5
+			y: sand.constants.kViewportHeight / 2
 		});
-
-		this.addChild(this.playerSprite);
+		this.playerSprite.setName("player");
 
 		this.animations = {
 			walkNorth: (function () {
@@ -104,7 +96,6 @@ var ElephantLayer = cc.Layer.extend({
 			})()
 		};
 
-
 		// set up listener to trigger animations
 		cc.eventManager.addListener({
 			event: cc.EventListener.MOUSE,
@@ -119,14 +110,24 @@ var ElephantLayer = cc.Layer.extend({
 		}, this);
 	},
 
+	createElephant: function(position) {
+		var sprite = new cc.Sprite("#elephant_sprite_sheet_01.png");
+
+		// note: anchor point is at the center of the sprite
+		sprite.setPosition(position);
+		sprite.setScale(1.5);
+
+		this.addChild(sprite);
+		return sprite;
+	},
+
 	moveElephant: function(sprite, destination) {
-		function stopPlayerMovement() {
-			sprite.stopActionByTag("animatePlayer");
-			sprite.stopActionByTag("movePlayer");
+		function stopElephantMovement() {
+			sprite.stopActionByTag("animateElephant");
+			sprite.stopActionByTag("moveElephant");
 			sprite.unscheduleAllCallbacks();
 		}
-		stopPlayerMovement();
-
+		stopElephantMovement();
 
 		var elephantPosition = sprite.getPosition();
 		var mousePosition = destination;
@@ -147,7 +148,7 @@ var ElephantLayer = cc.Layer.extend({
 			};
 		})(elephantPosition, mousePosition);
 
-		var duration = distance.total / sand.constants.kPlayerSpeed;
+		var duration = distance.total / sand.constants.kElephantSpeed;
 
 		var moveAnimation;
 		var frameAfterMove;
@@ -187,17 +188,17 @@ var ElephantLayer = cc.Layer.extend({
 
 		var moveAction = cc.moveTo(duration, mousePosition);
 		var standAction = cc.callFunc(function() {
-			stopPlayerMovement();
+			stopElephantMovement();
 			sprite.setSpriteFrame(frameAfterMove);
 		}, this);
 
-		var animatePlayerAction = cc.animate(moveAnimation).repeatForever();
-		var movePlayerAction = cc.sequence(moveAction, standAction);
+		var animateElephantAction = cc.animate(moveAnimation).repeatForever();
+		var moveElephantAction = cc.sequence(moveAction, standAction);
 
-		animatePlayerAction.setTag("animatePlayer");
-		movePlayerAction.setTag("movePlayer");
+		animateElephantAction.setTag("animateElephant");
+		moveElephantAction.setTag("moveElephant");
 
-		sprite.runAction(animatePlayerAction);
-		sprite.runAction(movePlayerAction);
+		sprite.runAction(animateElephantAction);
+		sprite.runAction(moveElephantAction);
 	}
 });

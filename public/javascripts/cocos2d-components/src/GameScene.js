@@ -34,6 +34,7 @@ var GameScene = cc.Scene.extend({
 				uuid: sand.uuid,
 				lastPosition: sand.globalCoordinates
 			};
+			sand.socket.emit('playerData', playerData);
 			$.cookie('playerData', playerData, {expires: 7});
 
 			this.savePlayerAndLevel();

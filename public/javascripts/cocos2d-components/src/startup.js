@@ -70,17 +70,16 @@ cc.game.onStart = function() {
 	sand.globalCoordinates = playerData.lastPosition;
 	sand.uuid = playerData.uuid;
 
-	sand.globalFunctions.addMoreRegions(loadAndRunGameScene);
+	sand.globalFunctions.addMoreRegions(onRegionInitializationComplete);
 
-	var currentRegionName = sand.globalFunctions.findRegionNameFromAbsolutePosition(sand.globalCoordinates);
-	sand.currentRegion = sand.allRegions[currentRegionName];
+	function onRegionInitializationComplete() {
+		var currentRegionName = sand.globalFunctions.findRegionNameFromAbsolutePosition(sand.globalCoordinates);
+		sand.currentRegion = sand.allRegions[currentRegionName];
 
-	cc.screen.requestFullScreen();
-	cc.view.setResolutionPolicy(cc.ResolutionPolicy.NO_BORDER);
-	cc.view.resizeWithBrowserSize(true);
-	cc.view.adjustViewPort(true);
-
-	function loadAndRunGameScene() {
+		cc.screen.requestFullScreen();
+		cc.view.setResolutionPolicy(cc.ResolutionPolicy.NO_BORDER);
+		cc.view.resizeWithBrowserSize(true);
+		cc.view.adjustViewPort(true);
 		cc.LoaderScene.preload(g_resources, function () {
 			cc.director.runScene(new GameScene());
 		}, this);
@@ -94,32 +93,22 @@ sand.globalFunctions = {
 	},
 
 	addMoreRegions: function (callback) {
-		var allRegions = sand.allRegions;
-
 		var preloadThresholdRect = {
 			x: sand.globalCoordinates.x - (sand.constants.kLoadMoreRegionsThreshold / 2),
 			y: sand.globalCoordinates.y - (sand.constants.kLoadMoreRegionsThreshold / 2),
 			width: sand.constants.kLoadMoreRegionsThreshold,
 			height: sand.constants.kLoadMoreRegionsThreshold
 		};
-		var visibleRegions = sand.globalFunctions.findRegionsInRect(preloadThresholdRect);
+		var visibleRegionNames = sand.globalFunctions.findRegionsInRect(preloadThresholdRect);
 
 		var newRegionNames = [];
-		for (var i = 0; i < visibleRegions.length; i++) {
-			var regionName = visibleRegions[i];
-			if (!allRegions.hasOwnProperty(regionName)) {
-				allRegions[regionName] = new RegionNode(regionName);
+		visibleRegionNames.forEach(function(regionName) {
+			if (!sand.allRegions.hasOwnProperty(regionName)) {
 				newRegionNames.push(regionName);
 			}
-		}
+		});
 
 		if (newRegionNames.length != 0) {
-			for (regionName in allRegions) {
-				if (allRegions.hasOwnProperty(regionName)) {
-					allRegions[regionName].initializeAdjacentNodes();
-				}
-			}
-
 			$.ajax({
 				url: "fetch_region",
 				type: "POST",
@@ -127,18 +116,38 @@ sand.globalFunctions = {
 				contentType: "application/json",
 				success: function (responseData) {
 					var allRegions = sand.allRegions;
+
 					var dataForNewRegions = responseData.regions;
 					for (var regionName in dataForNewRegions) {
 						if (dataForNewRegions.hasOwnProperty(regionName)) {
+							allRegions[regionName] = new RegionNode(regionName);
 							allRegions[regionName].setData(dataForNewRegions[regionName]);
-							allRegions[regionName].setCanvas(sand.globalFunctions.createCanvas(regionName, sand.constants.kCanvasWidth));
-							allRegions[regionName].getCanvas().style.display = 'none';
-							sand.canvasUpdate.drawRegionToCanvas(allRegions[regionName]);
+
+							var canvas = sand.globalFunctions.createCanvas(regionName, sand.constants.kCanvasWidth);
+							canvas.style.display = 'none';
+							allRegions[regionName].setCanvas(canvas);
 
 							var sprite = new cc.Sprite(new cc.Texture2D());
 							sprite.setName(regionName);
 							sprite.setAnchorPoint(0, 0);
 							allRegions[regionName].setSprite(sprite);
+						}
+					}
+
+					/**
+					 * new regions have been downloaded,
+					 * so reinitialize each region's 'adjacent region' references
+					 */
+					for (regionName in allRegions) {
+						if (allRegions.hasOwnProperty(regionName)) {
+							allRegions[regionName].initializeAdjacentNodes();
+						}
+					}
+
+					// draw new regions. note: relies on adjacent nodes being initialized
+					for (regionName in dataForNewRegions) {
+						if (dataForNewRegions.hasOwnProperty(regionName)) {
+							sand.canvasUpdate.drawRegionToCanvas(allRegions[regionName]);
 						}
 					}
 

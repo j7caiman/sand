@@ -8,25 +8,18 @@ var PlayerLayer = cc.Layer.extend({
 	},
 
 	player: {},
-
-	init: function() {
-		this._super();
-
-		// read sprite sheet from file system
-		cc.spriteFrameCache.addSpriteFrames(res.elephant_sprite_plist);
-
-		// create animations from frames, which come from the plist file
-		var walkNorth = (function() {
+	animations: {
+		walkNorth: (function () {
 			var frames = [];
-			for (var i = 11; i 	<= 12; i++) {
+			for (var i = 11; i <= 12; i++) {
 				var name = "elephant_sprite_sheet_" + i + ".png";
 				var frame = cc.spriteFrameCache.getSpriteFrame(name);
 				frames.push(frame);
 			}
 			return new cc.Animation(frames, 0.3);
-		})();
+		})(),
 
-		var walkNorthWest = (function() {
+		walkNorthWest: (function () {
 			var frames = [];
 			for (var i = 10; i <= 10; i++) {
 				var name = "elephant_sprite_sheet_" + i + ".png";
@@ -34,9 +27,9 @@ var PlayerLayer = cc.Layer.extend({
 				frames.push(frame);
 			}
 			return new cc.Animation(frames, 0.3);
-		})();
+		})(),
 
-		var walkWest = (function() {
+		walkWest: (function () {
 			var frames = [];
 			for (var i = 2; i <= 9; i++) {
 				var name = "elephant_sprite_sheet_0" + i + ".png";
@@ -44,9 +37,9 @@ var PlayerLayer = cc.Layer.extend({
 				frames.push(frame);
 			}
 			return new cc.Animation(frames, 0.3);
-		})();
+		})(),
 
-		var walkSouthWest = (function() {
+		walkSouthWest: (function () {
 			var frames = [];
 			for (var i = 14; i <= 14; i++) {
 				var name = "elephant_sprite_sheet_" + i + ".png";
@@ -54,9 +47,9 @@ var PlayerLayer = cc.Layer.extend({
 				frames.push(frame);
 			}
 			return new cc.Animation(frames, 0.3);
-		})();
+		})(),
 
-		var walkSouth = (function() {
+		walkSouth: (function () {
 			var frames = [];
 			for (var i = 15; i <= 16; i++) {
 				var name = "elephant_sprite_sheet_" + i + ".png";
@@ -64,136 +57,85 @@ var PlayerLayer = cc.Layer.extend({
 				frames.push(frame);
 			}
 			return new cc.Animation(frames, 0.3);
-		})();
-		
-		var standNorth = (function() {
+		})(),
+
+		standNorth: (function () {
 			var name = "elephant_sprite_sheet_11.png";
 			return cc.spriteFrameCache.getSpriteFrame(name);
-		})();
+		})(),
 
-		var standNorthWest = (function() {
+		standNorthWest: (function () {
 			var name = "elephant_sprite_sheet_10.png";
 			return cc.spriteFrameCache.getSpriteFrame(name);
-		})();
+		})(),
 
-		var standWest = (function() {
+		standWest: (function () {
 			var name = "elephant_sprite_sheet_01.png";
 			return cc.spriteFrameCache.getSpriteFrame(name);
-		})();
+		})(),
 
-		var standSouthWest = (function() {
+		standSouthWest: (function () {
 			var name = "elephant_sprite_sheet_14.png";
 			return cc.spriteFrameCache.getSpriteFrame(name);
-		})();
+		})(),
 
-		var standSouth = (function() {
+		standSouth: (function () {
 			var name = "elephant_sprite_sheet_15.png";
 			return cc.spriteFrameCache.getSpriteFrame(name);
-		})();
+		})()
+	},
 
+	init: function() {
+		this._super();
+
+		cc.spriteFrameCache.addSpriteFrames(res.elephant_sprite_plist);
 
 		// add player to scene
-		var sprite = new cc.Sprite("#elephant_sprite_sheet_01.png");
-		sprite.setName("player");
-		this.player = sprite;
+		var player = new cc.Sprite("#elephant_sprite_sheet_01.png");
+		this.player = player;
+		player.setName("player");
 
 		// note: anchor point is at the center of the sprite
-		sprite.attr({
+		player.attr({
 			x: sand.constants.kViewportWidth / 2,
 			y: sand.constants.kViewportHeight / 2,
 			scaleX: 1.5,
 			scaleY: 1.5
 		});
 
-		this.addChild(sprite);
+		this.addChild(player);
 
 		// set up listener to trigger animations
 		cc.eventManager.addListener({
 			event: cc.EventListener.MOUSE,
 
 			onMouseUp: function(event) {
-				function stopPlayerMovement() {
-					sprite.stopActionByTag("animatePlayer");
-					sprite.stopActionByTag("movePlayer");
-					sprite.unscheduleAllCallbacks();
-				}
-				stopPlayerMovement();
+				PlayerLayer.stopPlayerMovement();
 
-
-				var elephantPosition = sprite.getPosition();
 				var mousePosition = event.getLocation();
+				PlayerLayer.moveElephant(player, mousePosition);
 
-				var angle = Math.atan2(
-					mousePosition.y - elephantPosition.y,
-					mousePosition.x - elephantPosition.x
-				);
-
-				var distance = (function(point1, point2) {
-					var xDelta = point2.x - point1.x;
-					var yDelta = point2.y - point1.y;
-
-					return {
-						total: Math.sqrt( (xDelta * xDelta) + (yDelta * yDelta) ),
-						x: Math.abs(xDelta),
-						y: Math.abs(yDelta)
-					};
-				})(elephantPosition, mousePosition);
-
-				var duration = distance.total / sand.constants.kPlayerSpeed;
-
-				var moveAnimation;
-				var frameAfterMove;
-				sprite.flippedX = false;
-				if(Math.abs(angle) > 7 * Math.PI / 8) {	// west
-					moveAnimation = walkWest;
-					frameAfterMove = standWest;
-				} else if(angle < -5 * Math.PI / 8) {	// southwest
-					moveAnimation = walkSouthWest;
-					frameAfterMove = standSouthWest;
-				} else if(angle < -3 * Math.PI / 8) {	// south
-					moveAnimation = walkSouth;
-					frameAfterMove = standSouth;
-				} else if(angle < -Math.PI / 8) {		// southeast
-					moveAnimation = walkSouthWest;
-					frameAfterMove = standSouthWest;
-					sprite.flippedX = true;
-				} else if(angle < Math.PI / 8) {		// east
-					moveAnimation = walkWest;
-					frameAfterMove = standWest;
-					sprite.flippedX = true;
-				} else if(angle < 3 * Math.PI / 8) {	// northeast
-					moveAnimation = walkNorthWest;
-					frameAfterMove = standNorthWest;
-					sprite.flippedX = true;
-				} else if(angle < 5 * Math.PI / 8) {	// north
-					moveAnimation = walkNorth;
-					frameAfterMove = standNorth;
-				} else {								// northwest
-					moveAnimation = walkNorthWest;
-					frameAfterMove = standNorthWest;
-				}
-
-				sprite.schedule(
+				player.schedule(
 					sand.globalFunctions.updateRegionsAndDrawCanvases,
 					0.25);
 
-				var moveAction = cc.moveTo(duration, mousePosition);
-				var standAction = cc.callFunc(function() {
-					stopPlayerMovement();
-					sprite.setSpriteFrame(frameAfterMove);
-				}, this);
-
-				var animatePlayerAction = cc.animate(moveAnimation).repeatForever();
-				var movePlayerAction = cc.sequence(moveAction, standAction);
-
-				animatePlayerAction.setTag("animatePlayer");
-				movePlayerAction.setTag("movePlayer");
-
-				sprite.runAction(animatePlayerAction);
-				sprite.runAction(movePlayerAction);
-
 				triggerScrolling();
 				function triggerScrolling() {
+					var distance = (function(point1, point2) {
+						var xDelta = point2.x - point1.x;
+						var yDelta = point2.y - point1.y;
+
+						return {
+							total: Math.sqrt( (xDelta * xDelta) + (yDelta * yDelta) ),
+							x: Math.abs(xDelta),
+							y: Math.abs(yDelta)
+						};
+					})(player, mousePosition);
+
+					var duration = distance.total / sand.constants.kPlayerSpeed;
+
+					var elephantPosition = player.getPosition();
+
 					var boundary = {
 						left: sand.constants.kBeginScrollThreshold,
 						right: sand.constants.kViewportWidth - sand.constants.kBeginScrollThreshold,
@@ -237,10 +179,90 @@ var PlayerLayer = cc.Layer.extend({
 							event.setUserData(scrollVector);
 							cc.eventManager.dispatchEvent(event);
 						}
-						sprite.scheduleOnce(triggerScroll, thresholdCrossTime);
+						player.scheduleOnce(triggerScroll, thresholdCrossTime);
 					}
 				}
 			}
 		}, this);
+	},
+
+	moveElephant: function(sprite, destination) {
+		var currentPosition = sprite.getPosition();
+		var angle = Math.atan2(
+			destination.y - currentPosition.y,
+			destination.x - currentPosition.x
+		);
+
+		var distance = (function(point1, point2) {
+			var xDelta = point2.x - point1.x;
+			var yDelta = point2.y - point1.y;
+
+			return {
+				total: Math.sqrt( (xDelta * xDelta) + (yDelta * yDelta) ),
+				x: Math.abs(xDelta),
+				y: Math.abs(yDelta)
+			};
+		})(currentPosition, destination);
+
+		var duration = distance.total / sand.constants.kPlayerSpeed;
+
+		var moveAnimation;
+		var frameAfterMove;
+		if(Math.abs(angle) > 7 * Math.PI / 8) {	// west
+			moveAnimation = this.animations.walkWest;
+			frameAfterMove = this.animations.standWest;
+			sprite.flippedX = false;
+		} else if(angle < -5 * Math.PI / 8) {	// southwest
+			moveAnimation = this.animations.walkSouthWest;
+			frameAfterMove = this.animations.standSouthWest;
+			sprite.flippedX = false;
+		} else if(angle < -3 * Math.PI / 8) {	// south
+			moveAnimation = this.animations.walkSouth;
+			frameAfterMove = this.animations.standSouth;
+			sprite.flippedX = false;
+		} else if(angle < -Math.PI / 8) {		// southeast
+			moveAnimation = this.animations.walkSouthWest;
+			frameAfterMove = this.animations.standSouthWest;
+			sprite.flippedX = true;
+		} else if(angle < Math.PI / 8) {		// east
+			moveAnimation = this.animations.walkWest;
+			frameAfterMove = this.animations.standWest;
+			sprite.flippedX = true;
+		} else if(angle < 3 * Math.PI / 8) {	// northeast
+			moveAnimation = this.animations.walkNorthWest;
+			frameAfterMove = this.animations.standNorthWest;
+			sprite.flippedX = true;
+		} else if(angle < 5 * Math.PI / 8) {	// north
+			moveAnimation = this.animations.walkNorth;
+			frameAfterMove = this.animations.standNorth;
+			sprite.flippedX = false;
+		} else {								// northwest
+			moveAnimation = this.animations.walkNorthWest;
+			frameAfterMove = this.animations.standNorthWest;
+			sprite.flippedX = false;
+		}
+
+		var moveAction = cc.moveTo(duration, destination);
+		var standAction = cc.callFunc(function() {
+			this.stopPlayerMovement();
+			sprite.setSpriteFrame(frameAfterMove);
+		}, this);
+
+		var animatePlayerAction = cc.animate(moveAnimation).repeatForever();
+		var movePlayerAction = cc.sequence(moveAction, standAction);
+
+		animatePlayerAction.setTag("animatePlayer");
+		movePlayerAction.setTag("movePlayer");
+
+		sprite.runAction(animatePlayerAction);
+		sprite.runAction(movePlayerAction);
+	},
+
+	stopPlayerMovement: function() {
+		sand.player.sprite.stopActionByTag("animatePlayer");
+		sand.player.sprite.stopActionByTag("movePlayer");
+		sand.player.sprite.unscheduleAllCallbacks();
 	}
+	
+	
 });

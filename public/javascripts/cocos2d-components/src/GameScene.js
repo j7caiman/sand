@@ -20,6 +20,8 @@ var GameScene = cc.Scene.extend({
 	update: function() {
 		this._super();
 
+
+
 		var backgroundPosition = sand.currentRegion.getSprite();
 		var positionOnCanvas = {
 			x: sand.player.sprite.x - backgroundPosition.x,
@@ -27,12 +29,20 @@ var GameScene = cc.Scene.extend({
 		};
 
 		var globalCoordinates = sand.globalFunctions.toGlobalCoordinates(positionOnCanvas);
-		if(!(sand.player.globalCoordinates.x == globalCoordinates.x
-			&& sand.player.globalCoordinates.y == globalCoordinates.y)) {
+		if (sand.player.globalCoordinates.x != globalCoordinates.x
+			|| sand.player.globalCoordinates.y != globalCoordinates.y) {
 
-			this.savePlayerAndLevel(sand.player.globalCoordinates, sand.currentRegion);
+			sand.player.globalCoordinates = globalCoordinates;
+
+			var playerData = {
+				uuid: sand.player.uuid,
+				lastPosition: sand.player.globalCoordinates
+			};
+			sand.socket.emit('playerData', playerData);
+			$.cookie('playerData', playerData, {expires: 7});
+
+			this.savePlayerAndLevel(playerData);
 		}
-		sand.player.globalCoordinates = globalCoordinates;
 
 		function isOutOfBounds(position) {
 			return position.x > sand.constants.kCanvasWidth
@@ -62,23 +72,20 @@ var GameScene = cc.Scene.extend({
 		});
 	},
 
-	savePlayerAndLevel: function (globalPosition, region) {
+	savePlayerAndLevel: function () {
 		this.savePlayerAndLevel.counter = ++ this.savePlayerAndLevel.counter || 0;
 		if (this.savePlayerAndLevel.counter < 60) {
 			return;
 		}
 		this.savePlayerAndLevel.counter = 0;
 
-		$.cookie('lastPosition', globalPosition, {expires: 7});
-
 		var data = {
-			regionData: region.getData(),
+			regionData: sand.currentRegion.getData(),
 			regionCoordinates: {
-				x: region.x,
-				y: region.y
+				x: sand.currentRegion.x,
+				y: sand.currentRegion.y
 			}
 		};
-
 		$.ajax({
 			url: "write_to_region",
 			type: "POST",

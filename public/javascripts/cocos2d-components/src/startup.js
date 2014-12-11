@@ -1,5 +1,7 @@
 var sand = {
 	player: {},
+	otherPlayers: {},
+
 	backgroundLayer: {},
 	currentRegion: {},
 	allRegions: {},
@@ -14,8 +16,13 @@ var sand = {
 		kPlayerSpeed: 25,
 		kScrollSpeed: 50,
 		kBeginScrollThreshold: 90 // distance from edge to start scrolling toward player
-	}
+	},
+	socket: io()
 };
+
+sand.socket.on('playerData', function(playerData) {
+	sand.otherPlayers[playerData.uuid] = playerData.lastPosition;
+});
 
 $(document).ready(function() {
 	sand.globalFunctions.createCanvas(
@@ -34,21 +41,34 @@ cc.game.onStart = function() {
 		sand.constants.kLoadMoreRegionsThreshold = 400 + Math.max(window.innerWidth, window.innerHeight);
 	});
 
-	sand.player.globalCoordinates = (function() {
+	var playerData = (function() {
 		$.cookie.json = true;
-		var lastPositionFromCookie = $.cookie('lastPosition');
-		var lastPosition;
-		if (lastPositionFromCookie !== undefined) {
-			lastPosition = lastPositionFromCookie;
+		var playerDataCookie = $.cookie('playerData');
+		if (playerDataCookie !== undefined) {
+			return playerDataCookie;
 		} else {
-			lastPosition = {
-				x: 100,
-				y: 100
+			function generateUUID() {
+				return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+					var r = Math.random()*16|0;
+					var v = (c == 'x') ? r : (r&0x3|0x8);
+					return v.toString(16);
+				});
+			}
+
+			var playerData = {
+				uuid: generateUUID(),
+				lastPosition: {
+					x: 100,
+					y: 100
+				}
 			};
-			$.cookie('lastPosition', lastPosition, {expires: 7});
+			$.cookie('playerData', playerData, {expires: 7});
+
+			return playerData;
 		}
-		return lastPosition;
 	})();
+	sand.player.globalCoordinates = playerData.lastPosition;
+	sand.player.uuid = playerData.uuid;
 
 	sand.globalFunctions.addMoreRegions(loadAndRunGameScene);
 

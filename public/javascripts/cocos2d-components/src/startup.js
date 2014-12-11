@@ -8,6 +8,7 @@ var sand = {
 	globalCoordinates: {},
 	uuid: {},
 	otherPlayers: {},
+	batchedFootprints: [],
 
 	constants: {
 		kCanvasWidth: 512, // width of draw canvases
@@ -88,16 +89,8 @@ cc.game.onStart = function() {
 
 sand.globalFunctions = {
 	updateRegionsAndDrawCanvases: function() {
-		var changedArea = {
-			x: sand.globalCoordinates.x - sand.constants.kAffectedRegionWidth / 2,
-			y: sand.globalCoordinates.y - sand.constants.kAffectedRegionWidth / 2,
-			width: sand.constants.kAffectedRegionWidth,
-			height: (sand.constants.kAffectedRegionWidth)
-		};
-		sand.modifyRegion.makeFootprint(changedArea, sand.globalCoordinates);
-		sand.modifyRegion.settle();
-
-		sand.canvasUpdate.updateHtmlCanvases(changedArea);
+		sand.batchedFootprints.push(sand.globalCoordinates);
+		sand.socket.emit('footprint', sand.globalCoordinates); // broadcast player's footprint to others
 	},
 
 	addMoreRegions: function (callback) {

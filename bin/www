@@ -13,4 +13,8 @@ io.on('connection', function (socket) {
 	socket.on('playerData', function (playerData) {
 		socket.broadcast.emit('playerData', playerData);
 	});
+
+	socket.on('footprint', function (footprintData) {
+		socket.broadcast.emit('footprint', footprintData);
+	});
 });

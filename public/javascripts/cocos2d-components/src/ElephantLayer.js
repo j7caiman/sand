@@ -105,7 +105,7 @@ var ElephantLayer = cc.Layer.extend({
 
 				sprite.schedule(
 					sand.globalFunctions.updateRegionsAndDrawCanvases,
-					0.25);
+					0.25); //every 250 milliseconds
 			}
 		}, this);
 	},

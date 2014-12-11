@@ -86,24 +86,6 @@ cc.game.onStart = function() {
 	}
 };
 
-sand.socket.on('playerData', function (playerData) {
-	var localPosition = sand.globalFunctions.toLocalCoordinates(playerData.lastPosition);
-	var currentViewport = sand.currentRegion.getSprite().getPosition();
-	var locationOnPlayerScreen = {
-		x: currentViewport.x + localPosition.x,
-		y: currentViewport.y + localPosition.y
-	};
-
-	if(sand.otherPlayers[playerData.uuid] === undefined) {
-		sand.otherPlayers[playerData.uuid] = sand.elephantLayer.createElephant(locationOnPlayerScreen)
-	} else {
-		var otherPlayerSprite = sand.otherPlayers[playerData.uuid];
-		if(!otherPlayerSprite.getActionByTag("moveElephant")) {
-			sand.elephantLayer.moveElephant(otherPlayerSprite, locationOnPlayerScreen);
-		}
-	}
-});
-
 sand.globalFunctions = {
 	updateRegionsAndDrawCanvases: function() {
 		var changedArea = {
@@ -242,5 +224,16 @@ sand.globalFunctions = {
 			x: point.x + (sand.currentRegion.x * sand.constants.kCanvasWidth),
 			y: point.y + (sand.currentRegion.y * sand.constants.kCanvasWidth)
 		}
+	},
+
+	//calls "callback" roughly every 'delayMillis'
+	throttle: function (delayMillis, callback, thisArg) {
+		this.counter = ++this.counter || 0;
+		const frameRate = 24; // configured in project.json
+		if (this.counter < (frameRate * delayMillis / 1000)) {
+			return;
+		}
+		this.counter = 0;
+		callback.call(thisArg);
 	}
 };

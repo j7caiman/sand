@@ -7,12 +7,10 @@ var GameScene = cc.Scene.extend({
 		this._super();
 		this.init();
 
-		var playerLayer = new PlayerLayer();
-		sand.player.sprite = playerLayer.player;
-		var backgroundLayer = new BackgroundLayer();
-		sand.backgroundLayer = backgroundLayer;
-		this.addChild(backgroundLayer);
-		this.addChild(playerLayer);
+		sand.elephantLayer = new ElephantLayer();
+		sand.backgroundLayer = new BackgroundLayer();
+		this.addChild(sand.backgroundLayer);
+		this.addChild(sand.elephantLayer);
 
 		this.scheduleUpdate();
 	},
@@ -22,17 +20,17 @@ var GameScene = cc.Scene.extend({
 
 		var backgroundPosition = sand.currentRegion.getSprite();
 		var positionOnCanvas = {
-			x: sand.player.sprite.x - backgroundPosition.x,
-			y: (sand.player.sprite.y - sand.player.sprite.width / 4) - backgroundPosition.y // slightly offset footprints from player
+			x: sand.elephantLayer.playerSprite.x - backgroundPosition.x,
+			y: (sand.elephantLayer.playerSprite.y - sand.elephantLayer.playerSprite.width / 4) - backgroundPosition.y // slightly offset footprints from player
 		};
 
 		var globalCoordinates = sand.globalFunctions.toGlobalCoordinates(positionOnCanvas);
-		if(!(sand.player.globalCoordinates.x == globalCoordinates.x
-			&& sand.player.globalCoordinates.y == globalCoordinates.y)) {
+		if(!(sand.globalCoordinates.x == globalCoordinates.x
+			&& sand.globalCoordinates.y == globalCoordinates.y)) {
 
-			this.savePlayerAndLevel(sand.player.globalCoordinates, sand.currentRegion);
+			this.savePlayerAndLevel(sand.globalCoordinates, sand.currentRegion);
 		}
-		sand.player.globalCoordinates = globalCoordinates;
+		sand.globalCoordinates = globalCoordinates;
 
 		function isOutOfBounds(position) {
 			return position.x > sand.constants.kCanvasWidth
@@ -52,7 +50,7 @@ var GameScene = cc.Scene.extend({
 				y: backgroundPosition.y - differenceInLocation.y
 			};
 
-			var newRegionName = sand.globalFunctions.findRegionNameFromAbsolutePosition(sand.player.globalCoordinates);
+			var newRegionName = sand.globalFunctions.findRegionNameFromAbsolutePosition(sand.globalCoordinates);
 			sand.currentRegion = sand.allRegions[newRegionName];
 			sand.backgroundLayer.initializeSpriteLocations(newBackgroundPosition);
 		}

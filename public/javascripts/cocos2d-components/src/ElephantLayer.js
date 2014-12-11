@@ -1,13 +1,14 @@
 /**
  * Layer which listens for the mouse and moves / animates the player character.
  */
-var PlayerLayer = cc.Layer.extend({
+var ElephantLayer = cc.Layer.extend({
 	ctor: function() {
 		this._super();
 		this.init();
 	},
 
-	player: {},
+	playerSprite: {},
+	globalCoordinates: {},
 
 	init: function() {
 		this._super();
@@ -93,25 +94,25 @@ var PlayerLayer = cc.Layer.extend({
 
 
 		// add player to scene
-		var sprite = new cc.Sprite("#elephant_sprite_sheet_01.png");
-		sprite.setName("player");
-		this.player = sprite;
+		this.playerSprite = new cc.Sprite("#elephant_sprite_sheet_01.png");
+		this.playerSprite.setName("player");
 
 		// note: anchor point is at the center of the sprite
-		sprite.attr({
+		this.playerSprite.attr({
 			x: sand.constants.kViewportWidth / 2,
 			y: sand.constants.kViewportHeight / 2,
 			scaleX: 1.5,
 			scaleY: 1.5
 		});
 
-		this.addChild(sprite);
+		this.addChild(this.playerSprite);
 
 		// set up listener to trigger animations
 		cc.eventManager.addListener({
 			event: cc.EventListener.MOUSE,
 
 			onMouseUp: function(event) {
+				var sprite = sand.elephantLayer.playerSprite;
 				function stopPlayerMovement() {
 					sprite.stopActionByTag("animatePlayer");
 					sprite.stopActionByTag("movePlayer");

@@ -192,55 +192,6 @@ var ElephantLayer = cc.Layer.extend({
 
 				sprite.runAction(animatePlayerAction);
 				sprite.runAction(movePlayerAction);
-
-				triggerScrolling();
-				function triggerScrolling() {
-					var boundary = {
-						left: sand.constants.kBeginScrollThreshold,
-						right: sand.constants.kViewportWidth - sand.constants.kBeginScrollThreshold,
-						bottom: sand.constants.kBeginScrollThreshold,
-						top: sand.constants.kViewportHeight - sand.constants.kBeginScrollThreshold
-					};
-
-					var distanceToThreshold = {};
-					if (mousePosition.x < boundary.left) {
-						distanceToThreshold.x = elephantPosition.x - boundary.left;
-					} else if (mousePosition.x > boundary.right) {
-						distanceToThreshold.x = boundary.right - elephantPosition.x;
-					}
-					if (mousePosition.y < boundary.bottom) {
-						distanceToThreshold.y = elephantPosition.y - boundary.bottom;
-					} else if (mousePosition.y > boundary.top) {
-						distanceToThreshold.y = boundary.top - elephantPosition.y;
-					}
-
-					var thresholdCrossTime;
-					if (distanceToThreshold.x !== undefined) {
-						thresholdCrossTime = duration * (distanceToThreshold.x / distance.x);
-					}
-					if (distanceToThreshold.y !== undefined) {
-						var timeUntilYThreshold = duration * (distanceToThreshold.y / distance.y);
-						if(thresholdCrossTime === undefined || timeUntilYThreshold < thresholdCrossTime) {
-							thresholdCrossTime = timeUntilYThreshold;
-						}
-					}
-					if(thresholdCrossTime < 0) { // elephant has already passed the threshold, scroll immediately
-						thresholdCrossTime = 0;
-					}
-
-					if (thresholdCrossTime !== undefined) {
-						var scrollVector = {
-							x: sand.constants.kViewportWidth / 2 - mousePosition.x,
-							y: sand.constants.kViewportHeight / 2 - mousePosition.y
-						};
-						function triggerScroll() {
-							var event = new cc.EventCustom("scrollTrigger");
-							event.setUserData(scrollVector);
-							cc.eventManager.dispatchEvent(event);
-						}
-						sprite.scheduleOnce(triggerScroll, thresholdCrossTime);
-					}
-				}
 			}
 		}, this);
 	}

@@ -25,12 +25,13 @@ var GameScene = cc.Scene.extend({
 		};
 
 		var globalCoordinates = sand.globalFunctions.toGlobalCoordinates(positionOnCanvas);
-		if(!(sand.globalCoordinates.x == globalCoordinates.x
-			&& sand.globalCoordinates.y == globalCoordinates.y)) {
+		if (sand.globalCoordinates.x != globalCoordinates.x
+		 || sand.globalCoordinates.y != globalCoordinates.y) {
+
+			sand.globalCoordinates = globalCoordinates;
 
 			this.savePlayerAndLevel(sand.globalCoordinates, sand.currentRegion);
 		}
-		sand.globalCoordinates = globalCoordinates;
 
 		function isOutOfBounds(position) {
 			return position.x > sand.constants.kCanvasWidth
@@ -58,6 +59,42 @@ var GameScene = cc.Scene.extend({
 		sand.globalFunctions.addMoreRegions(function() {
 			sand.backgroundLayer.initializeSpriteLocations(sand.currentRegion.getSprite().getPosition());
 		});
+
+		this.triggerScrolling();
+	},
+
+	triggerScrolling: function() {
+		// if already scrolling, don't attempt to scroll more
+		if(sand.elephantLayer.playerSprite.getActionByTag("scrollPlayer")) {
+			return;
+		}
+
+		var elephantPosition = sand.elephantLayer.playerSprite.getPosition();
+
+		var boundary = {
+			left: sand.constants.kBeginScrollThreshold,
+			right: sand.constants.kViewportWidth - sand.constants.kBeginScrollThreshold,
+			bottom: sand.constants.kBeginScrollThreshold,
+			top: sand.constants.kViewportHeight - sand.constants.kBeginScrollThreshold
+		};
+
+		var beginScrolling = (function (position, boundary) {
+			return position.x < boundary.left
+				|| position.y < boundary.bottom
+				|| position.x > boundary.right
+				|| position.y > boundary.top;
+		})(elephantPosition, boundary);
+
+		if(beginScrolling) {
+			var scrollVector = {
+				x: sand.constants.kViewportWidth / 2 - elephantPosition.x,
+				y: sand.constants.kViewportHeight / 2 - elephantPosition.y
+			};
+
+			var event = new cc.EventCustom("scrollTrigger");
+			event.setUserData(scrollVector);
+			cc.eventManager.dispatchEvent(event);
+		}
 	},
 
 	savePlayerAndLevel: function (globalPosition, region) {

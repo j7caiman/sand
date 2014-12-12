@@ -10,15 +10,28 @@ router.post('/', function(req, res) {
 		throw "Unsupported parameters: pass an array of region names, e.g: [\"0_0\", \"0_-1\"]"
 	}
 
-	var numRegionsToRead = regionNames.length;
-	for(var i = 0; i < numRegionsToRead; i++) {
-		var path = '../resources/world_datastore/world_256x256_' + regionNames[i] + '.json';
+	regionNames.forEach(function(regionName, index) {
+		var coordinates = regionName.split("_");
+		if(coordinates.length != 2) {
+			throw "Invalid region name: " + regionName;
+		} else {
+			function isInteger(value) {
+				return !isNaN(value)
+					&& parseInt(Number(value)) == value
+					&& !isNaN(parseInt(value, 10));
+			}
+			if(!isInteger(coordinates[0]) || !isInteger(coordinates[1])) {
+				throw "Invalid region name: " + regionName;
+			}
+		}
+
+		var path = '../resources/world_datastore/world_256x256_' + regionName + '.json';
 		(function(index, path) {
 			fs.readFile(path, 'utf8', function(err, regionData) {
 				returnAllRegionsOnLoad(err, regionData, path, regionNames[index]);
 			});
-		})(i, path);
-	}
+		})(index, path);
+	});
 
 	var data = {
 		regions: {}
@@ -52,7 +65,7 @@ router.post('/', function(req, res) {
 
 		data.regions[regionName] = JSON.parse(regionData);
 		numLoadedRegions++;
-		if(numLoadedRegions == numRegionsToRead) {
+		if(numLoadedRegions == regionNames.length) {
 			res.setHeader("Content-Encoding", "gzip");
 			res.setHeader("Content-Type", "application/json");
 

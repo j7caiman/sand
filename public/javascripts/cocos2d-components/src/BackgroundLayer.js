@@ -93,7 +93,7 @@ var BackgroundLayer = cc.Layer.extend({
 
 		centerSprite.setPosition(position.x, position.y);
 
-		var adjacentSprites = sand.currentRegion.getAdjacentNodes().map(function (region) {
+		sand.currentRegion.getAdjacentNodes().forEach(function (region) {
 			if(region !== undefined) {
 				var sprite = region.getSprite();
 				if(this.getChildByName(sprite.getName()) === null) {
@@ -102,11 +102,21 @@ var BackgroundLayer = cc.Layer.extend({
 				sprite.setName(region.getName());
 				sprite.getTexture().initWithElement(region.getCanvas());
 				sprite.getTexture().handleLoadedTexture();
-				return sprite;
+			}
+		}, this);
+
+		this.updateAdjacentSpriteLocations();
+	},
+
+	updateAdjacentSpriteLocations: function() {
+		var adjacentSprites = sand.currentRegion.getAdjacentNodes().map(function (region) {
+			if(region !== undefined) {
+				return region.getSprite();
 			} else {
 				return undefined;
 			}
-		}, this);
+		});
+
 		(function setAdjacentSpriteCoordinates(sprites, center, offset) {
 			if(sprites[0] !== undefined) { sprites[0].setPosition(center.x + offset, center.y + offset);}	// northeast region
 			if(sprites[1] !== undefined) { sprites[1].setPosition(center.x + 0,      center.y + offset);}	// north region
@@ -116,6 +126,6 @@ var BackgroundLayer = cc.Layer.extend({
 			if(sprites[5] !== undefined) { sprites[5].setPosition(center.x + 0,      center.y - offset);}	// south region
 			if(sprites[6] !== undefined) { sprites[6].setPosition(center.x + offset, center.y - offset);}	// southeast region
 			if(sprites[7] !== undefined) { sprites[7].setPosition(center.x + offset, center.y + 0);}		// east region
-		})(adjacentSprites, centerSprite, sand.constants.kCanvasWidth);
+		})(adjacentSprites, sand.currentRegion.getSprite(), sand.constants.kCanvasWidth);
 	}
 });

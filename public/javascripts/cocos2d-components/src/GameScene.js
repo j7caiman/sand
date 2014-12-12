@@ -35,6 +35,10 @@ var GameScene = cc.Scene.extend({
 		sand.socket.on('footprint', function (footprintData) {
 			sand.batchedFootprints.push(footprintData);
 		});
+
+		this.cookiesThrottler = new this.Throttler(100);
+		this.savePlayerThrottler = new this.Throttler(1000);
+		this.addRegionsThrottler = new this.Throttler(500);
 	},
 
 	update: function() {
@@ -45,51 +49,56 @@ var GameScene = cc.Scene.extend({
 			x: sand.elephantLayer.playerSprite.x - backgroundPosition.x,
 			y: (sand.elephantLayer.playerSprite.y - sand.elephantLayer.playerSprite.width / 4) - backgroundPosition.y // slightly offset footprints from player
 		};
-
 		var globalCoordinates = sand.globalFunctions.toGlobalCoordinates(positionOnCanvas);
 		if (sand.globalCoordinates.x != globalCoordinates.x
 		 || sand.globalCoordinates.y != globalCoordinates.y) {
 
 			sand.globalCoordinates = globalCoordinates;
 
-			function updateCookiesAndEmitPosition() {
+			this.cookiesThrottler.throttle(function updateCookiesAndEmitPosition() {
 				var playerData = {
 					uuid: sand.uuid,
 					lastPosition: sand.globalCoordinates
 				};
 				sand.socket.emit('playerData', playerData);
 				$.cookie('playerData', playerData, {expires: 7});
+			}, this);
+
+			this.savePlayerThrottler.throttle(function() {
 				this.savePlayerAndLevel();
+			}, this);
+
+			function isOutOfBounds(position) {
+				return position.x > sand.constants.kCanvasWidth
+					|| position.y > sand.constants.kCanvasWidth
+					|| position.x < 0
+					|| position.y < 0;
 			}
-			sand.globalFunctions.throttle(100, updateCookiesAndEmitPosition, this);
+			if(isOutOfBounds(positionOnCanvas)) {
+				function mod(n, mod) { return ((mod % n) + n) % n; }
+				var differenceInLocation = {
+					x: mod(sand.constants.kCanvasWidth, positionOnCanvas.x) - positionOnCanvas.x,
+					y: mod(sand.constants.kCanvasWidth, positionOnCanvas.y) - positionOnCanvas.y
+				};
+
+				var newBackgroundPosition = {
+					x: backgroundPosition.x - differenceInLocation.x,
+					y: backgroundPosition.y - differenceInLocation.y
+				};
+
+				var newRegionName = sand.globalFunctions.findRegionNameFromAbsolutePosition(sand.globalCoordinates);
+				sand.currentRegion = sand.allRegions[newRegionName];
+				sand.backgroundLayer.initializeSpriteLocations(newBackgroundPosition);
+			}
+
+			this.addRegionsThrottler.throttle(function() {
+				sand.globalFunctions.addMoreRegions(function() {
+					sand.backgroundLayer.initializeSpriteLocations(sand.currentRegion.getSprite().getPosition());
+				});
+			});
+
+			this.triggerScrolling();
 		}
-
-		function isOutOfBounds(position) {
-			return position.x > sand.constants.kCanvasWidth
-				|| position.y > sand.constants.kCanvasWidth
-				|| position.x < 0
-				|| position.y < 0;
-		}
-		if(isOutOfBounds(positionOnCanvas)) {
-			function mod(n, mod) { return ((mod % n) + n) % n; }
-			var differenceInLocation = {
-				x: mod(sand.constants.kCanvasWidth, positionOnCanvas.x) - positionOnCanvas.x,
-				y: mod(sand.constants.kCanvasWidth, positionOnCanvas.y) - positionOnCanvas.y
-			};
-
-			var newBackgroundPosition = {
-				x: backgroundPosition.x - differenceInLocation.x,
-				y: backgroundPosition.y - differenceInLocation.y
-			};
-
-			var newRegionName = sand.globalFunctions.findRegionNameFromAbsolutePosition(sand.globalCoordinates);
-			sand.currentRegion = sand.allRegions[newRegionName];
-			sand.backgroundLayer.initializeSpriteLocations(newBackgroundPosition);
-		}
-
-		sand.globalFunctions.addMoreRegions(function() {
-			sand.backgroundLayer.initializeSpriteLocations(sand.currentRegion.getSprite().getPosition());
-		});
 
 		if(sand.batchedFootprints.length != 0) {
 			function determineAffectedArea(position) {
@@ -115,10 +124,19 @@ var GameScene = cc.Scene.extend({
 
 			sand.batchedFootprints = [];
 		}
+	},
 
-
-
-		this.triggerScrolling();
+	//calls "callback" roughly every 'delayMillis'
+	Throttler: function (delayMillis) {
+		this.throttle = function(callback, thisArg) {
+			this.counter = ++this.counter || 0;
+			const frameRate = 24; // configured in project.json
+			if (this.counter < (frameRate * delayMillis / 1000)) {
+				return;
+			}
+			this.counter = 0;
+			callback.call(thisArg);
+		}
 	},
 
 	triggerScrolling: function() {

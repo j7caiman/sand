@@ -226,16 +226,5 @@ sand.globalFunctions = {
 			x: point.x + (sand.currentRegion.x * sand.constants.kCanvasWidth),
 			y: point.y + (sand.currentRegion.y * sand.constants.kCanvasWidth)
 		}
-	},
-
-	//calls "callback" roughly every 'delayMillis'
-	throttle: function (delayMillis, callback, thisArg) {
-		this.counter = ++this.counter || 0;
-		const frameRate = 24; // configured in project.json
-		if (this.counter < (frameRate * delayMillis / 1000)) {
-			return;
-		}
-		this.counter = 0;
-		callback.call(thisArg);
 	}
 };

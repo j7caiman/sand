@@ -64,9 +64,7 @@ var GameScene = cc.Scene.extend({
 				$.cookie('playerData', playerData, {expires: 7});
 			}, this);
 
-			this.savePlayerThrottler.throttle(function() {
-				this.savePlayerAndLevel();
-			}, this);
+			this.savePlayerThrottler.throttle(this.savePlayerAndLevel, this);
 
 			function isOutOfBounds(position) {
 				return position.x > sand.constants.kCanvasWidth
@@ -91,11 +89,7 @@ var GameScene = cc.Scene.extend({
 				sand.backgroundLayer.initializeSpriteLocations(newBackgroundPosition);
 			}
 
-			this.addRegionsThrottler.throttle(function() {
-				sand.globalFunctions.addMoreRegions(function() {
-					sand.backgroundLayer.initializeSpriteLocations(sand.currentRegion.getSprite().getPosition());
-				});
-			});
+			this.addRegionsThrottler.throttle(sand.globalFunctions.addMoreRegions);
 
 			this.triggerScrolling();
 		}
@@ -124,6 +118,8 @@ var GameScene = cc.Scene.extend({
 
 			sand.batchedFootprints = [];
 		}
+
+		sand.backgroundLayer.updateAdjacentSpriteLocations();
 	},
 
 	//calls "callback" roughly every 'delayMillis'

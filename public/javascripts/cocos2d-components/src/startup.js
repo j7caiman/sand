@@ -1,12 +1,5 @@
 var sand = {
-	elephantLayer: {},
-	backgroundLayer: {},
-
-	currentRegion: {},
 	allRegions: {},
-
-	globalCoordinates: {},
-	uuid: {},
 	otherPlayers: {},
 	batchedFootprints: [],
 
@@ -15,7 +8,7 @@ var sand = {
 		kRegionWidth: 256, // number of sand grains in a single row of desert
 		kViewportWidth: window.innerWidth, // width of cocos2d canvas and viewport dimensions
 		kViewportHeight: window.innerHeight,
-		kLoadMoreRegionsThreshold: Math.max(window.innerWidth, window.innerHeight), // distance from player to load more regions
+		kLoadMoreRegionsThreshold: 400, // distance beyond edge of viewport to start loading more regions
 		kAffectedRegionWidth: 120,
 		kElephantSpeed: 25,
 		kScrollSpeed: 50,
@@ -38,7 +31,6 @@ cc.game.onStart = function() {
 		// width of cocos2d canvas and viewport dimensions
 		sand.constants.kViewportWidth = window.innerWidth;
 		sand.constants.kViewportHeight = window.innerHeight;
-		sand.constants.kLoadMoreRegionsThreshold = 400 + Math.max(window.innerWidth, window.innerHeight);
 	});
 
 	var playerData = (function() {
@@ -76,6 +68,14 @@ cc.game.onStart = function() {
 		var currentRegionName = sand.globalFunctions.findRegionNameFromAbsolutePosition(sand.globalCoordinates);
 		sand.currentRegion = sand.allRegions[currentRegionName];
 
+		var localPlayerPosition = sand.globalFunctions.toLocalCoordinates(sand.globalCoordinates);
+		var position = {
+			x: sand.constants.kViewportWidth / 2 - localPlayerPosition.x,
+			y: sand.constants.kViewportHeight / 2 - localPlayerPosition.y
+		};
+		sand.currentRegion.getSprite().setPosition(position);
+		sand.globalFunctions.updateBackgroundSpriteLocations();
+
 		cc.screen.requestFullScreen();
 		cc.view.setResolutionPolicy(cc.ResolutionPolicy.NO_BORDER);
 		cc.view.resizeWithBrowserSize(true);
@@ -93,11 +93,12 @@ sand.globalFunctions = {
 	},
 
 	addMoreRegions: function (callback) {
+		var padding = sand.constants.kLoadMoreRegionsThreshold;
 		var preloadThresholdRect = {
-			x: sand.globalCoordinates.x - (sand.constants.kLoadMoreRegionsThreshold / 2),
-			y: sand.globalCoordinates.y - (sand.constants.kLoadMoreRegionsThreshold / 2),
-			width: sand.constants.kLoadMoreRegionsThreshold,
-			height: sand.constants.kLoadMoreRegionsThreshold
+			x: sand.globalCoordinates.x - (sand.constants.kViewportWidth / 2 + padding),
+			y: sand.globalCoordinates.y - (sand.constants.kViewportHeight / 2 + padding),
+			width: sand.constants.kViewportWidth + (2 * padding),
+			height: sand.constants.kViewportHeight + (2 * padding)
 		};
 		var visibleRegionNames = sand.globalFunctions.findRegionsInRect(preloadThresholdRect);
 
@@ -130,7 +131,15 @@ sand.globalFunctions = {
 							var sprite = new cc.Sprite(new cc.Texture2D());
 							sprite.setName(regionName);
 							sprite.setAnchorPoint(0, 0);
+							sprite.getTexture().initWithElement(allRegions[regionName].getCanvas());
+							sprite.getTexture().handleLoadedTexture();
 							allRegions[regionName].setSprite(sprite);
+
+							// on startup, BackgroundLayer has not yet been initialized. In that case, the sprites are
+							// later added during BackgroundLayer's init function.
+							if(sand.backgroundLayer !== undefined) {
+								sand.backgroundLayer.addChild(sprite, -1);
+							}
 						}
 					}
 
@@ -159,6 +168,55 @@ sand.globalFunctions = {
 		}
 	},
 
+	updateBackgroundSpriteLocations: function() {
+		var viewport = {
+			x: sand.globalCoordinates.x - (sand.constants.kViewportWidth / 2),
+			y: sand.globalCoordinates.y - (sand.constants.kViewportHeight / 2),
+			width: sand.constants.kViewportWidth,
+			height: sand.constants.kViewportHeight
+		};
+		var visibleRegionNames = sand.globalFunctions.findRegionsInRect(viewport);
+
+		var indexOfCurrentRegion = undefined;
+		var previousRegionYCoordinate;
+		var numColumns;
+		visibleRegionNames.forEach(function(regionName, index) {
+			if(sand.currentRegion.getName() === regionName) {
+				indexOfCurrentRegion = index;
+			}
+			var yCoordinate = regionName.split("_")[1];
+			if(numColumns === undefined && index !== 0 && yCoordinate !== previousRegionYCoordinate) {
+				numColumns = index;
+			}
+
+			previousRegionYCoordinate = yCoordinate;
+		});
+		if(numColumns === undefined) {
+			numColumns = 1;
+		}
+
+		var currentRegionOffset = {
+			x: indexOfCurrentRegion % numColumns,
+			y: Math.floor(indexOfCurrentRegion / numColumns)
+		};
+		var currentRegionLocation = sand.currentRegion.getSprite().getPosition();
+
+		visibleRegionNames.forEach(function(regionName, index) {
+			var region = sand.allRegions[regionName];
+			var sprite = region.getSprite();
+
+			var regionOffset = {
+				x: index % numColumns,
+				y: Math.floor(index / numColumns)
+			};
+
+			var x = currentRegionLocation.x - sand.constants.kCanvasWidth * (currentRegionOffset.x - regionOffset.x);
+			var y = currentRegionLocation.y - sand.constants.kCanvasWidth * (currentRegionOffset.y - regionOffset.y);
+			sprite.setPosition(x, y);
+			sprite.setZOrder(0);
+		});
+	},
+
 	createCanvas: function (id, width, height) {
 		if(height === undefined) { // creates square canvas
 			height = (width);
@@ -177,6 +235,11 @@ sand.globalFunctions = {
 		return xCoordinate + "_" + yCoordinate;
 	},
 
+	/**
+	 * returns an array of region names that are inside the bounding rectangle
+	 * array is organized from lowest to highest, first by the y coordinate,
+	 * then by the x coordinate.
+	 */
 	findRegionsInRect: function (rect) {
 		var xCoordinates = [];
 		for (var x = rect.x; x < rect.x + rect.width; x += sand.constants.kCanvasWidth) {
@@ -191,15 +254,15 @@ sand.globalFunctions = {
 		yCoordinates.push(rect.y + rect.height);
 
 		var coordinates = [];
-		for (x = 0; x < xCoordinates.length; x++) {
-			for (y = 0; y < yCoordinates.length; y++) {
+		for (y = 0; y < yCoordinates.length; y++) {
+			for (x = 0; x < xCoordinates.length; x++) {
 				coordinates.push({
 					x: xCoordinates[x],
 					y: yCoordinates[y]
 				})
 			}
 		}
-		
+
 		var regionNames = [];
 		for (var i = 0; i < coordinates.length; i++) {
 			var item = sand.globalFunctions.findRegionNameFromAbsolutePosition(coordinates[i]);

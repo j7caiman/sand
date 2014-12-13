@@ -45,11 +45,11 @@ var GameScene = cc.Scene.extend({
 		this._super();
 
 		var backgroundPosition = sand.currentRegion.getSprite();
-		var positionOnCanvas = {
+		var positionOnCurrentRegionCanvas = {
 			x: sand.elephantLayer.playerSprite.x - backgroundPosition.x,
 			y: (sand.elephantLayer.playerSprite.y - sand.elephantLayer.playerSprite.width / 4) - backgroundPosition.y // slightly offset footprints from player
 		};
-		var globalCoordinates = sand.globalFunctions.toGlobalCoordinates(positionOnCanvas);
+		var globalCoordinates = sand.globalFunctions.toGlobalCoordinates(positionOnCurrentRegionCanvas);
 		if (sand.globalCoordinates.x != globalCoordinates.x
 		 || sand.globalCoordinates.y != globalCoordinates.y) {
 
@@ -72,11 +72,11 @@ var GameScene = cc.Scene.extend({
 					|| position.x < 0
 					|| position.y < 0;
 			}
-			if(isOutOfBounds(positionOnCanvas)) {
+			if(isOutOfBounds(positionOnCurrentRegionCanvas)) {
 				function mod(n, mod) { return ((mod % n) + n) % n; }
 				var differenceInLocation = {
-					x: mod(sand.constants.kCanvasWidth, positionOnCanvas.x) - positionOnCanvas.x,
-					y: mod(sand.constants.kCanvasWidth, positionOnCanvas.y) - positionOnCanvas.y
+					x: mod(sand.constants.kCanvasWidth, positionOnCurrentRegionCanvas.x) - positionOnCurrentRegionCanvas.x,
+					y: mod(sand.constants.kCanvasWidth, positionOnCurrentRegionCanvas.y) - positionOnCurrentRegionCanvas.y
 				};
 
 				var newBackgroundPosition = {
@@ -86,7 +86,7 @@ var GameScene = cc.Scene.extend({
 
 				var newRegionName = sand.globalFunctions.findRegionNameFromAbsolutePosition(sand.globalCoordinates);
 				sand.currentRegion = sand.allRegions[newRegionName];
-				sand.backgroundLayer.initializeSpriteLocations(newBackgroundPosition);
+				sand.currentRegion.getSprite().setPosition(newBackgroundPosition);
 			}
 
 			this.addRegionsThrottler.throttle(sand.globalFunctions.addMoreRegions);
@@ -119,7 +119,7 @@ var GameScene = cc.Scene.extend({
 			sand.batchedFootprints = [];
 		}
 
-		sand.backgroundLayer.updateAdjacentSpriteLocations();
+		sand.globalFunctions.updateBackgroundSpriteLocations();
 	},
 
 	//calls "callback" roughly every 'delayMillis'

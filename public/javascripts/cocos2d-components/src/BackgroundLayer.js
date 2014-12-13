@@ -27,11 +27,12 @@ var BackgroundLayer = cc.Layer.extend({
 	init: function () {
 		this._super();
 
-		var localPlayerPosition = sand.globalFunctions.toLocalCoordinates(sand.globalCoordinates);
-		this.initializeSpriteLocations({
-			x: sand.constants.kViewportWidth / 2 - localPlayerPosition.x,
-			y: sand.constants.kViewportHeight / 2 - localPlayerPosition.y
-		});
+		var allRegions = sand.allRegions;
+		for(var region in allRegions) {
+			if(allRegions.hasOwnProperty(region)) {
+				this.addChild(allRegions[region].getSprite());
+			}
+		}
 
 		/**
 		 * Custom listener reacts to scroll commands.
@@ -42,21 +43,21 @@ var BackgroundLayer = cc.Layer.extend({
 			eventName: "scrollTrigger",
 			callback: function (event) {
 				var spritesToScroll = (function getAllScrollableSprites() {
-					var allSprites = [];
+					var sprites = [];
 					var allRegions = sand.allRegions;
 					for (var regionName in allRegions) {
-						if (allRegions.hasOwnProperty(regionName) && allRegions[regionName].getSprite() !== undefined) {
-							allSprites.push(allRegions[regionName].getSprite());
+						if (allRegions.hasOwnProperty(regionName)) {
+							sprites.push(allRegions[regionName].getSprite());
 						}
 					}
 					var otherPlayers = sand.otherPlayers;
 					for (var uuid in otherPlayers) {
 						if (otherPlayers.hasOwnProperty(uuid)) {
-							allSprites.push(otherPlayers[uuid]);
+							sprites.push(otherPlayers[uuid]);
 						}
 					}
-					allSprites.push(sand.elephantLayer.playerSprite);
-					return allSprites;
+					sprites.push(sand.elephantLayer.playerSprite);
+					return sprites;
 				})();
 
 				spritesToScroll.forEach(function (sprite) {
@@ -80,52 +81,5 @@ var BackgroundLayer = cc.Layer.extend({
 				});
 			}
 		}, this);
-	},
-
-	initializeSpriteLocations: function(position) {
-		var centerSprite = sand.currentRegion.getSprite();
-		if(this.getChildByName(centerSprite.getName()) === null) {
-			this.addChild(centerSprite);
-		}
-		centerSprite.setName(sand.currentRegion.getName());
-		centerSprite.getTexture().initWithElement(sand.currentRegion.getCanvas());
-		centerSprite.getTexture().handleLoadedTexture();
-
-		centerSprite.setPosition(position.x, position.y);
-
-		sand.currentRegion.getAdjacentNodes().forEach(function (region) {
-			if(region !== undefined) {
-				var sprite = region.getSprite();
-				if(this.getChildByName(sprite.getName()) === null) {
-					this.addChild(sprite);
-				}
-				sprite.setName(region.getName());
-				sprite.getTexture().initWithElement(region.getCanvas());
-				sprite.getTexture().handleLoadedTexture();
-			}
-		}, this);
-
-		this.updateAdjacentSpriteLocations();
-	},
-
-	updateAdjacentSpriteLocations: function() {
-		var adjacentSprites = sand.currentRegion.getAdjacentNodes().map(function (region) {
-			if(region !== undefined) {
-				return region.getSprite();
-			} else {
-				return undefined;
-			}
-		});
-
-		(function setAdjacentSpriteCoordinates(sprites, center, offset) {
-			if(sprites[0] !== undefined) { sprites[0].setPosition(center.x + offset, center.y + offset);}	// northeast region
-			if(sprites[1] !== undefined) { sprites[1].setPosition(center.x + 0,      center.y + offset);}	// north region
-			if(sprites[2] !== undefined) { sprites[2].setPosition(center.x - offset, center.y + offset);}	// northwest region
-			if(sprites[3] !== undefined) { sprites[3].setPosition(center.x - offset, center.y + 0);}		// west region
-			if(sprites[4] !== undefined) { sprites[4].setPosition(center.x - offset, center.y - offset);}	// southwest region
-			if(sprites[5] !== undefined) { sprites[5].setPosition(center.x + 0,      center.y - offset);}	// south region
-			if(sprites[6] !== undefined) { sprites[6].setPosition(center.x + offset, center.y - offset);}	// southeast region
-			if(sprites[7] !== undefined) { sprites[7].setPosition(center.x + offset, center.y + 0);}		// east region
-		})(adjacentSprites, sand.currentRegion.getSprite(), sand.constants.kCanvasWidth);
 	}
 });

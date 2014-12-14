@@ -110,14 +110,14 @@ var ElephantLayer = cc.Layer.extend({
 		}, this);
 	},
 
-	createElephant: function(position) {
+	createElephant: function(position, tag) { // tag is an optional parameter
 		var sprite = new cc.Sprite("#elephant_sprite_sheet_01.png");
 
 		// note: anchor point is at the center of the sprite
 		sprite.setPosition(position);
 		sprite.setScale(1.5);
 
-		this.addChild(sprite);
+		this.addChild(sprite, undefined, tag);
 		return sprite;
 	},
 

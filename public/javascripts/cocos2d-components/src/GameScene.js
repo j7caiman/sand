@@ -14,26 +14,59 @@ var GameScene = cc.Scene.extend({
 
 		this.scheduleUpdate();
 
-		sand.socket.on('playerData', function (playerData) {
-			var localPosition = sand.globalFunctions.toLocalCoordinates(playerData.lastPosition);
+		sand.socket = io();
+		sand.socket.emit('playerData', {
+			uuid: sand.uuid,
+			lastPosition: sand.globalCoordinates
+		});
+
+		function determineOtherPlayerLocation(globalPosition) {
+			var localPosition = sand.globalFunctions.toLocalCoordinates(globalPosition);
 			var currentViewport = sand.currentRegion.getSprite().getPosition();
-			var locationOnPlayerScreen = {
+			return {
 				x: currentViewport.x + localPosition.x,
 				y: currentViewport.y + localPosition.y
 			};
+		}
 
+		sand.socket.on('onConnect', function (currentPlayers) {
+			sand.otherPlayers = {};
+			/**
+			 * tags cannot be strings, and 'removeChildByName' is not in the API, so in order to remove players once
+			 * they disconnect, they must have a reference which is a unique integer.
+			 */
+			sand.cocosTagCounter = 0;
+
+			currentPlayers.forEach(function(playerData) {
+				var location = determineOtherPlayerLocation(playerData.lastPosition);
+				sand.otherPlayers[playerData.uuid] = sand.elephantLayer.createElephant(
+					location,
+					sand.cocosTagCounter++);
+			});
+		});
+
+		sand.socket.on('playerData', function (playerData) {
+			var location = determineOtherPlayerLocation(playerData.lastPosition);
 			if(sand.otherPlayers[playerData.uuid] === undefined) {
-				sand.otherPlayers[playerData.uuid] = sand.elephantLayer.createElephant(locationOnPlayerScreen)
+				sand.otherPlayers[playerData.uuid] = sand.elephantLayer.createElephant(
+					location,
+					sand.cocosTagCounter++);
 			} else {
 				var otherPlayerSprite = sand.otherPlayers[playerData.uuid];
 				if(!otherPlayerSprite.getActionByTag("moveElephant")) {
-					sand.elephantLayer.moveElephant(otherPlayerSprite, locationOnPlayerScreen);
+					sand.elephantLayer.moveElephant(otherPlayerSprite, location);
 				}
 			}
 		});
 
 		sand.socket.on('footprint', function (footprintData) {
 			sand.batchedFootprints.push(footprintData);
+		});
+
+		sand.socket.on('playerDisconnected', function (uuid) {
+			var spriteTag = sand.otherPlayers[uuid].getTag();
+			sand.elephantLayer.removeChildByTag(spriteTag);
+			delete sand.otherPlayers[uuid];
 		});
 
 		this.cookiesThrottler = new this.Throttler(100);

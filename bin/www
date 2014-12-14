@@ -8,13 +8,30 @@ var server = app.listen(app.get('port'), function () {
 	debug('Express server listening on port ' + server.address().port);
 });
 
+
 var io = require('socket.io')(server);
+var connectedClients = {};
 io.on('connection', function (socket) {
+	var currentPlayers = [];
+	for(var socketId in connectedClients) {
+		if(connectedClients.hasOwnProperty(socketId)) {
+			var playerData = connectedClients[socketId];
+			currentPlayers.push(playerData);
+		}
+	}
+	socket.emit('onConnect', currentPlayers);
+
 	socket.on('playerData', function (playerData) {
+		connectedClients[socket.id] = playerData;
 		socket.broadcast.emit('playerData', playerData);
 	});
 
 	socket.on('footprint', function (footprintData) {
 		socket.broadcast.emit('footprint', footprintData);
+	});
+
+	socket.on('disconnect', function() {
+		io.emit('playerDisconnected', connectedClients[socket.id].uuid);
+		delete connectedClients[socket.id];
 	});
 });

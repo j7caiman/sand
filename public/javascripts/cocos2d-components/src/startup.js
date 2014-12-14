@@ -1,6 +1,5 @@
 var sand = {
 	allRegions: {},
-	otherPlayers: {},
 	batchedFootprints: [],
 
 	constants: {
@@ -13,8 +12,7 @@ var sand = {
 		kElephantSpeed: 25,
 		kScrollSpeed: 50,
 		kBeginScrollThreshold: 150 // distance from edge to start scrolling toward player
-	},
-	socket: io()
+	}
 };
 
 $(document).ready(function() {

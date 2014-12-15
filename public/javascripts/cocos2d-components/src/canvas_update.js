@@ -38,7 +38,10 @@ sand.canvasUpdate = {
 					}
 				})(regionLocal, rectLocal);
 
-				sand.canvasUpdate.drawRegionToCanvas(region, intersectRect);
+				//check that the draw rectangle has a nonzero area
+				if (intersectRect.width != 0 && intersectRect.height != 0) {
+					sand.canvasUpdate.drawRegionToCanvas(region, intersectRect);
+				}
 			}
 		});
 	},

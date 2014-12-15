@@ -53,7 +53,7 @@ var BackgroundLayer = cc.Layer.extend({
 					var otherPlayers = sand.otherPlayers;
 					for (var uuid in otherPlayers) {
 						if (otherPlayers.hasOwnProperty(uuid)) {
-							sprites.push(otherPlayers[uuid]);
+							sprites.push(otherPlayers[uuid].sprite);
 						}
 					}
 					sprites.push(sand.elephantLayer.playerSprite);

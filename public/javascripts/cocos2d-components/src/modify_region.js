@@ -1,11 +1,14 @@
 sand.modifyRegion = {
 	makeFootprint: function (changedArea, globalPosition) {
 		var regionNames = sand.globalFunctions.findRegionsInRect(changedArea);
-		for (var i = 0; i < regionNames.length; i++) {
-			var region = sand.allRegions[regionNames[i]];
-			var localPosition = sand.globalFunctions.toLocalCoordinates(globalPosition, region);
-			sand.modifyRegion.imprintSphere(region.getData(), localPosition, 12);
-		}
+		regionNames.forEach(function(regionName) {
+			var region = sand.allRegions[regionName];
+			// region not guaranteed to be loaded, since the rectangle may reference an area beyond the player
+			if(region !== undefined) {
+				var localPosition = sand.globalFunctions.toLocalCoordinates(globalPosition, region);
+				sand.modifyRegion.imprintSphere(region.getData(), localPosition, 12);
+			}
+		});
 	},
 
 	/**

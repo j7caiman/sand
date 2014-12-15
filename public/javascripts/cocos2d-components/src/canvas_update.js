@@ -4,40 +4,43 @@ sand.canvasUpdate = {
 	 */
 	updateHtmlCanvases: function (rectToDraw) {
 		var regionNames = sand.globalFunctions.findRegionsInRect(rectToDraw);
-		for (var i = 0; i < regionNames.length; i++) {
-			var region = sand.allRegions[regionNames[i]];
-			var rectLocal = sand.globalFunctions.toLocalCoordinates({x: rectToDraw.x, y: rectToDraw.y}, region);
-			rectLocal.width = rectToDraw.width;
-			rectLocal.height = rectToDraw.height;
+		regionNames.forEach(function (regionName) {
+			var region = sand.allRegions[regionName];
+			// region not guaranteed to be loaded, since the rectangle may reference an area beyond the player
+			if (region !== undefined) {
+				var rectLocal = sand.globalFunctions.toLocalCoordinates({x: rectToDraw.x, y: rectToDraw.y}, region);
+				rectLocal.width = rectToDraw.width;
+				rectLocal.height = rectToDraw.height;
 
-			var regionLocal = {
-				x: 0,
-				y: 0,
-				width: sand.constants.kCanvasWidth,
-				height: (sand.constants.kCanvasWidth)
-			};
-
-			var intersectRect = (function computeIntersectRect(r1, r2) {
-				var bottomLeft = {
-					x: r1.x > r2.x ? r1.x : r2.x,
-					y: r1.y > r2.y ? r1.y : r2.y
+				var regionLocal = {
+					x: 0,
+					y: 0,
+					width: sand.constants.kCanvasWidth,
+					height: (sand.constants.kCanvasWidth)
 				};
 
-				var topRight = {
-					x: (r1.x + r1.width) < (r2.x + r2.width) ? (r1.x + r1.width) : (r2.x + r2.width),
-					y: (r1.y + r1.height) < (r2.y + r2.height) ? (r1.y + r1.height) : (r2.y + r2.height)
-				};
+				var intersectRect = (function computeIntersectRect(r1, r2) {
+					var bottomLeft = {
+						x: r1.x > r2.x ? r1.x : r2.x,
+						y: r1.y > r2.y ? r1.y : r2.y
+					};
 
-				return {
-					x: Math.floor(bottomLeft.x),
-					y: Math.floor(bottomLeft.y),
-					width: Math.ceil(topRight.x - bottomLeft.x),
-					height: Math.ceil(topRight.y - bottomLeft.y)
-				}
-			})(regionLocal, rectLocal);
+					var topRight = {
+						x: (r1.x + r1.width) < (r2.x + r2.width) ? (r1.x + r1.width) : (r2.x + r2.width),
+						y: (r1.y + r1.height) < (r2.y + r2.height) ? (r1.y + r1.height) : (r2.y + r2.height)
+					};
 
-			sand.canvasUpdate.drawRegionToCanvas(region, intersectRect);
-		}
+					return {
+						x: Math.floor(bottomLeft.x),
+						y: Math.floor(bottomLeft.y),
+						width: Math.ceil(topRight.x - bottomLeft.x),
+						height: Math.ceil(topRight.y - bottomLeft.y)
+					}
+				})(regionLocal, rectLocal);
+
+				sand.canvasUpdate.drawRegionToCanvas(region, intersectRect);
+			}
+		});
 	},
 
 	drawRegionToCanvas: function (region, rectToDraw) {

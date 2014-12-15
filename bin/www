@@ -31,7 +31,11 @@ io.on('connection', function (socket) {
 	});
 
 	socket.on('disconnect', function() {
-		io.emit('playerDisconnected', connectedClients[socket.id].uuid);
-		delete connectedClients[socket.id];
+		// if the server is restarted while clients are connected, connectedClients will be empty and
+		// a client who disconnects will cause this exception
+		if(connectedClients[socket.id] !== undefined) {
+			io.emit('playerDisconnected', connectedClients[socket.id].uuid);
+			delete connectedClients[socket.id];
+		}
 	});
 });

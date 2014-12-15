@@ -121,7 +121,7 @@ var ElephantLayer = cc.Layer.extend({
 		return sprite;
 	},
 
-	moveElephant: function(sprite, destination) {
+	moveElephant: function(sprite, destination, duration) {
 		var elephantPosition = sprite.getPosition();
 		var mousePosition = destination;
 
@@ -141,7 +141,9 @@ var ElephantLayer = cc.Layer.extend({
 			};
 		})(elephantPosition, mousePosition);
 
-		var duration = distance.total / sand.constants.kElephantSpeed;
+		if(duration === undefined) {
+			duration = distance.total / sand.constants.kElephantSpeed;
+		}
 
 		var animationTag;
 		var moveAnimation;

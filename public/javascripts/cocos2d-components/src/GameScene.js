@@ -39,23 +39,40 @@ var GameScene = cc.Scene.extend({
 
 			currentPlayers.forEach(function(playerData) {
 				var location = determineOtherPlayerLocation(playerData.lastPosition);
-				sand.otherPlayers[playerData.uuid] = sand.elephantLayer.createElephant(
-					location,
-					sand.cocosTagCounter++);
+				sand.otherPlayers[playerData.uuid] =  {
+					sprite: sand.elephantLayer.createElephant(location, sand.cocosTagCounter++),
+					timeSinceLastCommand: Date.now()
+				};
 			});
 		});
 
 		sand.socket.on('playerData', function (playerData) {
 			var location = determineOtherPlayerLocation(playerData.lastPosition);
 			if(sand.otherPlayers[playerData.uuid] === undefined) {
-				sand.otherPlayers[playerData.uuid] = sand.elephantLayer.createElephant(
-					location,
-					sand.cocosTagCounter++);
+				sand.otherPlayers[playerData.uuid] =  {
+					sprite: sand.elephantLayer.createElephant(location, sand.cocosTagCounter++),
+					timeSinceLastCommand: Date.now()
+				};
 			} else {
-				var otherPlayerSprite = sand.otherPlayers[playerData.uuid];
-				if(!otherPlayerSprite.getActionByTag("moveElephant")) {
-					sand.elephantLayer.moveElephant(otherPlayerSprite, location);
+				var otherPlayer = sand.otherPlayers[playerData.uuid];
+				var now = Date.now();
+				/**
+				 * If an elephant has been standing still and gets a new position to move to,
+				 * begin to move it to the new location at the default speed.
+				 * However, if an elephant is currently moving and receives a new position,
+				 * cancel the last move command and move it for a duration equal to the
+				 * time difference between when it received its last position and its most
+				 * recent one. This way, if the last position was received late due to lag, the
+				 * elephant won't fall behind too far, since it will move faster to
+				 * compensate.
+				 */
+				if(!otherPlayer.sprite.getActionByTag("moveElephant")) {
+					sand.elephantLayer.moveElephant(otherPlayer.sprite, location);
+				} else {
+					var duration = (now - otherPlayer.timeSinceLastCommand) / 1000;
+					sand.elephantLayer.moveElephant(otherPlayer.sprite, location, duration);
 				}
+				otherPlayer.timeSinceLastCommand = now;
 			}
 		});
 
@@ -64,7 +81,7 @@ var GameScene = cc.Scene.extend({
 		});
 
 		sand.socket.on('playerDisconnected', function (uuid) {
-			var spriteTag = sand.otherPlayers[uuid].getTag();
+			var spriteTag = sand.otherPlayers[uuid].sprite.getTag();
 			sand.elephantLayer.removeChildByTag(spriteTag);
 			delete sand.otherPlayers[uuid];
 		});

@@ -17,7 +17,10 @@ var GameScene = cc.Scene.extend({
 		sand.socket = io();
 		sand.socket.emit('playerData', {
 			uuid: sand.uuid,
-			lastPosition: sand.globalCoordinates
+			lastPosition: {
+				x: Math.round(sand.globalCoordinates.x),
+				y: Math.round(sand.globalCoordinates.y)
+			}
 		});
 
 		function determineOtherPlayerLocation(globalPosition) {
@@ -86,7 +89,7 @@ var GameScene = cc.Scene.extend({
 			delete sand.otherPlayers[uuid];
 		});
 
-		this.cookiesThrottler = new this.Throttler(100);
+		this.positionEmitterThrottler = new this.Throttler(100);
 		this.savePlayerThrottler = new this.Throttler(1000);
 		this.addRegionsThrottler = new this.Throttler(500);
 	},
@@ -105,13 +108,30 @@ var GameScene = cc.Scene.extend({
 
 			sand.globalCoordinates = globalCoordinates;
 
-			this.cookiesThrottler.throttle(function updateCookiesAndEmitPosition() {
-				var playerData = {
-					uuid: sand.uuid,
-					lastPosition: sand.globalCoordinates
+			this.positionEmitterThrottler.throttle(function updateCookiesAndEmitPosition() {
+				function equalsWithEpsilon(num1, num2, epsilon) {
+					return Math.abs(num1 - num2) < epsilon;
+				}
+
+				// don't sent small movements from rounding errors
+				var roundedGlobalPosition = {
+					x: Math.round(sand.globalCoordinates.x),
+					y: Math.round(sand.globalCoordinates.y)
 				};
-				sand.socket.emit('playerData', playerData);
-				$.cookie('playerData', playerData, {expires: 7});
+
+				if (this.lastEmittedPosition === undefined
+					|| !equalsWithEpsilon(this.lastEmittedPosition.x, roundedGlobalPosition.x, 1)
+					|| !equalsWithEpsilon(this.lastEmittedPosition.y, roundedGlobalPosition.y, 1)) {
+
+					var playerData = {
+						uuid: sand.uuid,
+						lastPosition: roundedGlobalPosition
+					};
+					this.lastEmittedPosition = roundedGlobalPosition;
+
+					sand.socket.emit('playerData', playerData);
+					$.cookie('playerData', playerData, {expires: 7});
+				}
 			}, this);
 
 			this.savePlayerThrottler.throttle(this.savePlayerAndLevel, this);

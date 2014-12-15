@@ -87,7 +87,12 @@ cc.game.onStart = function() {
 sand.globalFunctions = {
 	updateRegionsAndDrawCanvases: function() {
 		sand.batchedFootprints.push(sand.globalCoordinates);
-		sand.socket.emit('footprint', sand.globalCoordinates); // broadcast player's footprint to others
+
+		// broadcast player's footprint to others
+		sand.socket.emit('footprint', {
+			x: Math.round(sand.globalCoordinates.x),
+			y: Math.round(sand.globalCoordinates.y)
+		});
 	},
 
 	addMoreRegions: function (callback) {

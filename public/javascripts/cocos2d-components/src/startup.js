@@ -72,7 +72,6 @@ cc.game.onStart = function() {
 			y: sand.constants.kViewportHeight / 2 - localPlayerPosition.y
 		};
 		sand.currentRegion.getSprite().setPosition(position);
-		sand.globalFunctions.updateBackgroundSpriteLocations();
 
 		cc.screen.requestFullScreen();
 		cc.view.setResolutionPolicy(cc.ResolutionPolicy.NO_BORDER);
@@ -136,12 +135,13 @@ sand.globalFunctions = {
 							sprite.setAnchorPoint(0, 0);
 							sprite.getTexture().initWithElement(allRegions[regionName].getCanvas());
 							sprite.getTexture().handleLoadedTexture();
+							sprite.setVisible(false);
 							allRegions[regionName].setSprite(sprite);
 
 							// on startup, BackgroundLayer has not yet been initialized. In that case, the sprites are
 							// later added during BackgroundLayer's init function.
 							if(sand.backgroundLayer !== undefined) {
-								sand.backgroundLayer.addChild(sprite, -1);
+								sand.backgroundLayer.addChild(sprite);
 							}
 						}
 					}
@@ -172,9 +172,15 @@ sand.globalFunctions = {
 	},
 
 	updateBackgroundSpriteLocations: function() {
+		var playerScreenPosition = sand.elephantLayer.playerSprite.getPosition();
+		var bottomLeftCornerOfViewport = {
+			x:  sand.globalCoordinates.x - playerScreenPosition.x,
+			y:  sand.globalCoordinates.y - playerScreenPosition.y
+		};
+
 		var viewport = {
-			x: sand.globalCoordinates.x - (sand.constants.kViewportWidth / 2),
-			y: sand.globalCoordinates.y - (sand.constants.kViewportHeight / 2),
+			x: bottomLeftCornerOfViewport.x,
+			y: bottomLeftCornerOfViewport.y,
 			width: sand.constants.kViewportWidth,
 			height: sand.constants.kViewportHeight
 		};
@@ -216,7 +222,7 @@ sand.globalFunctions = {
 			var x = currentRegionLocation.x - sand.constants.kCanvasWidth * (currentRegionOffset.x - regionOffset.x);
 			var y = currentRegionLocation.y - sand.constants.kCanvasWidth * (currentRegionOffset.y - regionOffset.y);
 			sprite.setPosition(x, y);
-			sprite.setZOrder(0);
+			sprite.setVisible(true);
 		});
 	},
 

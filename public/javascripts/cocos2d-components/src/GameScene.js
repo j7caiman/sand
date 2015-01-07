@@ -242,10 +242,7 @@ var GameScene = cc.Scene.extend({
 	savePlayerAndLevel: function () {
 		var data = {
 			regionData: sand.currentRegion.getData(),
-			regionCoordinates: {
-				x: sand.currentRegion.x,
-				y: sand.currentRegion.y
-			}
+			regionName: sand.currentRegion.getName()
 		};
 
 		$.ajax({

@@ -293,10 +293,14 @@ sand.globalFunctions = {
 		}
 	},
 
-	toGlobalCoordinates: function(point) {
+	toGlobalCoordinates: function(point, region) {
+		if(region === undefined) { // region is an optional parameter
+			region = sand.currentRegion;
+		}
+
 		return {
-			x: point.x + (sand.currentRegion.x * sand.constants.kCanvasWidth),
-			y: point.y + (sand.currentRegion.y * sand.constants.kCanvasWidth)
+			x: point.x + (region.x * sand.constants.kCanvasWidth),
+			y: point.y + (region.y * sand.constants.kCanvasWidth)
 		}
 	}
 };

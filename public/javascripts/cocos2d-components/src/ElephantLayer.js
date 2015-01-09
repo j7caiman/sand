@@ -102,7 +102,7 @@ var ElephantLayer = cc.Layer.extend({
 			onMouseUp: function(event) {
 				// debug: right click to generate dunes
 				if (event.getButton() == 2) {
-					sand.modifyRegion.generateDunes();
+					sand.modifyRegion.generateLargeDune();
 
 					return;
 				}

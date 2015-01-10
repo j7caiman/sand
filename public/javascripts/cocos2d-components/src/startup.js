@@ -302,5 +302,7 @@ sand.globalFunctions = {
 			x: point.x + (region.x * sand.constants.kCanvasWidth),
 			y: point.y + (region.y * sand.constants.kCanvasWidth)
 		}
-	}
+	},
+
+	mod: function(a, n) { return ((a % n) + n) % n; }
 };

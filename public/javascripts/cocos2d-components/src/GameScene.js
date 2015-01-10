@@ -143,10 +143,9 @@ var GameScene = cc.Scene.extend({
 					|| position.y < 0;
 			}
 			if(isOutOfBounds(positionOnCurrentRegionCanvas)) {
-				function mod(n, mod) { return ((mod % n) + n) % n; }
 				var differenceInLocation = {
-					x: mod(sand.constants.kCanvasWidth, positionOnCurrentRegionCanvas.x) - positionOnCurrentRegionCanvas.x,
-					y: mod(sand.constants.kCanvasWidth, positionOnCurrentRegionCanvas.y) - positionOnCurrentRegionCanvas.y
+					x: sand.globalFunctions.mod(positionOnCurrentRegionCanvas.x, sand.constants.kCanvasWidth) - positionOnCurrentRegionCanvas.x,
+					y: sand.globalFunctions.mod(positionOnCurrentRegionCanvas.y, sand.constants.kCanvasWidth) - positionOnCurrentRegionCanvas.y
 				};
 
 				var newBackgroundPosition = {

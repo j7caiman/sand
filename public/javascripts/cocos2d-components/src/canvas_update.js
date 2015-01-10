@@ -64,9 +64,9 @@ sand.canvasUpdate = {
 		};
 
 		const yellow = {
-			red: 252,
-			green: 246,
-			blue: 56
+			red: 251,
+			green: 190,
+			blue: 127
 		};
 
 		var colorChange = 2000;
@@ -112,14 +112,14 @@ sand.canvasUpdate = {
 		var difference =  depthOfLeftBlock - depthOfCurrentBlock;
 
 		if (difference >= 2) {
-			const dark = 200;
+			const dark = 100;
 			return {
 				red: dark,
 				green: dark,
 				blue: dark
 			}
 		} else if (difference >= 1) {
-			const medium = 100;
+			const medium = 60;
 			return {
 				red: medium,
 				green: medium,
@@ -133,7 +133,7 @@ sand.canvasUpdate = {
 				blue: light
 			}
 		} else {
-			const bright = -20;
+			const bright = -15;
 			return {
 				red: bright,
 				green: bright,

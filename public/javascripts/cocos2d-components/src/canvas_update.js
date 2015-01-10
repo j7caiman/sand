@@ -50,81 +50,106 @@ sand.canvasUpdate = {
 		sand.canvasUpdate.canvasDrawHelper(region, rectToDraw, sand.canvasUpdate.compositeDraw);
 	},
 
-	depthGridGradientDraw: function (blockIndex, region) {
-		var baseColor = 150;
-
-		function makeColorBlocky(color) {
-			var base = Math.floor(color / 16) * 16;
-			base += (color % 2 == 0) ? 20 : 0;
-			return base;
-		}
-
-		return {
-			red: 120 + (region.x * 20) + makeColorBlocky(blockIndex.x / 2),
-			green: baseColor,
-			blue: 100 + (region.y * 20) + makeColorBlocky(blockIndex.y)
+	eternalSunsetDraw: function (sandGrainPosition, region) {
+		const pink = {
+			red: 255,
+			green: 168,
+			blue: 211
 		};
+
+		const cyan = {
+			red: 169,
+			green: 244,
+			blue: 255
+		};
+
+		const yellow = {
+			red: 252,
+			green: 246,
+			blue: 56
+		};
+
+		var colorChange = 2000;
+		var globalSandGrainPosition = {
+			x: (region.x * sand.constants.kRegionWidth) + sandGrainPosition.x,
+			y: (region.y * sand.constants.kRegionWidth) + sandGrainPosition.y
+		};
+
+		var whatever = sand.globalFunctions.mod((globalSandGrainPosition.x + globalSandGrainPosition.y), (colorChange * 3));
+
+		if(whatever < colorChange) {
+			return sand.canvasUpdate._weightedColorAverage(yellow, pink, (whatever / colorChange));
+		} else if(whatever < 2 * colorChange) {
+			return sand.canvasUpdate._weightedColorAverage(pink, cyan, ((whatever - colorChange) / colorChange));
+		} else {
+			return sand.canvasUpdate._weightedColorAverage(cyan, yellow, ((whatever - 2 * colorChange) / colorChange));
+		}
+	},
+
+	_weightedColorAverage: function(color1, color2, weight) {
+		return {
+			red: (color1.red * (1 - weight)) + (color2.red * weight),
+			green: (color1.green * (1 - weight)) + (color2.green *  weight),
+			blue: (color1.blue * (1 - weight)) + (color2.blue * weight)
+		}
 	},
 
 	localDepthDeltaLightingDraw: function (blockIndex, region) {
-		var difference = findDepthDifferenceOfBlockToTheLeft(blockIndex, region);
+		// finds depth difference of block to the left
+		var data = region.getData();
+		var depthOfCurrentBlock = data[blockIndex.y][blockIndex.x];
+		var depthOfLeftBlock;
+		if (blockIndex.x == 0) {
+			var westRegion = region.getAdjacentNodes()[3];
+			if (westRegion !== undefined) {
+				depthOfLeftBlock = westRegion.getData()[blockIndex.y][sand.constants.kRegionWidth - 1];
+			} else {
+				depthOfLeftBlock = 0;
+			}
+		} else {
+			depthOfLeftBlock = data[blockIndex.y][blockIndex.x - 1];
+		}
+		var difference =  depthOfLeftBlock - depthOfCurrentBlock;
 
 		if (difference >= 2) {
-			const dark = 80;
+			const dark = 200;
 			return {
 				red: dark,
 				green: dark,
 				blue: dark
 			}
 		} else if (difference >= 1) {
-			const medium = 150;
+			const medium = 100;
 			return {
 				red: medium,
 				green: medium,
 				blue: medium
 			}
 		} else if (difference >= 0) {
-			const light = 210;
+			const light = 0;
 			return {
 				red: light,
 				green: light,
 				blue: light
 			}
 		} else {
-			const bright = 230;
+			const bright = -20;
 			return {
 				red: bright,
 				green: bright,
 				blue: bright
 			}
 		}
-
-		function findDepthDifferenceOfBlockToTheLeft(blockIndex, region) {
-			var data = region.getData();
-			var depthOfCurrentBlock = data[blockIndex.y][blockIndex.x];
-			var depthOfLeftBlock;
-			if (blockIndex.x == 0) {
-				var westRegion = region.getAdjacentNodes()[3];
-				if (westRegion !== undefined && westRegion.getData() !== undefined) {
-					depthOfLeftBlock = westRegion.getData()[sand.constants.kRegionWidth - 1][blockIndex.x - 1];
-				} else {
-					depthOfLeftBlock = 0;
-				}
-			} else {
-				depthOfLeftBlock = data[blockIndex.y][blockIndex.x - 1];
-			}
-			return depthOfLeftBlock - depthOfCurrentBlock;
-		}
 	},
 
-	compositeDraw: function (region, rectToDraw) {
-		var firstColor = sand.canvasUpdate.localDepthDeltaLightingDraw(region, rectToDraw);
-		var secondColor = sand.canvasUpdate.depthGridGradientDraw(region, rectToDraw);
+	compositeDraw: function (blockIndex, region) {
+		var firstColor = sand.canvasUpdate.eternalSunsetDraw(blockIndex, region);
+		var secondColor = sand.canvasUpdate.localDepthDeltaLightingDraw(blockIndex, region);
 
 		return {
-			red: Math.floor((firstColor.red + secondColor.red) / 2),
-			green: Math.floor((firstColor.green + secondColor.green) / 2),
-			blue: Math.floor((firstColor.blue + secondColor.blue) / 2)
+			red: Math.floor((firstColor.red - secondColor.red)),
+			green: Math.floor((firstColor.green - secondColor.green)),
+			blue: Math.floor((firstColor.blue - secondColor.blue))
 		}
 	},
 

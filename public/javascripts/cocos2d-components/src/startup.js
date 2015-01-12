@@ -86,7 +86,7 @@ cc.game.onStart = function() {
 };
 
 sand.globalFunctions = {
-	addFootprintToQueue: function(location, radius) {
+	addFootprintToQueue: function(location, brushStrokeType) {
 		var roundedLocation = {
 			x: Math.round(location.x),
 			y: Math.round(location.y)
@@ -94,7 +94,7 @@ sand.globalFunctions = {
 
 		var print = {
 			location: roundedLocation,
-			radius: radius
+			brush: brushStrokeType
 		};
 
 		sand.batchedFootprints.push(print);

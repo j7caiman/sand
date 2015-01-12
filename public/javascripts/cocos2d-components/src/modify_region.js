@@ -1,12 +1,27 @@
 sand.modifyRegion = {
-	makeFootprint: function (changedArea, globalPosition, radius) {
+	brushes: {
+		painting: {
+			radius: 8,
+			pointOfImpact: 3
+		},
+
+		walking: {
+			radius: 1.5,
+			pointOfImpact: 0.5
+		}
+	},
+
+	makeFootprint: function (changedArea, globalPosition, brush) {
 		var regionNames = sand.globalFunctions.findRegionsInRect(changedArea);
 		regionNames.forEach(function(regionName) {
 			var region = sand.allRegions[regionName];
 			// region not guaranteed to be loaded, since the rectangle may reference an area beyond the player
 			if(region !== undefined) {
-				var localPosition = sand.globalFunctions.toLocalCoordinates(globalPosition, region);
-				sand.modifyRegion.imprintSphere(region.getData(), localPosition, radius);
+				sand.modifyRegion.imprintSphere(
+					region.getData(),
+					sand.globalFunctions.toLocalCoordinates(globalPosition, region),
+					sand.modifyRegion.brushes[brush].radius,
+					sand.modifyRegion.brushes[brush].pointOfImpact);
 			}
 		});
 	},
@@ -25,9 +40,7 @@ sand.modifyRegion = {
 	 *  - note that in the diagram above, pointOfImpact would be located slightly above the word "follows"
 	 *
 	 */
-	imprintSphere: function (regionData, positionOnCanvas, radius) {
-		const pointOfImpactZ = 4;
-
+	imprintSphere: function (regionData, positionOnCanvas, radius, pointOfImpactZ) {
 		const sandGrainWidth = sand.constants.kCanvasWidth / sand.constants.kRegionWidth; // blocks are square
 		var pointOfImpact = {
 			x: Math.floor(positionOnCanvas.x / sandGrainWidth),

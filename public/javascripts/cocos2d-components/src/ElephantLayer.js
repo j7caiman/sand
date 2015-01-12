@@ -218,15 +218,11 @@ var ElephantLayer = cc.Layer.extend({
 			);
 			var elephantAnimationData = that._chooseElephantAnimationData(angle);
 
-			startPosition = endPosition;
-
 			if (index === 0 && sprite.getActionByTag(elephantAnimationData.animationTag)) {
 				previousElephantAnimationTag = elephantAnimationData.animationTag;
 			}
 
 			if (previousElephantAnimationTag !== elephantAnimationData.animationTag) {
-				previousElephantAnimationTag = elephantAnimationData.animationTag;
-
 				elephantPath.push(cc.callFunc(function () {
 					that._stopAllAnimations(sprite);
 					sprite.flippedX = elephantAnimationData.spriteFlipped;
@@ -236,7 +232,7 @@ var ElephantLayer = cc.Layer.extend({
 					sprite.runAction(walkAnimation);
 				}));
 			}
-			elephantPath.push(cc.moveTo(duration, endPosition));
+			elephantPath.push(cc.moveBy(duration, endPosition.x - startPosition.x, endPosition.y - startPosition.y));
 
 			if (index === 0) {
 				elephantPath.push(cc.callFunc(function () {
@@ -251,6 +247,9 @@ var ElephantLayer = cc.Layer.extend({
 					sand.isPlayerPainting = false;
 				}));
 			}
+
+			previousElephantAnimationTag = elephantAnimationData.animationTag;
+			startPosition = endPosition;
 		});
 
 		sprite.stopActionByTag("moveElephant");

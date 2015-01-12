@@ -1,6 +1,7 @@
 var sand = {
 	allRegions: {},
 	batchedFootprints: [],
+	elephantPath: [],
 
 	constants: {
 		kCanvasWidth: 512, // width of draw canvases
@@ -11,7 +12,8 @@ var sand = {
 		kAffectedRegionWidth: 120,
 		kElephantSpeed: 25,
 		kScrollSpeed: 50,
-		kBeginScrollThreshold: 150 // distance from edge to start scrolling toward player
+		kBeginScrollThreshold: 150, // distance from edge to start scrolling toward player
+		kBrushPathMinimumLineSegmentWidth: 10
 	}
 };
 
@@ -84,14 +86,19 @@ cc.game.onStart = function() {
 };
 
 sand.globalFunctions = {
-	updateRegionsAndDrawCanvases: function() {
-		sand.batchedFootprints.push(sand.globalCoordinates);
+	addFootprintToQueue: function(location, radius) {
+		var roundedLocation = {
+			x: Math.round(location.x),
+			y: Math.round(location.y)
+		};
 
-		// broadcast player's footprint to others
-		sand.socket.emit('footprint', {
-			x: Math.round(sand.globalCoordinates.x),
-			y: Math.round(sand.globalCoordinates.y)
-		});
+		var print = {
+			location: roundedLocation,
+			radius: radius
+		};
+
+		sand.batchedFootprints.push(print);
+		sand.socket.emit('footprint', print);
 	},
 
 	addMoreRegions: function (callback) {
@@ -283,6 +290,10 @@ sand.globalFunctions = {
 		return regionNames;
 	},
 
+	/**
+	 * In this case, local coordinates refers to the point's location relative to the bottom left
+	 * corner of the region.
+	 */
 	toLocalCoordinates: function(point, region) {
 		if(region === undefined) { // region is an optional parameter
 			region = sand.currentRegion;
@@ -304,5 +315,11 @@ sand.globalFunctions = {
 		}
 	},
 
-	mod: function(a, n) { return ((a % n) + n) % n; }
+	mod: function(a, n) { return ((a % n) + n) % n; },
+
+	calculateDistance: function (point1, point2) {
+		var xDelta = point2.x - point1.x;
+		var yDelta = point2.y - point1.y;
+		return Math.sqrt((xDelta * xDelta) + (yDelta * yDelta));
+	}
 };

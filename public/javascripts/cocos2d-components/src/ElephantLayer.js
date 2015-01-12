@@ -2,12 +2,12 @@
  * Layer which listens for the mouse and moves / animates the player character.
  */
 var ElephantLayer = cc.Layer.extend({
-	ctor: function() {
+	ctor: function () {
 		this._super();
 		this.init();
 	},
 
-	init: function() {
+	init: function () {
 		this._super();
 
 		// read sprite sheet from file system
@@ -19,201 +19,277 @@ var ElephantLayer = cc.Layer.extend({
 		});
 		this.playerSprite.setName("player");
 
-		this.animations = {
-			walkNorth: (function () {
-				var frames = [];
-				for (var i = 11; i <= 12; i++) {
-					var name = "elephant_sprite_sheet_" + i + ".png";
-					var frame = cc.spriteFrameCache.getSpriteFrame(name);
-					frames.push(frame);
-				}
-				return new cc.Animation(frames, 0.3);
-			})(),
+		var walkNorth = (function () {
+			var frames = [];
+			for (var i = 11; i <= 12; i++) {
+				var name = "elephant_sprite_sheet_" + i + ".png";
+				var frame = cc.spriteFrameCache.getSpriteFrame(name);
+				frames.push(frame);
+			}
+			return new cc.Animation(frames, 0.3);
+		})();
 
-				walkNorthWest: (function () {
-				var frames = [];
-				for (var i = 10; i <= 10; i++) {
-					var name = "elephant_sprite_sheet_" + i + ".png";
-					var frame = cc.spriteFrameCache.getSpriteFrame(name);
-					frames.push(frame);
-				}
-				return new cc.Animation(frames, 0.3);
-			})(),
+		var standNorth = (function () {
+			var name = "elephant_sprite_sheet_11.png";
+			return cc.spriteFrameCache.getSpriteFrame(name);
+		})();
 
-				walkWest: (function () {
-				var frames = [];
-				for (var i = 2; i <= 9; i++) {
-					var name = "elephant_sprite_sheet_0" + i + ".png";
-					var frame = cc.spriteFrameCache.getSpriteFrame(name);
-					frames.push(frame);
-				}
-				return new cc.Animation(frames, 0.3);
-			})(),
+		var walkNorthwest = (function () {
+			var frames = [];
+			for (var i = 10; i <= 10; i++) {
+				var name = "elephant_sprite_sheet_" + i + ".png";
+				var frame = cc.spriteFrameCache.getSpriteFrame(name);
+				frames.push(frame);
+			}
+			return new cc.Animation(frames, 0.3);
+		})();
 
-				walkSouthWest: (function () {
-				var frames = [];
-				for (var i = 14; i <= 14; i++) {
-					var name = "elephant_sprite_sheet_" + i + ".png";
-					var frame = cc.spriteFrameCache.getSpriteFrame(name);
-					frames.push(frame);
-				}
-				return new cc.Animation(frames, 0.3);
-			})(),
+		var standNorthwest = (function () {
+			var name = "elephant_sprite_sheet_10.png";
+			return cc.spriteFrameCache.getSpriteFrame(name);
+		})();
 
-				walkSouth: (function () {
-				var frames = [];
-				for (var i = 15; i <= 16; i++) {
-					var name = "elephant_sprite_sheet_" + i + ".png";
-					var frame = cc.spriteFrameCache.getSpriteFrame(name);
-					frames.push(frame);
-				}
-				return new cc.Animation(frames, 0.3);
-			})(),
+		var walkWest = (function () {
+			var frames = [];
+			for (var i = 2; i <= 9; i++) {
+				var name = "elephant_sprite_sheet_0" + i + ".png";
+				var frame = cc.spriteFrameCache.getSpriteFrame(name);
+				frames.push(frame);
+			}
+			return new cc.Animation(frames, 0.3);
+		})();
 
-				standNorth: (function () {
-				var name = "elephant_sprite_sheet_11.png";
-				return cc.spriteFrameCache.getSpriteFrame(name);
-			})(),
+		var standWest = (function () {
+			var name = "elephant_sprite_sheet_01.png";
+			return cc.spriteFrameCache.getSpriteFrame(name);
+		})();
 
-				standNorthWest: (function () {
-				var name = "elephant_sprite_sheet_10.png";
-				return cc.spriteFrameCache.getSpriteFrame(name);
-			})(),
+		var walkSouthwest = (function () {
+			var frames = [];
+			for (var i = 14; i <= 14; i++) {
+				var name = "elephant_sprite_sheet_" + i + ".png";
+				var frame = cc.spriteFrameCache.getSpriteFrame(name);
+				frames.push(frame);
+			}
+			return new cc.Animation(frames, 0.3);
+		})();
 
-				standWest: (function () {
-				var name = "elephant_sprite_sheet_01.png";
-				return cc.spriteFrameCache.getSpriteFrame(name);
-			})(),
+		var standSouthwest = (function () {
+			var name = "elephant_sprite_sheet_14.png";
+			return cc.spriteFrameCache.getSpriteFrame(name);
+		})();
 
-				standSouthWest: (function () {
-				var name = "elephant_sprite_sheet_14.png";
-				return cc.spriteFrameCache.getSpriteFrame(name);
-			})(),
+		var walkSouth = (function () {
+			var frames = [];
+			for (var i = 15; i <= 16; i++) {
+				var name = "elephant_sprite_sheet_" + i + ".png";
+				var frame = cc.spriteFrameCache.getSpriteFrame(name);
+				frames.push(frame);
+			}
+			return new cc.Animation(frames, 0.3);
+		})();
 
-				standSouth: (function () {
-				var name = "elephant_sprite_sheet_15.png";
-				return cc.spriteFrameCache.getSpriteFrame(name);
-			})()
+		var standSouth = (function () {
+			var name = "elephant_sprite_sheet_15.png";
+			return cc.spriteFrameCache.getSpriteFrame(name);
+		})();
+
+		this.elephantAnimationData = {
+			north: {
+				walkAnimation: walkNorth,
+				standFrame: standNorth,
+				animationTag: "animate_north",
+				spriteFlipped: false
+			},
+
+			northwest: {
+				walkAnimation: walkNorthwest,
+				standFrame: standNorthwest,
+				animationTag: "animate_northwest",
+				spriteFlipped: false
+			},
+
+			west: {
+				walkAnimation: walkWest,
+				standFrame: standWest,
+				animationTag: "animate_west",
+				spriteFlipped: false
+			},
+
+			southwest: {
+				walkAnimation: walkSouthwest,
+				standFrame: standSouthwest,
+				animationTag: "animate_southwest",
+				spriteFlipped: false
+			},
+
+			south: {
+				walkAnimation: walkSouth,
+				standFrame: standSouth,
+				animationTag: "animate_south",
+				spriteFlipped: false
+			},
+
+			southeast: {
+				walkAnimation: walkSouthwest,
+				standFrame: standSouthwest,
+				animationTag: "animate_southeast",
+				spriteFlipped: true
+			},
+
+			east: {
+				walkAnimation: walkWest,
+				standFrame: standWest,
+				animationTag: "animate_east",
+				spriteFlipped: true
+			},
+
+			northeast: {
+				walkAnimation: walkNorthwest,
+				standFrame: standNorthwest,
+				animationTag: "animate_northeast",
+				spriteFlipped: true
+			}
 		};
 
 		// set up listener to trigger animations
 		cc.eventManager.addListener({
 			event: cc.EventListener.MOUSE,
-			onMouseUp: function(event) {
+
+			onMouseDown: function (event) {
+				sand.elephantPath = [];
+				sand.elephantPath.push(event.getLocation());
+			},
+
+			onMouseMove: function (event) {
+				if (event.getButton() == 0) { // left click
+					var lastVertex = sand.elephantPath[sand.elephantPath.length - 1];
+					var distance = sand.globalFunctions.calculateDistance(lastVertex, event.getLocation());
+					if (distance >= sand.constants.kBrushPathMinimumLineSegmentWidth) {
+						sand.elephantPath.push(event.getLocation());
+					}
+				}
+			},
+
+			onMouseUp: function (event) {
 				// debug: right click to generate dunes
 				if (event.getButton() == 2) {
 					sand.modifyRegion.generateLargeDune();
-
 					return;
 				}
 
 				var sprite = sand.elephantLayer.playerSprite;
-				sand.elephantLayer.moveElephant(sprite, event.getLocation());
-
-				sprite.schedule(
-					sand.globalFunctions.updateRegionsAndDrawCanvases,
-					0.25); //every 250 milliseconds
+				if (sand.elephantPath.length === 1) {
+					sand.elephantLayer.moveElephantToLocation(sprite, sand.elephantPath[0]);
+				} else {
+					sand.elephantLayer.moveElephantAlongPath(sprite, sand.elephantPath);
+				}
 			}
 		}, this);
 	},
 
-	createElephant: function(position, tag) { // tag is an optional parameter
+	createElephant: function (position, tag) { // tag is an optional parameter
 		var sprite = new cc.Sprite("#elephant_sprite_sheet_01.png");
 
-		// note: anchor point is at the center of the sprite
 		sprite.setPosition(position);
 		sprite.setScale(1.5);
+		sprite.setAnchorPoint(0.5, 0.5);
 
 		this.addChild(sprite, undefined, tag);
 		return sprite;
 	},
 
-	moveElephant: function(sprite, destination, duration) {
+	moveElephantAlongPath: function (sprite, brushStrokePath) {
+		var that = this;
+
+		var startPosition = sprite.getPosition();
+		var endPosition;
+		var previousElephantAnimationTag;
+
+		var elephantPath = [];
+		brushStrokePath.forEach(function (element, index) {
+			endPosition = element;
+			var distance = sand.globalFunctions.calculateDistance(startPosition, endPosition);
+			var duration = distance / sand.constants.kElephantSpeed;
+
+			var angle = Math.atan2(
+				endPosition.y - startPosition.y,
+				endPosition.x - startPosition.x
+			);
+			var elephantAnimationData = that._chooseElephantAnimationData(angle);
+
+			startPosition = endPosition;
+
+			if (index === 0 && sprite.getActionByTag(elephantAnimationData.animationTag)) {
+				previousElephantAnimationTag = elephantAnimationData.animationTag;
+			}
+
+			if (previousElephantAnimationTag !== elephantAnimationData.animationTag) {
+				previousElephantAnimationTag = elephantAnimationData.animationTag;
+
+				elephantPath.push(cc.callFunc(function () {
+					that._stopAllAnimations(sprite);
+					sprite.flippedX = elephantAnimationData.spriteFlipped;
+
+					var walkAnimation = cc.animate(elephantAnimationData.walkAnimation).repeatForever();
+					walkAnimation.setTag(elephantAnimationData.animationTag);
+					sprite.runAction(walkAnimation);
+				}));
+			}
+			elephantPath.push(cc.moveTo(duration, endPosition));
+
+			if (index === 0) {
+				elephantPath.push(cc.callFunc(function () {
+					sand.isPlayerPainting = true;
+				}));
+			}
+
+			if (index === brushStrokePath.length - 1) {
+				elephantPath.push(cc.callFunc(function () {
+					that._stopAllAnimations(sprite);
+					sprite.setSpriteFrame(elephantAnimationData.standFrame);
+					sand.isPlayerPainting = false;
+				}));
+			}
+		});
+
+		sprite.stopActionByTag("moveElephant");
+		var action = cc.sequence(elephantPath);
+		action.setTag("moveElephant");
+		sprite.runAction(action);
+	},
+
+	moveElephantToLocation: function (sprite, destination, duration) {
+		var that = this;
+
 		var elephantPosition = sprite.getPosition();
-		var mousePosition = destination;
+
+		var distance = sand.globalFunctions.calculateDistance(elephantPosition, destination);
+		if (duration === undefined) {
+			duration = distance / sand.constants.kElephantSpeed;
+		}
 
 		var angle = Math.atan2(
-			mousePosition.y - elephantPosition.y,
-			mousePosition.x - elephantPosition.x
+			destination.y - elephantPosition.y,
+			destination.x - elephantPosition.x
 		);
+		var elephantAnimationData = that._chooseElephantAnimationData(angle);
 
-		var distance = (function(point1, point2) {
-			var xDelta = point2.x - point1.x;
-			var yDelta = point2.y - point1.y;
+		/**
+		 * If the elephant is already walking in the same direction as this new
+		 * command arrives, don't restart the animation.
+		 */
+		if (!sprite.getActionByTag(elephantAnimationData.animationTag)) {
+			/**
+			 * If the elephant isn't currently walking or is walking a different
+			 * direction, stop the animation and start a new one.
+			 */
+			that._stopAllAnimations(sprite);
 
-			return {
-				total: Math.sqrt( (xDelta * xDelta) + (yDelta * yDelta) ),
-				x: Math.abs(xDelta),
-				y: Math.abs(yDelta)
-			};
-		})(elephantPosition, mousePosition);
-
-		if(duration === undefined) {
-			duration = distance.total / sand.constants.kElephantSpeed;
-		}
-
-		var animationTag;
-		var moveAnimation;
-		var frameAfterMove;
-		if (Math.abs(angle) > 7 * Math.PI / 8) {
-			animationTag = "animate_west";
-			moveAnimation = this.animations.walkWest;
-			frameAfterMove = this.animations.standWest;
-			sprite.flippedX = false;
-		} else if (angle < -5 * Math.PI / 8) {
-			animationTag = "animate_southwest";
-			moveAnimation = this.animations.walkSouthWest;
-			frameAfterMove = this.animations.standSouthWest;
-			sprite.flippedX = false;
-		} else if (angle < -3 * Math.PI / 8) {
-			animationTag = "animate_south";
-			moveAnimation = this.animations.walkSouth;
-			frameAfterMove = this.animations.standSouth;
-			sprite.flippedX = false;
-		} else if (angle < -Math.PI / 8) {
-			animationTag = "animate_southeast";
-			moveAnimation = this.animations.walkSouthWest;
-			frameAfterMove = this.animations.standSouthWest;
-			sprite.flippedX = true;
-		} else if (angle < Math.PI / 8) {
-			animationTag = "animate_east";
-			moveAnimation = this.animations.walkWest;
-			frameAfterMove = this.animations.standWest;
-			sprite.flippedX = true;
-		} else if (angle < 3 * Math.PI / 8) {
-			animationTag = "animate_northeast";
-			moveAnimation = this.animations.walkNorthWest;
-			frameAfterMove = this.animations.standNorthWest;
-			sprite.flippedX = true;
-		} else if (angle < 5 * Math.PI / 8) {
-			animationTag = "animate_north";
-			moveAnimation = this.animations.walkNorth;
-			frameAfterMove = this.animations.standNorth;
-			sprite.flippedX = false;
-		} else {
-			animationTag = "animate_northwest";
-			moveAnimation = this.animations.walkNorthWest;
-			frameAfterMove = this.animations.standNorthWest;
-			sprite.flippedX = false;
-		}
-
-		function stopAllAnimations() {
-			sprite.stopActionByTag("animate_west");
-			sprite.stopActionByTag("animate_southwest");
-			sprite.stopActionByTag("animate_south");
-			sprite.stopActionByTag("animate_southeast");
-			sprite.stopActionByTag("animate_east");
-			sprite.stopActionByTag("animate_northeast");
-			sprite.stopActionByTag("animate_north");
-			sprite.stopActionByTag("animate_northwest");
-		}
-
-		if(!sprite.getActionByTag(animationTag)) {
-			stopAllAnimations();
-			var animateElephantAction = cc.animate(moveAnimation).repeatForever();
-			animateElephantAction.setTag(animationTag);
-			sprite.runAction(animateElephantAction);
-		} else {
+			var walkAnimation = cc.animate(elephantAnimationData.walkAnimation).repeatForever();
+			walkAnimation.setTag(elephantAnimationData.animationTag);
+			sprite.runAction(walkAnimation);
+		} else if (sprite.getName() !== "player" && sprite.getActionByTag(elephantAnimationData.animationTag)) {
 			/**
 			 * It would be preferable to only unschedule the callback
 			 * which is added with scheduleOnce below.
@@ -221,29 +297,69 @@ var ElephantLayer = cc.Layer.extend({
 			 * once, and therefore the callback is overwritten with a
 			 * new reference to itself. thus when trying to remove it,
 			 * it will fail.
+			 *
+			 * This callback, if called, tells the elephant to stop walking
+			 * and stand. If the elephant is already walking in this direction,
+			 * do nothing.
+			 *
+			 * Elephants which are not the player are not immediately stopped from walking
+			 * to work around jittery movement.
 			 */
 			sprite.unscheduleAllCallbacks();
 		}
 
+		sprite.flippedX = elephantAnimationData.spriteFlipped;
 		sprite.stopActionByTag("moveElephant");
+		var moveToAction = cc.moveTo(duration, destination);
 
-		var moveAction = cc.moveTo(duration, mousePosition);
-		var standAction = cc.callFunc(function() {
-			sprite.stopActionByTag("moveElephant");
-			if(sprite.getName() === "player") {
-				sprite.unscheduleAllCallbacks(); // ensures no more footprints are created
-				stopAllAnimations();
-				sprite.setSpriteFrame(frameAfterMove);
-			} else {
-				sprite.scheduleOnce(function() {
-					stopAllAnimations();
-					sprite.setSpriteFrame(frameAfterMove);
+		var standAction;
+		if (sprite.getName() === "player") {
+			standAction = cc.callFunc(function () {
+				that._stopAllAnimations(sprite);
+				sprite.setSpriteFrame(elephantAnimationData.standFrame);
+			}, this);
+		} else {
+			standAction = cc.callFunc(function () {
+				sprite.scheduleOnce(function () {
+					that._stopAllAnimations(sprite);
+					sprite.setSpriteFrame(elephantAnimationData.standFrame);
 				}, 0.5);
-			}
-		}, this);
+			}, this);
+		}
 
-		var moveElephantAction = cc.sequence(moveAction, standAction);
-		moveElephantAction.setTag("moveElephant");
-		sprite.runAction(moveElephantAction);
+		var moveToThenStopAction = cc.sequence(moveToAction, standAction);
+		moveToThenStopAction.setTag("moveElephant");
+		sprite.runAction(moveToThenStopAction);
+	},
+
+	_chooseElephantAnimationData: function (angle) {
+		if (Math.abs(angle) > 7 * Math.PI / 8) {
+			return this.elephantAnimationData.west;
+		} else if (angle < -5 * Math.PI / 8) {
+			return this.elephantAnimationData.southwest;
+		} else if (angle < -3 * Math.PI / 8) {
+			return this.elephantAnimationData.south;
+		} else if (angle < -Math.PI / 8) {
+			return this.elephantAnimationData.southeast;
+		} else if (angle < Math.PI / 8) {
+			return this.elephantAnimationData.east;
+		} else if (angle < 3 * Math.PI / 8) {
+			return this.elephantAnimationData.northeast;
+		} else if (angle < 5 * Math.PI / 8) {
+			return this.elephantAnimationData.north;
+		} else {
+			return this.elephantAnimationData.northwest;
+		}
+	},
+
+	_stopAllAnimations: function (sprite) {
+		sprite.stopActionByTag("animate_west");
+		sprite.stopActionByTag("animate_southwest");
+		sprite.stopActionByTag("animate_south");
+		sprite.stopActionByTag("animate_southeast");
+		sprite.stopActionByTag("animate_east");
+		sprite.stopActionByTag("animate_northeast");
+		sprite.stopActionByTag("animate_north");
+		sprite.stopActionByTag("animate_northwest");
 	}
 });

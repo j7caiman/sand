@@ -207,6 +207,9 @@ var ElephantLayer = cc.Layer.extend({
 		var previousElephantAnimationTag;
 
 		var elephantPath = [];
+		elephantPath.push(cc.callFunc(function () {
+			sand.isPlayerPainting = false;
+		}));
 		brushStrokePath.forEach(function (element, index) {
 			endPosition = element;
 			var distance = sand.globalFunctions.calculateDistance(startPosition, endPosition);
@@ -308,6 +311,7 @@ var ElephantLayer = cc.Layer.extend({
 		}
 
 		sprite.flippedX = elephantAnimationData.spriteFlipped;
+		sand.isPlayerPainting = false;
 		sprite.stopActionByTag("moveElephant");
 		var moveToAction = cc.moveTo(duration, destination);
 

@@ -10,7 +10,7 @@ var sand = {
 		kViewportHeight: window.innerHeight,
 		kLoadMoreRegionsThreshold: 400, // distance beyond edge of viewport to start loading more regions
 		kAffectedRegionWidth: 120,
-		kElephantSpeed: 25,
+		kElephantSpeed: 50,
 		kScrollSpeed: 50,
 		kBeginScrollThreshold: 150, // distance from edge to start scrolling toward player
 		kBrushPathMinimumLineSegmentWidth: 10

@@ -70,10 +70,10 @@ var GameScene = cc.Scene.extend({
 				 * compensate.
 				 */
 				if(!otherPlayer.sprite.getActionByTag("moveElephant")) {
-					sand.elephantLayer.moveElephant(otherPlayer.sprite, location);
+					sand.elephantLayer.moveElephantToLocation(otherPlayer.sprite, location);
 				} else {
 					var duration = (now - otherPlayer.timeSinceLastCommand) / 1000;
-					sand.elephantLayer.moveElephant(otherPlayer.sprite, location, duration);
+					sand.elephantLayer.moveElephantToLocation(otherPlayer.sprite, location, duration);
 				}
 				otherPlayer.timeSinceLastCommand = now;
 			}
@@ -98,15 +98,31 @@ var GameScene = cc.Scene.extend({
 		this._super();
 
 		var backgroundPosition = sand.currentRegion.getSprite();
-		var positionOnCurrentRegionCanvas = {
+		var localPosition = {
 			x: sand.elephantLayer.playerSprite.x - backgroundPosition.x,
-			y: (sand.elephantLayer.playerSprite.y - sand.elephantLayer.playerSprite.width / 4) - backgroundPosition.y // slightly offset footprints from player
+			y: sand.elephantLayer.playerSprite.y - backgroundPosition.y
 		};
-		var globalCoordinates = sand.globalFunctions.toGlobalCoordinates(positionOnCurrentRegionCanvas);
+		var globalCoordinates = sand.globalFunctions.toGlobalCoordinates(localPosition);
 		if (sand.globalCoordinates.x != globalCoordinates.x
 		 || sand.globalCoordinates.y != globalCoordinates.y) {
 
 			sand.globalCoordinates = globalCoordinates;
+
+			if(this._lastPrint === undefined) {
+				this._lastPrint = sand.globalCoordinates;
+			} else {
+				var spaceBetweenFootprints = sand.globalFunctions.calculateDistance(this._lastPrint, sand.globalCoordinates);
+				if (spaceBetweenFootprints >= sand.constants.kBrushPathMinimumLineSegmentWidth) {
+					var radius;
+					if(sand.isPlayerPainting) {
+						radius = 12;
+					} else {
+						radius = 5.5;
+					}
+					sand.globalFunctions.addFootprintToQueue(sand.globalCoordinates, radius);
+					this._lastPrint = sand.globalCoordinates;
+				}
+			}
 
 			this.positionEmitterThrottler.throttle(function updateCookiesAndEmitPosition() {
 				function equalsWithEpsilon(num1, num2, epsilon) {
@@ -142,10 +158,10 @@ var GameScene = cc.Scene.extend({
 					|| position.x < 0
 					|| position.y < 0;
 			}
-			if(isOutOfBounds(positionOnCurrentRegionCanvas)) {
+			if(isOutOfBounds(localPosition)) {
 				var differenceInLocation = {
-					x: sand.globalFunctions.mod(positionOnCurrentRegionCanvas.x, sand.constants.kCanvasWidth) - positionOnCurrentRegionCanvas.x,
-					y: sand.globalFunctions.mod(positionOnCurrentRegionCanvas.y, sand.constants.kCanvasWidth) - positionOnCurrentRegionCanvas.y
+					x: sand.globalFunctions.mod(localPosition.x, sand.constants.kCanvasWidth) - localPosition.x,
+					y: sand.globalFunctions.mod(localPosition.y, sand.constants.kCanvasWidth) - localPosition.y
 				};
 
 				var newBackgroundPosition = {
@@ -164,31 +180,31 @@ var GameScene = cc.Scene.extend({
 		}
 
 		if(sand.batchedFootprints.length != 0) {
-			function determineAffectedArea(position) {
-				return {
-					x: position.x - sand.constants.kAffectedRegionWidth / 2,
-					y: position.y - sand.constants.kAffectedRegionWidth / 2,
-					width: sand.constants.kAffectedRegionWidth,
-					height: (sand.constants.kAffectedRegionWidth)
-				};
-			}
-
-			sand.batchedFootprints.forEach(function(printLocation) {
-				var area = determineAffectedArea(printLocation);
-				sand.modifyRegion.makeFootprint(area, printLocation);
-			});
+			sand.batchedFootprints.forEach(function(print) {
+				var area = this._determineAffectedArea(print.location);
+				sand.modifyRegion.makeFootprint(area, print.location, print.radius);
+			}, this);
 
 			sand.modifyRegion.settle();
 
-			sand.batchedFootprints.forEach(function(printLocation) {
-				var area = determineAffectedArea(printLocation);
+			sand.batchedFootprints.forEach(function(print) {
+				var area = this._determineAffectedArea(print.location);
 				sand.canvasUpdate.updateHtmlCanvases(area);
-			});
+			}, this);
 
 			sand.batchedFootprints = [];
 		}
 
 		sand.globalFunctions.updateBackgroundSpriteLocations();
+	},
+
+	_determineAffectedArea: function(position) {
+		return {
+			x: position.x - sand.constants.kAffectedRegionWidth / 2,
+			y: position.y - sand.constants.kAffectedRegionWidth / 2,
+			width: sand.constants.kAffectedRegionWidth,
+			height: (sand.constants.kAffectedRegionWidth)
+		};
 	},
 
 	//calls "callback" roughly every 'delayMillis'

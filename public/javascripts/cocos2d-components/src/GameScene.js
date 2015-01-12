@@ -113,13 +113,13 @@ var GameScene = cc.Scene.extend({
 			} else {
 				var spaceBetweenFootprints = sand.globalFunctions.calculateDistance(this._lastPrint, sand.globalCoordinates);
 				if (spaceBetweenFootprints >= sand.constants.kBrushPathMinimumLineSegmentWidth) {
-					var radius;
+					var brush;
 					if(sand.isPlayerPainting) {
-						radius = 12;
+						brush = "painting";
 					} else {
-						radius = 5.5;
+						brush = "walking";
 					}
-					sand.globalFunctions.addFootprintToQueue(sand.globalCoordinates, radius);
+					sand.globalFunctions.addFootprintToQueue(sand.globalCoordinates, brush);
 					this._lastPrint = sand.globalCoordinates;
 				}
 			}
@@ -182,7 +182,7 @@ var GameScene = cc.Scene.extend({
 		if(sand.batchedFootprints.length != 0) {
 			sand.batchedFootprints.forEach(function(print) {
 				var area = this._determineAffectedArea(print.location);
-				sand.modifyRegion.makeFootprint(area, print.location, print.radius);
+				sand.modifyRegion.makeFootprint(area, print.location, print.brush);
 			}, this);
 
 			sand.modifyRegion.settle();

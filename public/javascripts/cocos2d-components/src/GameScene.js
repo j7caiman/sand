@@ -108,20 +108,23 @@ var GameScene = cc.Scene.extend({
 
 			sand.globalCoordinates = globalCoordinates;
 
-			if(this._lastPrint === undefined) {
-				this._lastPrint = sand.globalCoordinates;
-			} else {
-				var spaceBetweenFootprints = sand.globalFunctions.calculateDistance(this._lastPrint, sand.globalCoordinates);
-				if (spaceBetweenFootprints >= sand.constants.kBrushPathMinimumLineSegmentWidth) {
-					var brush;
-					if(sand.isPlayerPainting) {
-						brush = "painting";
-					} else {
-						brush = "walking";
-					}
-					sand.globalFunctions.addFootprintToQueue(sand.globalCoordinates, brush);
-					this._lastPrint = sand.globalCoordinates;
+			var printLocation = {
+				x: sand.globalCoordinates.x,
+				y: sand.globalCoordinates.y + sand.constants.kFootprintVerticalOffset
+			};
+			if (this._lastPrint === undefined
+				|| (sand.globalFunctions.calculateDistance(this._lastPrint, printLocation)
+						>= sand.constants.kBrushPathMinimumLineSegmentWidth)) {
+
+				var brush;
+				if (sand.isPlayerPainting) {
+					brush = "painting";
+				} else {
+					brush = "walking";
 				}
+
+				sand.globalFunctions.addFootprintToQueue(printLocation, brush);
+				this._lastPrint = printLocation;
 			}
 
 			this.positionEmitterThrottler.throttle(function updateCookiesAndEmitPosition() {

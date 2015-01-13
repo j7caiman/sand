@@ -158,15 +158,22 @@ var ElephantLayer = cc.Layer.extend({
 
 			onMouseDown: function (event) {
 				sand.elephantPath = [];
-				sand.elephantPath.push(event.getLocation());
+				sand.elephantPath.push({
+					x: event.getLocationX(),
+					y: event.getLocationY() - sand.constants.kFootprintVerticalOffset
+				});
 			},
 
 			onMouseMove: function (event) {
 				if (event.getButton() == 0) { // left click
 					var lastVertex = sand.elephantPath[sand.elephantPath.length - 1];
-					var distance = sand.globalFunctions.calculateDistance(lastVertex, event.getLocation());
+					var newVertex = {
+						x: event.getLocationX(),
+						y: event.getLocationY() - sand.constants.kFootprintVerticalOffset
+					};
+					var distance = sand.globalFunctions.calculateDistance(lastVertex, newVertex);
 					if (distance >= sand.constants.kBrushPathMinimumLineSegmentWidth) {
-						sand.elephantPath.push(event.getLocation());
+						sand.elephantPath.push(newVertex);
 					}
 				}
 			},
@@ -193,7 +200,7 @@ var ElephantLayer = cc.Layer.extend({
 
 		sprite.setPosition(position);
 		sprite.setScale(1.5);
-		sprite.setAnchorPoint(0.5, 0.5);
+		sprite.setAnchorPoint(0.5, 0);
 
 		this.addChild(sprite, undefined, tag);
 		return sprite;
@@ -311,6 +318,7 @@ var ElephantLayer = cc.Layer.extend({
 		}
 
 		sprite.flippedX = elephantAnimationData.spriteFlipped;
+
 		sand.isPlayerPainting = false;
 		sprite.stopActionByTag("moveElephant");
 		var moveToAction = cc.moveTo(duration, destination);

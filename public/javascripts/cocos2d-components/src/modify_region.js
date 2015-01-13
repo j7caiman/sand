@@ -117,9 +117,36 @@ sand.modifyRegion = {
 		}
 	},
 
+	regenerateTerrain: function () {
+		var that = this;
+		var zipCode = that._getRegionZipCode(sand.currentRegion.getName());
+		var regionNames = that._listRegionsInZipCode(zipCode);
+
+		sand.globalFunctions.addMoreRegions(onComplete, regionNames);
+
+		function onComplete() {
+			regionNames.forEach(function (regionName) {
+				(function zeroOutRegion(regionData, width) {
+					for (var y = 0; y < width; y++) {
+						for (var x = 0; x < width; x++) {
+							regionData[y][x] = 0;
+						}
+					}
+				})(sand.allRegions[regionName].getData(), sand.constants.kRegionWidth);
+			});
+
+			var regions = regionNames.map(function (regionName) {
+				return sand.allRegions[regionName];
+			});
+
+			that._generateLargeDune(regions);
+			that._generateBumps(regions);
+		}
+	},
+
 	_zipCodeWidth: 4,
 
-	generateBumps: function(regions) {
+	_generateBumps: function(regions) {
 		var numTrails;
 		var heightRange;
 		var addOntoDunes;
@@ -161,30 +188,18 @@ sand.modifyRegion = {
 		}
 	},
 
-	generateLargeDune: function() {
+	_generateLargeDune: function(regions) {
 		const zipCodeWidth = this._zipCodeWidth;
-		var zipCode = this._getRegionZipCode(sand.currentRegion.getName());
-		var regionNames = this._listRegionsInZipCode(zipCode);
 
-		regionNames.forEach(function(regionName) {
-			(function zeroOutRegion(regionData, width) {
-				for(var y = 0; y < width; y++) {
-					for(var x = 0; x < width; x++) {
-						regionData[y][x] = 0;
-					}
-				}
-			})(sand.allRegions[regionName].getData(), sand.constants.kRegionWidth);
-		});
-
-		var bottomRightRegionName = regionNames[zipCodeWidth - 1];
-		var topLeftRegionName = regionNames[(zipCodeWidth * zipCodeWidth) - zipCodeWidth];
+		var bottomRightRegion = regions[zipCodeWidth - 1];
+		var topLeftRegion = regions[(zipCodeWidth * zipCodeWidth) - zipCodeWidth];
 
 		var begin = sand.globalFunctions.toGlobalCoordinates(
 			{
 				x: sand.constants.kCanvasWidth / 2,
 				y: sand.constants.kCanvasWidth / 2
 			},
-			sand.allRegions[bottomRightRegionName]
+			bottomRightRegion
 		);
 
 		var end = sand.globalFunctions.toGlobalCoordinates(
@@ -192,20 +207,14 @@ sand.modifyRegion = {
 				x: sand.constants.kCanvasWidth / 2,
 				y: sand.constants.kCanvasWidth / 2
 			},
-			sand.allRegions[topLeftRegionName]
+			topLeftRegion
 		);
 
 		var bezier = this._generateWindingCurve(begin, end, 1);
 
-		regionNames.forEach(function(regionName) {
-			this._inscribeDuneToRegion(bezier, sand.allRegions[regionName]);
+		regions.forEach(function(region) {
+			this._inscribeDuneToRegion(bezier, region);
 		}, this);
-
-		var regions = regionNames.map(function(regionName) {
-			return sand.allRegions[regionName];
-		});
-
-		this.generateBumps(regions);
 	},
 
 	_getRegionZipCode: function (regionName) {

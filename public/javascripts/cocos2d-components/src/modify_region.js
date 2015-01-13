@@ -2,12 +2,12 @@ sand.modifyRegion = {
 	brushes: {
 		painting: {
 			radius: 8,
-			pointOfImpact: 3
+			pointOfImpact: 2
 		},
 
 		walking: {
 			radius: 1.5,
-			pointOfImpact: 0.5
+			pointOfImpact: 0
 		}
 	},
 
@@ -62,10 +62,8 @@ sand.modifyRegion = {
 					y: localCoordinates.y - pointOfImpact.y
 				};
 
-				// radius = sqrt((x1-x0)^2 + (y1-y0)^2 + (z1-z0)^2)
-				// z1     = sqrt(radius^2 - ( (x1-x0)^2 + (y1-y0)^2 )) + z0
-				var newZ = -Math.sqrt(radius * radius - ( delta.x * delta.x + delta.y * delta.y )) + pointOfImpact.z;
-				if (newZ < 0) {
+				var newZ = Math.sqrt(radius * radius - ( delta.x * delta.x + delta.y * delta.y )) - pointOfImpact.z;
+				if (newZ > 0) {
 					regionData[y][x] -= Math.floor(newZ);
 				}
 			}

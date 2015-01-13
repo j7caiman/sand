@@ -102,24 +102,30 @@ sand.globalFunctions = {
 		sand.socket.emit('footprint', print);
 	},
 
-	addMoreRegions: function (callback) {
-		var padding = sand.constants.kLoadMoreRegionsThreshold;
-		var preloadThresholdRect = {
-			x: sand.globalCoordinates.x - (sand.constants.kViewportWidth / 2 + padding),
-			y: sand.globalCoordinates.y - (sand.constants.kViewportHeight / 2 + padding),
-			width: sand.constants.kViewportWidth + (2 * padding),
-			height: sand.constants.kViewportHeight + (2 * padding)
-		};
-		var visibleRegionNames = sand.globalFunctions.findRegionsInRect(preloadThresholdRect);
+	addMoreRegions: function (onComplete, regionNames) {
+		if(regionNames === undefined) {
+			var padding = sand.constants.kLoadMoreRegionsThreshold;
+			var preloadThresholdRect = {
+				x: sand.globalCoordinates.x - (sand.constants.kViewportWidth / 2 + padding),
+				y: sand.globalCoordinates.y - (sand.constants.kViewportHeight / 2 + padding),
+				width: sand.constants.kViewportWidth + (2 * padding),
+				height: sand.constants.kViewportHeight + (2 * padding)
+			};
+			regionNames = sand.globalFunctions.findRegionsInRect(preloadThresholdRect);
+		}
 
 		var newRegionNames = [];
-		visibleRegionNames.forEach(function(regionName) {
+		regionNames.forEach(function(regionName) {
 			if (!sand.allRegions.hasOwnProperty(regionName)) {
 				newRegionNames.push(regionName);
 			}
 		});
 
-		if (newRegionNames.length != 0) {
+		if (newRegionNames.length === 0) {
+			if (onComplete !== undefined) {
+				onComplete();
+			}
+		} else {
 			$.ajax({
 				url: "fetch_region",
 				type: "POST",
@@ -148,7 +154,7 @@ sand.globalFunctions = {
 
 							// on startup, BackgroundLayer has not yet been initialized. In that case, the sprites are
 							// later added during BackgroundLayer's init function.
-							if(sand.backgroundLayer !== undefined) {
+							if (sand.backgroundLayer !== undefined) {
 								sand.backgroundLayer.addChild(sprite);
 							}
 						}
@@ -171,8 +177,8 @@ sand.globalFunctions = {
 						}
 					}
 
-					if (callback !== undefined) {
-						callback();
+					if (onComplete !== undefined) {
+						onComplete();
 					}
 				}
 			});

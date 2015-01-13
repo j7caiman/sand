@@ -52,20 +52,20 @@ module.exports = {
 	_createRegionsForZipCode: function(zipCode, onComplete) {
 		var that = this;
 
-		const zipCodeWidth = this._zipCodeWidth;
-		const numRegionsToCreate = zipCodeWidth * zipCodeWidth;
+		var regionsToCreate = that._listRegionsInZipCode(zipCode);
+		regionsToCreate.forEach(function(region) {
+			region.data = that._createGrid(256);
+		});
+
+		that._generateLargeDune(regionsToCreate);
+		that._generateBumps(regionsToCreate);
+
+		const numRegionsToCreate = this._zipCodeWidth * this._zipCodeWidth;
 		var numRegionsCreated = 0;
 		fs.mkdir('../resources/world_datastore/' + zipCode, function (err) {
 			if (err) {
 				throw err;
 			}
-
-			var regionsToCreate = that._listRegionsInZipCode(zipCode);
-			regionsToCreate.forEach(function(region) {
-				region.data = that._createGrid(256);
-			});
-
-			that._generateLargeDune(regionsToCreate);
 
 			regionsToCreate.forEach(function (region) {
 				var path = '../resources/world_datastore/' + zipCode + '/' + region.name + '.json';
@@ -142,32 +142,75 @@ module.exports = {
 		}, this);
 	},
 
+	_generateBumps: function(regions) {
+		var numTrails;
+		var heightRange;
+		var addOntoDunes;
+
+		regions.forEach(function (region) {
+			numTrails = 5000 / 16;
+			heightRange = { min: 0.5, max: 2 };
+			addOntoDunes = true;
+			this._generateBumpsForHeightRange(numTrails, region, heightRange, addOntoDunes);
+
+			numTrails = 1000 / 16;
+			heightRange = { min: 2, max: 3 };
+			addOntoDunes = false;
+			this._generateBumpsForHeightRange(numTrails, region, heightRange, addOntoDunes);
+
+
+			numTrails = 100 / 16;
+			heightRange = { min: 2, max: 6 };
+			addOntoDunes = false;
+			this._generateBumpsForHeightRange(numTrails, region, heightRange, addOntoDunes);
+		}, this);
+	},
+
+	_generateBumpsForHeightRange: function (numBumps, region, heightRange, addToDunes) {
+		for (var i = 0; i < numBumps; i++) {
+			var location = {
+				x: this._getRandomFloat(0, this._kCanvasWidth),
+				y: this._getRandomFloat(0, this._kCanvasWidth)
+			};
+			var height = this._getRandomFloat(heightRange.min, heightRange.max);
+			this._createCone(region.data, location, height, addToDunes);
+		}
+	},
+
 	_generateWindingCurve: function (begin, end) {
 		var angle = Math.atan2(end.y - begin.y, end.x - begin.x);
 		var duneCurveMultiplier = 2000;
 
-		var cp1Offset = this._getRandomCoordinateWithinUnitCircleSector(angle - Math.PI/2, angle + Math.PI/2);
+		var cp1Offset = this._getRandomCoordinateWithinCircleSector(
+			angle - Math.PI/2,
+			angle + Math.PI/2,
+			duneCurveMultiplier
+		);
 		var cp1 = {
-			x: cp1Offset.x * duneCurveMultiplier + begin.x,
-			y: cp1Offset.y * duneCurveMultiplier + begin.y
+			x: cp1Offset.x + begin.x,
+			y: cp1Offset.y + begin.y
 		};
 
-		var cp2Offset = this._getRandomCoordinateWithinUnitCircleSector(angle + Math.PI/2, angle + 3 * Math.PI/2);
+		var cp2Offset = this._getRandomCoordinateWithinCircleSector(
+			angle + Math.PI/2,
+			angle + 3 * Math.PI/2,
+			duneCurveMultiplier
+		);
 		var cp2 = {
-			x: cp2Offset.x * duneCurveMultiplier + end.x,
-			y: cp2Offset.y * duneCurveMultiplier + end.y
+			x: cp2Offset.x + end.x,
+			y: cp2Offset.y + end.y
 		};
 
 		return this._createBezierFunction(begin, cp1, cp2, end);
 	},
 
-	_getRandomCoordinateWithinUnitCircleSector: function (minAngle, maxAngle) {
+	_getRandomCoordinateWithinCircleSector: function (minAngle, maxAngle, radius) {
 		var angle = this._getRandomFloat(minAngle, maxAngle);
 		var u = Math.random() + Math.random(); //ensures uniform distribution within circle (http://stackoverflow.com/a/5838055)
 		var offset = (u > 1) ? (2 - u) : u;
 		return {
-			x: offset * Math.cos(angle),
-			y: offset * Math.sin(angle)
+			x: offset * Math.cos(angle) * radius,
+			y: offset * Math.sin(angle) * radius
 		};
 	},
 
@@ -198,7 +241,7 @@ module.exports = {
 		for(var t = 0; t <= 1; t += samplePeriod) {
 			var positionOfCone = this._toLocalCoordinates(dunePath(t), region);
 			var height = this._determineHeightOfCone(t);
-			this._createCone(region.data, positionOfCone, height);
+			this._createCone(region.data, positionOfCone, height, false);
 		}
 	},
 
@@ -232,7 +275,7 @@ module.exports = {
 		}
 	},
 
-	_createCone: function(regionData, positionOnCanvas, highestPoint) {
+	_createCone: function(regionData, positionOnCanvas, highestPoint, isAdditive) {
 		const angleOfRepose = Math.PI / 4;
 		const sandGrainWidth = this._kCanvasWidth / this._kRegionWidth; // blocks are square
 		var positionOnRegion = {
@@ -267,8 +310,12 @@ module.exports = {
 				})({x: x, y: y}, positionOnRegion);
 
 				var height = Math.floor(positionOnRegion.z - Math.tan(angleOfRepose) * lateralDistance);
-				if(regionData[y] !== undefined && height > 0 && height > regionData[y][x]) {
-					regionData[y][x] = height;
+				if (regionData[y] !== undefined && height > 0) {
+					if(isAdditive) {
+						regionData[y][x] += height;
+					} else if (height > regionData[y][x]) {
+						regionData[y][x] = height;
+					}
 				}
 			}
 		}

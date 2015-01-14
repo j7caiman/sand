@@ -75,7 +75,7 @@ var BackgroundLayer = cc.Layer.extend({
 				var duration = distance / sand.constants.kScrollSpeed;
 
 				spritesToScroll.forEach(function (sprite) {
-					var scrollAction = cc.moveBy(duration, cc.p(scrollVector.x, scrollVector.y));
+					var scrollAction = cc.moveBy(duration, scrollVector.x, scrollVector.y);
 					scrollAction.setTag("scroll");
 					sprite.runAction(scrollAction);
 				});

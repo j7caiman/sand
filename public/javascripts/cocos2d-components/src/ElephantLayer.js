@@ -56,7 +56,7 @@ var ElephantLayer = cc.Layer.extend({
 				var frame = cc.spriteFrameCache.getSpriteFrame(name);
 				frames.push(frame);
 			}
-			return new cc.Animation(frames, 0.3);
+			return new cc.Animation(frames, 0.15);
 		})();
 
 		var standWest = (function () {
@@ -326,11 +326,19 @@ var ElephantLayer = cc.Layer.extend({
 		var standAction;
 		if (sprite.getName() === "player") {
 			standAction = cc.callFunc(function () {
+				/**
+				 *  It's necessary to stop the "moveElephant" action because even though this action
+				 *  is supposedly only run after the cc.moveTo action is complete, the elephant still
+				 *  moves a little bit if a scroll action occurred while the elephant was walking.
+				 *  Root cause unknown, presumably a bug with cocos2d.
+				 */
+				sprite.stopActionByTag("moveElephant");
 				that._stopAllAnimations(sprite);
 				sprite.setSpriteFrame(elephantAnimationData.standFrame);
 			}, this);
 		} else {
 			standAction = cc.callFunc(function () {
+				sprite.stopActionByTag("moveElephant");
 				sprite.scheduleOnce(function () {
 					that._stopAllAnimations(sprite);
 					sprite.setSpriteFrame(elephantAnimationData.standFrame);

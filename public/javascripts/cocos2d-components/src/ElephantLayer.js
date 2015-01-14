@@ -319,7 +319,10 @@ var ElephantLayer = cc.Layer.extend({
 
 		sprite.flippedX = elephantAnimationData.spriteFlipped;
 
-		sand.isPlayerPainting = false;
+		if(sprite.getName() === "player") {
+			sand.isPlayerPainting = false;
+		}
+
 		sprite.stopActionByTag("moveElephant");
 		var moveToAction = cc.moveTo(duration, destination);
 

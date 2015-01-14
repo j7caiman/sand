@@ -4,11 +4,9 @@ var logger = require('morgan');
 
 var bodyParser = require('body-parser');
 
-var routes = require('./routes/index');
-var users = require('./routes/users');
+var game = require('./routes/game');
 var fetch_region = require('./routes/fetch_region');
 var write_to_region = require('./routes/write_to_region');
-var game = require('./routes/game');
 
 var app = express();
 
@@ -21,11 +19,9 @@ app.use(bodyParser.json({limit: '500kb'}));
 app.use(require('less-middleware')(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', routes);
-app.use('/users', users);
+app.use('/', game);
 app.use('/fetch_region', fetch_region);
 app.use('/write_to_region', write_to_region);
-app.use('/game', game);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

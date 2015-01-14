@@ -1,0 +1,15 @@
+{
+    "debugMode"     : 1,
+    "frameRate"     : 24,
+    "id"            : "cocos2d_gameCanvas",
+    "renderMode"    : 1,
+    "jsList" : [
+        "javascripts/src/cocos2d_image_resources.js",
+        "javascripts/src/GameScene.js",
+        "javascripts/src/ElephantLayer.js",
+        "javascripts/src/BackgroundLayer.js",
+        "javascripts/src/RegionNode.js",
+        "javascripts/src/modify_region.js",
+        "javascripts/src/canvas_update.js"
+    ]
+}

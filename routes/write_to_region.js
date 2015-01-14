@@ -2,7 +2,7 @@ var express = require('express');
 var router = express.Router();
 var fs = require('fs');
 
-var regionFunctions = require('../src/region_functions');
+var regionFunctions = require('../sand_modules/region_functions');
 
 router.post('/', function(req, res) {
 	var data = JSON.stringify(req.body.regionData);

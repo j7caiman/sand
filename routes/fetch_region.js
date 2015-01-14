@@ -4,7 +4,7 @@ var fs = require('fs');
 var zlib = require('zlib');
 var stream = require('stream');
 
-var regionFunctions = require('../src/region_functions');
+var regionFunctions = require('../sand_modules/region_functions');
 
 router.post('/', function(req, res) {
 	var regionNames = req.body;

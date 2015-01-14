@@ -241,10 +241,11 @@ sand.modifyRegion = {
 	_generateWindingCurve: function (begin, end) {
 		var angle = Math.atan2(end.y - begin.y, end.x - begin.x);
 		var duneCurveMultiplier = 2000;
+		var angleBuffer = 0.8; // prevents generated dunes from running off screen
 
 		var cp1Offset = this._getRandomCoordinateWithinCircleSector(
-			angle - Math.PI/2,
-			angle + Math.PI/2,
+			angle - Math.PI/2 + angleBuffer,
+			angle + Math.PI/2 - angleBuffer,
 			duneCurveMultiplier
 		);
 		var cp1 = {
@@ -253,8 +254,8 @@ sand.modifyRegion = {
 		};
 
 		var cp2Offset = this._getRandomCoordinateWithinCircleSector(
-			angle + Math.PI/2,
-			angle + 3 * Math.PI/2,
+			angle + Math.PI/2 + angleBuffer,
+			angle + 3 * Math.PI/2 - angleBuffer,
 			duneCurveMultiplier
 		);
 		var cp2 = {

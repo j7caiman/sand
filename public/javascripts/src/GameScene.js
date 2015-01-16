@@ -233,9 +233,9 @@ var GameScene = cc.Scene.extend({
 
 		var boundary = {
 			left: sand.constants.kBeginScrollThreshold,
-			right: sand.constants.kViewportWidth - sand.constants.kBeginScrollThreshold,
+			right: window.innerWidth - sand.constants.kBeginScrollThreshold,
 			bottom: sand.constants.kBeginScrollThreshold,
-			top: sand.constants.kViewportHeight - sand.constants.kBeginScrollThreshold
+			top: window.innerHeight - sand.constants.kBeginScrollThreshold
 		};
 
 		var beginScrolling = (function (position, boundary) {
@@ -247,8 +247,8 @@ var GameScene = cc.Scene.extend({
 
 		if(beginScrolling) {
 			var scrollVector = {
-				x: sand.constants.kViewportWidth / 2 - elephantPosition.x,
-				y: sand.constants.kViewportHeight / 2 - elephantPosition.y
+				x: window.innerWidth / 2 - elephantPosition.x,
+				y: window.innerHeight / 2 - elephantPosition.y
 			};
 
 			var event = new cc.EventCustom("scrollTrigger");

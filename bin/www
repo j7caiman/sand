@@ -8,7 +8,6 @@ var server = app.listen(app.get('port'), function () {
 	debug('Express server listening on port ' + server.address().port);
 });
 
-
 var io = require('socket.io')(server);
 var connectedClients = {};
 io.on('connection', function (socket) {

@@ -1,39 +1,19 @@
 var sand = {
 	allRegions: {},
 	batchedFootprints: [],
-	elephantPath: [],
-
-	constants: {
-		kCanvasWidth: 512, // width of draw canvases
-		kRegionWidth: 256, // number of sand grains in a single row of desert
-		kViewportWidth: window.innerWidth, // width of cocos2d canvas and viewport dimensions
-		kViewportHeight: window.innerHeight,
-		kLoadMoreRegionsThreshold: 400, // distance beyond edge of viewport to start loading more regions
-		kAffectedRegionWidth: 120,
-		kElephantSpeed: 50,
-		kScrollSpeed: 50,
-		kBeginScrollThreshold: 150, // distance from edge to start scrolling toward player
-		kBrushPathMinimumLineSegmentWidth: 10,
-		kFootprintVerticalOffset: 12 // vertical distance from center of elephant sprite to place footprints
-	}
+	elephantPath: []
 };
 
 $(document).ready(function() {
 	sand.globalFunctions.createCanvas(
 		'cocos2d_gameCanvas', // game canvas is referenced in project.json
-		sand.constants.kViewportWidth,
-		sand.constants.kViewportHeight
+		window.innerWidth,
+		window.innerHeight
 	);
 	cc.game.run();
 });
 
 cc.game.onStart = function() {
-	$(window).resize(function() {
-		// width of cocos2d canvas and viewport dimensions
-		sand.constants.kViewportWidth = window.innerWidth;
-		sand.constants.kViewportHeight = window.innerHeight;
-	});
-
 	var playerData = (function() {
 		$.cookie.json = true;
 		var playerDataCookie = $.cookie('playerData');
@@ -71,8 +51,8 @@ cc.game.onStart = function() {
 
 		var localPlayerPosition = sand.globalFunctions.toLocalCoordinates(sand.globalCoordinates);
 		var position = {
-			x: sand.constants.kViewportWidth / 2 - localPlayerPosition.x,
-			y: sand.constants.kViewportHeight / 2 - localPlayerPosition.y
+			x: window.innerWidth / 2 - localPlayerPosition.x,
+			y: window.innerHeight / 2 - localPlayerPosition.y
 		};
 		sand.currentRegion.getSprite().setPosition(position);
 
@@ -106,10 +86,10 @@ sand.globalFunctions = {
 		if(regionNames === undefined) {
 			var padding = sand.constants.kLoadMoreRegionsThreshold;
 			var preloadThresholdRect = {
-				x: sand.globalCoordinates.x - (sand.constants.kViewportWidth / 2 + padding),
-				y: sand.globalCoordinates.y - (sand.constants.kViewportHeight / 2 + padding),
-				width: sand.constants.kViewportWidth + (2 * padding),
-				height: sand.constants.kViewportHeight + (2 * padding)
+				x: sand.globalCoordinates.x - (window.innerWidth / 2 + padding),
+				y: sand.globalCoordinates.y - (window.innerHeight / 2 + padding),
+				width: window.innerWidth + (2 * padding),
+				height: window.innerHeight + (2 * padding)
 			};
 			regionNames = sand.globalFunctions.findRegionsInRect(preloadThresholdRect);
 		}
@@ -195,8 +175,8 @@ sand.globalFunctions = {
 		var viewport = {
 			x: bottomLeftCornerOfViewport.x,
 			y: bottomLeftCornerOfViewport.y,
-			width: sand.constants.kViewportWidth,
-			height: sand.constants.kViewportHeight
+			width: window.innerWidth,
+			height: window.innerHeight
 		};
 		var visibleRegionNames = sand.globalFunctions.findRegionsInRect(viewport);
 
@@ -295,31 +275,6 @@ sand.globalFunctions = {
 		}
 
 		return regionNames;
-	},
-
-	/**
-	 * In this case, local coordinates refers to the point's location relative to the bottom left
-	 * corner of the region.
-	 */
-	toLocalCoordinates: function(point, region) {
-		if(region === undefined) { // region is an optional parameter
-			region = sand.currentRegion;
-		}
-		return {
-			x: point.x - (region.x * sand.constants.kCanvasWidth),
-			y: point.y - (region.y * sand.constants.kCanvasWidth)
-		}
-	},
-
-	toGlobalCoordinates: function(point, region) {
-		if(region === undefined) { // region is an optional parameter
-			region = sand.currentRegion;
-		}
-
-		return {
-			x: point.x + (region.x * sand.constants.kCanvasWidth),
-			y: point.y + (region.y * sand.constants.kCanvasWidth)
-		}
 	},
 
 	mod: function(a, n) { return ((a % n) + n) % n; },

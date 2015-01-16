@@ -14,8 +14,8 @@ var ElephantLayer = cc.Layer.extend({
 		cc.spriteFrameCache.addSpriteFrames(res.elephant_sprite_plist);
 
 		this.playerSprite = this.createElephant({
-			x: sand.constants.kViewportWidth / 2,
-			y: sand.constants.kViewportHeight / 2
+			x: window.innerWidth / 2,
+			y: window.innerHeight / 2
 		});
 		this.playerSprite.setName("player");
 

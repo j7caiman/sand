@@ -8,7 +8,15 @@ var RegionNode = function (name) {
 RegionNode.prototype = {
 	constructor: RegionNode,
 
+	/**
+	 * Only call this in the client. sand.allRegions is not defined
+	 * on the server.
+	 */
 	initializeAdjacentNodes: function () {
+		if (sand.allRegions === undefined) {
+			throw "sand.currentRegion undefined.\nIs this function being called improperly from the server?"
+		}
+
 		var adjacentNodes = [];
 		adjacentNodes[0] = sand.allRegions[(this.x + 1) + "_" + (this.y + 1)];	// northeast
 		adjacentNodes[1] = sand.allRegions[(this.x + 0) + "_" + (this.y + 1)];	// north
@@ -51,3 +59,6 @@ RegionNode.prototype = {
 		return this._name;
 	}
 };
+
+var module = module || {};
+module.exports = RegionNode;

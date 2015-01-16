@@ -8,8 +8,11 @@
         "javascripts/src/GameScene.js",
         "javascripts/src/ElephantLayer.js",
         "javascripts/src/BackgroundLayer.js",
-        "javascripts/src/RegionNode.js",
         "javascripts/src/modify_region.js",
-        "javascripts/src/canvas_update.js"
+        "javascripts/src/canvas_update.js",
+        "javascripts/shared/RegionNode.js",
+        "javascripts/shared/global_constants.js",
+        "javascripts/shared/global_functions.js",
+        "javascripts/shared/dune_functions.js"
     ]
 }

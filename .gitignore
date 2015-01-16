@@ -1,8 +1,12 @@
 .idea/
 sand.iml
 npm-debug.log
+
 resources/
-public/images/
-public/stylesheets/style.css
+
+client/public/images/
+client/public/stylesheets/style.css
+client/public/javascripts/min.js
+compiler.jar
 
 sandbox/client/sand-cocos2d-src/

@@ -1,4 +1,5 @@
 var sand = sand || {};
+var require = require || function(){};
 sand.globalFunctions = sand.globalFunctions || require("./global_functions");
 sand.constants = sand.constants || require("./global_constants");
 

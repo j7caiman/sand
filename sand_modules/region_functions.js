@@ -1,11 +1,11 @@
 var fs = require('fs');
 
 var sand = {
-	modifyRegion: require("../public/javascripts/shared/dune_functions"),
-	globalFunctions: require("../public/javascripts/shared/global_functions"),
-	constants: require("../public/javascripts/shared/global_constants")
+	modifyRegion: require("../client/javascripts/shared/dune_functions"),
+	globalFunctions: require("../client/javascripts/shared/global_functions"),
+	constants: require("../client/javascripts/shared/global_constants")
 };
-var RegionNode = require("../public/javascripts/shared/RegionNode");
+var RegionNode = require("../client/javascripts/shared/RegionNode");
 
 module.exports = {
 	generateRegions: function (regionNames, onComplete) {

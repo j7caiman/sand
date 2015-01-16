@@ -5,7 +5,7 @@ var zlib = require('zlib');
 var stream = require('stream');
 
 var regionFunctions = require('../sand_modules/region_functions');
-var globalFunctions = require('../public/javascripts/shared/global_functions');
+var globalFunctions = require('../client/javascripts/shared/global_functions');
 
 router.post('/', function(req, res) {
 	var regionNames = req.body;

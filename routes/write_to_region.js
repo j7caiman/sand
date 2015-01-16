@@ -2,7 +2,7 @@ var express = require('express');
 var router = express.Router();
 var fs = require('fs');
 
-var globalFunctions = require('../public/javascripts/shared/global_functions');
+var globalFunctions = require('../client/javascripts/shared/global_functions');
 
 router.post('/', function(req, res) {
 	var data = JSON.stringify(req.body.regionData);

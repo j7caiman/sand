@@ -119,6 +119,10 @@ sand.modifyRegion = {
 
 	regenerateTerrain: function () {
 		var that = this;
+		if(!that.generateLargeDune) {
+			return;
+		}
+
 		var zipCode = sand.globalFunctions.getRegionZipCode(sand.currentRegion.getName());
 		var regionNames = that.listRegionNamesInZipCode(zipCode);
 

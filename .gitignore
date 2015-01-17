@@ -4,9 +4,9 @@ npm-debug.log
 
 resources/
 
-client/public/images/
-client/public/stylesheets/style.css
-client/public/javascripts/min.js
+public/images/
+public/stylesheets/style.css
+public/javascripts/min.js
 compiler.jar
 
-sandbox/client/sand-cocos2d-src/
+sandbox/

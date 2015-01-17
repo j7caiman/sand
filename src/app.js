@@ -16,12 +16,11 @@ app.set('view engine', 'jade');
 
 app.use(logger('dev'));
 app.use(bodyParser.json({limit: '500kb'}));
-app.use('/stylesheets', require('less-middleware')(path.join(__dirname, 'client/public/stylesheets')));
-app.use('/stylesheets', express.static(path.join(__dirname, 'client/public/stylesheets')));
-app.use('/images', express.static(path.join(__dirname, 'client/public/images')));
-app.use('/javascripts', express.static(path.join(__dirname, 'client/public/javascripts')));
+app.use(require('less-middleware')(path.join(__dirname, '../public')));
+app.use(express.static(path.join(__dirname, '../public')));
 if(app.get('env') === 'development') {
-    app.use('/javascripts', express.static(path.join(__dirname, 'client/javascripts')));
+    app.use(express.static(path.join(__dirname, 'client')));
+    app.use(express.static(path.join(__dirname, 'shared')));
 }
 
 app.use('/', game);

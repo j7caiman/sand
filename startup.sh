@@ -1,8 +1,7 @@
 #!/bin/bash
 
-outputPath="client/public/javascripts/min.js"
-baseDir="client/javascripts"
-inputPaths="$baseDir/src/startup.js $baseDir/src/**.js $baseDir/shared/RegionNode.js $baseDir/shared/global_constants.js $baseDir/shared/global_functions.js"
+outputPath="public/javascripts/min.js"
+inputPaths="src/client/startup.js src/client/**.js src/shared/RegionNode.js src/shared/global_constants.js src/shared/global_functions.js"
 
 echo gathering source files:
 echo $inputPaths
@@ -16,8 +15,8 @@ pidof nodejs | awk '{print "kill " $1}' | sh
 echo server killed
 
 echo starting server...
-cd /root/sand/bin
+cd /root/sand
 export NODE_ENV=production
-nohup nodejs www &
+nohup nodejs src/www &
 cd -
 echo server started

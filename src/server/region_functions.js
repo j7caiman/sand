@@ -1,11 +1,11 @@
 var fs = require('fs');
 
 var sand = {
-	modifyRegion: require("../client/javascripts/shared/dune_functions"),
-	globalFunctions: require("../client/javascripts/shared/global_functions"),
-	constants: require("../client/javascripts/shared/global_constants")
+	modifyRegion: require("../shared/dune_functions"),
+	globalFunctions: require("../shared/global_functions"),
+	constants: require("../shared/global_constants")
 };
-var RegionNode = require("../client/javascripts/shared/RegionNode");
+var RegionNode = require("../shared/RegionNode");
 
 module.exports = {
 	generateRegions: function (regionNames, onComplete) {
@@ -23,7 +23,7 @@ module.exports = {
 
 		var zipCodesToAccountFor = regionZipCodes.length;
 		regionZipCodes.forEach(function (zipCode) {
-			var path = '../resources/world_datastore/' + zipCode;
+			var path = './resources/world_datastore/' + zipCode;
 			fs.readdir(path, function (err) {
 				function zipCodeCompleted() {
 					zipCodesToAccountFor--;
@@ -58,13 +58,13 @@ module.exports = {
 
 		const numRegionsToCreate = sand.constants.kZipCodeWidth * sand.constants.kZipCodeWidth;
 		var numRegionsCreated = 0;
-		fs.mkdir('../resources/world_datastore/' + zipCode, function (err) {
+		fs.mkdir('./resources/world_datastore/' + zipCode, function (err) {
 			if (err) {
 				throw err;
 			}
 
 			regionsToCreate.forEach(function (region) {
-				var path = '../resources/world_datastore/' + zipCode + '/' + region.getName() + '.json';
+				var path = './resources/world_datastore/' + zipCode + '/' + region.getName() + '.json';
 				fs.writeFile(path, JSON.stringify(region.getData()), function (err) {
 					if (err) {
 						throw err;

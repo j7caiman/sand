@@ -4,8 +4,8 @@ var fs = require('fs');
 var zlib = require('zlib');
 var stream = require('stream');
 
-var regionFunctions = require('../sand_modules/region_functions');
-var globalFunctions = require('../client/javascripts/shared/global_functions');
+var regionFunctions = require('../server/region_functions');
+var globalFunctions = require('../shared/global_functions');
 
 router.post('/', function(req, res) {
 	var regionNames = req.body;
@@ -39,7 +39,7 @@ router.post('/', function(req, res) {
 		regionNames.forEach(function (regionName) {
 			var zipCode = globalFunctions.getRegionZipCode(regionName);
 
-			var path = '../resources/world_datastore/' + zipCode + '/' + regionName + '.json';
+			var path = './resources/world_datastore/' + zipCode + '/' + regionName + '.json';
 			fs.readFile(path, 'utf8', function (err, regionData) {
 				returnAllRegionsOnLoad(err, regionData, regionName);
 			});

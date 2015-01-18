@@ -15,14 +15,23 @@ echo $inputPaths
 echo minifying source files...
 java -jar compiler.jar --language_in=ECMASCRIPT6 --language_out=ES5 --js_output_file=$outputPath $inputPaths
 
-pid=`pidof nodejs`
-if [[ $pid ]]; then
-  echo killing server, process id: $pid
-  kill $pid
-fi
+while getopts ":r" opt; do
+  case $opt in
+    r)
+      pid=`pidof nodejs`
+      if [[ $pid ]]; then
+        echo killing server, process id: $pid
+        kill $pid
+      fi
 
-echo starting server...
-cd /root/sand
-export NODE_ENV=production
-nohup nodejs src/www &
-cd -
+      echo starting server...
+      cd /root/sand
+      export NODE_ENV=production
+      nohup nodejs src/www &
+      cd -
+      ;;
+    \?)
+      echo "invalid option: -$OPTARG" >&2
+      ;;
+  esac
+done

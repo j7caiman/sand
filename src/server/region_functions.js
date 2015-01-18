@@ -58,9 +58,16 @@ module.exports = {
 
 		const numRegionsToCreate = sand.constants.kZipCodeWidth * sand.constants.kZipCodeWidth;
 		var numRegionsCreated = 0;
-		fs.mkdir('./resources/world_datastore/' + zipCode, function (err) {
+		var path = './resources/world_datastore/' + zipCode;
+		fs.mkdir(path, function (err) {
 			if (err) {
-				throw err;
+				if (err.code === 'EEXIST') {
+					console.log('file already exists: ' + path);
+					onComplete();
+					return;
+				} else {
+					throw err;
+				}
 			}
 
 			regionsToCreate.forEach(function (region) {

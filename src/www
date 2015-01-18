@@ -7,8 +7,9 @@ app.set('port', process.env.PORT || 3000);
 var server = app.listen(app.get('port'), function () {
 	debug('Express server listening on port ' + server.address().port);
 });
-
 var io = require('socket.io')(server);
+var processFootprint = require("./server/process_footprint");
+
 var connectedClients = {};
 io.on('connection', function (socket) {
 	var currentPlayers = [];
@@ -27,6 +28,8 @@ io.on('connection', function (socket) {
 
 	socket.on('footprint', function (footprintData) {
 		socket.broadcast.emit('footprint', footprintData);
+
+		processFootprint(footprintData);
 	});
 
 	socket.on('disconnect', function() {

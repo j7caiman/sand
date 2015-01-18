@@ -90,7 +90,6 @@ var GameScene = cc.Scene.extend({
 		});
 
 		this.positionEmitterThrottler = new this.Throttler(100);
-		this.savePlayerThrottler = new this.Throttler(1000);
 		this.addRegionsThrottler = new this.Throttler(500);
 	},
 
@@ -153,8 +152,6 @@ var GameScene = cc.Scene.extend({
 				}
 			}, this);
 
-			this.savePlayerThrottler.throttle(this.savePlayerAndLevel, this);
-
 			function isOutOfBounds(position) {
 				return position.x > sand.constants.kCanvasWidth
 					|| position.y > sand.constants.kCanvasWidth
@@ -184,14 +181,20 @@ var GameScene = cc.Scene.extend({
 
 		if(sand.batchedFootprints.length != 0) {
 			sand.batchedFootprints.forEach(function(print) {
-				var area = this._determineAffectedArea(print.location);
+				var area = sand.globalFunctions.createBoundingBox(
+					print.location,
+					sand.modifyRegion.brushes[print.brush].radius
+				);
 				sand.modifyRegion.makeFootprint(area, print.location, print.brush);
 			}, this);
 
 			sand.modifyRegion.settle();
 
 			sand.batchedFootprints.forEach(function(print) {
-				var area = this._determineAffectedArea(print.location);
+				var area = sand.globalFunctions.createBoundingBox(
+					print.location,
+					sand.constants.kAffectedRegionWidth / 2
+				);
 				sand.canvasUpdate.updateHtmlCanvases(area);
 			}, this);
 
@@ -199,15 +202,6 @@ var GameScene = cc.Scene.extend({
 		}
 
 		sand.globalFunctions.updateBackgroundSpriteLocations();
-	},
-
-	_determineAffectedArea: function(position) {
-		return {
-			x: position.x - sand.constants.kAffectedRegionWidth / 2,
-			y: position.y - sand.constants.kAffectedRegionWidth / 2,
-			width: sand.constants.kAffectedRegionWidth,
-			height: (sand.constants.kAffectedRegionWidth)
-		};
 	},
 
 	//calls "callback" roughly every 'delayMillis'
@@ -255,19 +249,5 @@ var GameScene = cc.Scene.extend({
 			event.setUserData(scrollVector);
 			cc.eventManager.dispatchEvent(event);
 		}
-	},
-
-	savePlayerAndLevel: function () {
-		var data = {
-			regionData: sand.currentRegion.getData(),
-			regionName: sand.currentRegion.getName()
-		};
-
-		$.ajax({
-			url: "write_to_region",
-			type: "POST",
-			data: JSON.stringify(data),
-			contentType: "application/json"
-		});
 	}
 });

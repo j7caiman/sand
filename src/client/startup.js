@@ -213,8 +213,9 @@ sand.globalFunctions = {
 				y: Math.floor(index / numColumns)
 			};
 
-			var x = currentRegionLocation.x - sand.constants.kCanvasWidth * (currentRegionOffset.x - regionOffset.x);
-			var y = currentRegionLocation.y - sand.constants.kCanvasWidth * (currentRegionOffset.y - regionOffset.y);
+			const epsilon = 1; // slightly overlap regions so that safari and firefox tears between regions are invisible
+			var x = currentRegionLocation.x - (sand.constants.kCanvasWidth - epsilon) * (currentRegionOffset.x - regionOffset.x);
+			var y = currentRegionLocation.y - (sand.constants.kCanvasWidth - epsilon) * (currentRegionOffset.y - regionOffset.y);
 			sprite.setPosition(x, y);
 			sprite.setVisible(true);
 		});

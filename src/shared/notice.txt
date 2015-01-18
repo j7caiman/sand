@@ -1,3 +1,0 @@
-Notice:
-Files in this directory (public/javascripts/shared/) are shared
-between the client and the server.

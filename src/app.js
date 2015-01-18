@@ -6,7 +6,6 @@ var bodyParser = require('body-parser');
 
 var game = require('./routes/game');
 var fetch_region = require('./routes/fetch_region');
-var write_to_region = require('./routes/write_to_region');
 
 var app = express();
 
@@ -25,7 +24,6 @@ if(app.get('env') === 'development') {
 
 app.use('/', game);
 app.use('/fetch_region', fetch_region);
-app.use('/write_to_region', write_to_region);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

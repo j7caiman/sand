@@ -35,7 +35,14 @@ router.post('/', function(req, res) {
 
 	regionFunctions.generateRegions(regionNames, onRegionCreationComplete);
 
-	function onRegionCreationComplete() {
+	function onRegionCreationComplete(error) {
+		if(error) {
+			var message = "region lookup failed: " + error;
+			console.log(message);
+			res.status("500").send(message);
+			return;
+		}
+
 		regionNames.forEach(function (regionName) {
 			var zipCode = globalFunctions.getRegionZipCode(regionName);
 
@@ -55,7 +62,14 @@ router.post('/', function(req, res) {
 				throw err;
 			}
 
-			data.regions[regionName] = JSON.parse(regionData);
+			try {
+				data.regions[regionName] = JSON.parse(regionData);
+			} catch (error) {
+				console.log("error for region: " + regionName);
+				console.log("regionData: " + regionData);
+				throw error;
+			}
+
 			numLoadedRegions++;
 			if (numLoadedRegions == regionNames.length) {
 				res.setHeader("Content-Encoding", "gzip");

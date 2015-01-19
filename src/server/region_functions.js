@@ -8,9 +8,7 @@ var sand = {
 var RegionNode = require("../shared/RegionNode");
 
 module.exports = {
-	generateRegions: function (regionNames, onComplete) {
-		var that = this;
-
+	generateRegions: function (regionNames, regionGenerationComplete) {
 		var regionZipCodes = [];
 		regionNames.forEach(function (regionName) {
 			var regionZipCode = Math.floor(regionName.split("_")[0] / sand.constants.kZipCodeWidth)
@@ -21,31 +19,73 @@ module.exports = {
 			}
 		});
 
-		var zipCodesToAccountFor = regionZipCodes.length;
-		regionZipCodes.forEach(function (zipCode) {
-			var path = './resources/world_datastore/' + zipCode;
-			fs.readdir(path, function (err) {
-				function zipCodeCompleted() {
-					zipCodesToAccountFor--;
-					if (zipCodesToAccountFor === 0) {
-						onComplete();
-					}
-				}
+		const numZipCodesToAccountFor = regionZipCodes.length;
+		var numZipCodesLoaded = 0;
 
-				if (err == null) {
-					zipCodeCompleted();
-				} else if (err.code == 'ENOENT') {
-					that._createRegionsForZipCode(zipCode, function () {
-						zipCodeCompleted();
-					});
-				} else {
-					throw err;
+		function onComplete(error) {
+			if (error) {
+				regionGenerationComplete(error);
+			} else {
+				numZipCodesLoaded++;
+				if (numZipCodesLoaded === numZipCodesToAccountFor) {
+					regionGenerationComplete();
 				}
-			});
+			}
+		}
+
+		regionZipCodes.forEach(function (zipCode) {
+			var zipCodeHandler = new ZipCodeHandler(zipCode, onComplete);
+			zipCodeHandler.handle(onComplete);
+		});
+	}
+};
+
+var ZipCodeHandler = function (zipCode) {
+	this._zipCode = zipCode;
+};
+ZipCodeHandler.fileLocks = {};
+
+ZipCodeHandler.prototype = {
+	constructor: ZipCodeHandler,
+
+	handle: function (onComplete) {
+		var that = this;
+		var zipCode = this._zipCode;
+		var path = './resources/world_datastore/' + zipCode;
+		fs.readdir(path, function (err) {
+			if (err == null) {
+				onComplete();
+			} else if (err.code == 'ENOENT') {
+				if (ZipCodeHandler.fileLocks[zipCode] === undefined) {
+					that._createRegions(onComplete);
+				} else {
+					console.log("zip code: " + zipCode + " is locked. " +
+					"Waiting for 100ms, then attempting to read again once.");
+					setTimeout(function () {
+						if (ZipCodeHandler.fileLocks[zipCode] === undefined) {
+							fs.readdir(path, function (err) {
+								if (err == null) {
+									onComplete();
+								} else {
+									throw err;
+								}
+							});
+						} else {
+							console.log("zip code lookup failed. file: " + zipCode + " is locked.");
+							onComplete("zip code locked: " + zipCode);
+						}
+					}, 100);
+				}
+			} else {
+				throw err;
+			}
 		});
 	},
 
-	_createRegionsForZipCode: function (zipCode, onComplete) {
+	_createRegions: function (onComplete) {
+		var zipCode = this._zipCode;
+		ZipCodeHandler.fileLocks[zipCode] = true;
+
 		var regionNamesToCreate = sand.modifyRegion.listRegionNamesInZipCode(zipCode);
 		var regionsToCreate = regionNamesToCreate.map(function (regionName) {
 			var region = new RegionNode(regionName);
@@ -58,20 +98,19 @@ module.exports = {
 
 		const numRegionsToCreate = sand.constants.kZipCodeWidth * sand.constants.kZipCodeWidth;
 		var numRegionsCreated = 0;
-		var path = './resources/world_datastore/' + zipCode;
-		fs.mkdir(path, function (err) {
+		var tempDirectory = './resources/world_datastore/' + zipCode + "temp";
+		fs.mkdir(tempDirectory, function (err) {
 			if (err) {
-				if (err.code === 'EEXIST') {
-					console.log('file already exists: ' + path);
-					onComplete();
-					return;
+				if (err.code == 'EEXIST') {
+					console.log("Path: " + tempDirectory + " already exists. Was the server recently restarted? " +
+					"Overwriting file contents with new regions.");
 				} else {
 					throw err;
 				}
 			}
 
 			regionsToCreate.forEach(function (region) {
-				var path = './resources/world_datastore/' + zipCode + '/' + region.getName() + '.json';
+				var path = tempDirectory + '/' + region.getName() + '.json';
 				fs.writeFile(path, JSON.stringify(region.getData()), function (err) {
 					if (err) {
 						throw err;
@@ -79,10 +118,19 @@ module.exports = {
 
 					numRegionsCreated++;
 					if (numRegionsCreated === numRegionsToCreate) {
-						onComplete();
+						var directory = tempDirectory.replace('temp', '');
+						fs.rename(tempDirectory, directory, function () {
+							if (err) {
+								throw err;
+							}
+
+							delete ZipCodeHandler.fileLocks[zipCode];
+							onComplete();
+						});
 					}
 				});
 			});
+
 		});
 	},
 

@@ -25,7 +25,6 @@ function processFootprint(footprintData) {
 			_flushFootprintBuffer(regionName);
 		}
 	});
-
 }
 
 function _flushFootprintBuffer(regionName) {

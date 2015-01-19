@@ -156,25 +156,11 @@ var ElephantLayer = cc.Layer.extend({
 		cc.eventManager.addListener({
 			event: cc.EventListener.MOUSE,
 
-			onMouseDown: function (event) {
-				sand.elephantPath = [];
-				sand.elephantPath.push({
-					x: event.getLocationX(),
-					y: event.getLocationY() - sand.constants.kFootprintVerticalOffset
-				});
-			},
+			onMouseDown: _onMouseDown,
 
 			onMouseMove: function (event) {
 				if (event.getButton() == 0) { // left click
-					var lastVertex = sand.elephantPath[sand.elephantPath.length - 1];
-					var newVertex = {
-						x: event.getLocationX(),
-						y: event.getLocationY() - sand.constants.kFootprintVerticalOffset
-					};
-					var distance = sand.globalFunctions.calculateDistance(lastVertex, newVertex);
-					if (distance >= sand.constants.kBrushPathMinimumLineSegmentWidth) {
-						sand.elephantPath.push(newVertex);
-					}
+					_onMouseMove(event);
 				}
 			},
 
@@ -185,14 +171,52 @@ var ElephantLayer = cc.Layer.extend({
 					return;
 				}
 
-				var sprite = sand.elephantLayer.playerSprite;
-				if (sand.elephantPath.length === 1) {
-					sand.elephantLayer.moveElephantToLocation(sprite, sand.elephantPath[0]);
-				} else {
-					sand.elephantLayer.moveElephantAlongPath(sprite, sand.elephantPath);
-				}
+				_onMouseUp();
 			}
 		}, this);
+
+		cc.eventManager.addListener({
+			event: cc.EventListener.TOUCH_ALL_AT_ONCE,
+
+			onTouchesBegan: function (touches) {
+				_onMouseDown(touches[0]);
+			},
+
+			onTouchesMoved: function (touches) {
+				_onMouseMove(touches[0]);
+			},
+
+			onTouchesEnded: _onMouseUp
+		}, this);
+
+		function _onMouseDown(event) {
+			sand.elephantPath = [];
+			sand.elephantPath.push({
+				x: event.getLocationX(),
+				y: event.getLocationY() - sand.constants.kFootprintVerticalOffset
+			});
+		}
+
+		function _onMouseMove(event) {
+			var lastVertex = sand.elephantPath[sand.elephantPath.length - 1];
+			var newVertex = {
+				x: event.getLocationX(),
+				y: event.getLocationY() - sand.constants.kFootprintVerticalOffset
+			};
+			var distance = sand.globalFunctions.calculateDistance(lastVertex, newVertex);
+			if (distance >= sand.constants.kBrushPathMinimumLineSegmentWidth) {
+				sand.elephantPath.push(newVertex);
+			}
+		}
+
+		function _onMouseUp() {
+			var sprite = sand.elephantLayer.playerSprite;
+			if (sand.elephantPath.length === 1) {
+				sand.elephantLayer.moveElephantToLocation(sprite, sand.elephantPath[0]);
+			} else {
+				sand.elephantLayer.moveElephantAlongPath(sprite, sand.elephantPath);
+			}
+		}
 	},
 
 	createElephant: function (position, tag) { // tag is an optional parameter

@@ -39,7 +39,7 @@ function _flushFootprintBuffer(regionName) {
 
 	var region = new RegionNode(regionName);
 	var zipCode = globalFunctions.getRegionZipCode(regionName);
-	var path = './resources/world_datastore/' + zipCode + '/' + regionName + '.json';
+	var path = './resources/world_datastore/z' + zipCode + '/r' + regionName + '.json';
 	fs.readFile(path, 'utf8', function (err, regionData) {
 		if (err) {
 			throw err;

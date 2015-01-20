@@ -51,7 +51,7 @@ ZipCodeHandler.prototype = {
 	handle: function (onComplete) {
 		var that = this;
 		var zipCode = this._zipCode;
-		var path = './resources/world_datastore/' + zipCode;
+		var path = './resources/world_datastore/z' + zipCode;
 		fs.readdir(path, function (err) {
 			if (err == null) {
 				onComplete();
@@ -98,7 +98,7 @@ ZipCodeHandler.prototype = {
 
 		const numRegionsToCreate = sand.constants.kZipCodeWidth * sand.constants.kZipCodeWidth;
 		var numRegionsCreated = 0;
-		var tempDirectory = './resources/world_datastore/' + zipCode + "temp";
+		var tempDirectory = './resources/world_datastore/z' + zipCode + "temp";
 		fs.mkdir(tempDirectory, function (err) {
 			if (err) {
 				if (err.code == 'EEXIST') {
@@ -110,7 +110,7 @@ ZipCodeHandler.prototype = {
 			}
 
 			regionsToCreate.forEach(function (region) {
-				var path = tempDirectory + '/' + region.getName() + '.json';
+				var path = tempDirectory + '/r' + region.getName() + '.json';
 				fs.writeFile(path, JSON.stringify(region.getData()), function (err) {
 					if (err) {
 						throw err;

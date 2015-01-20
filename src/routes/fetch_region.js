@@ -46,7 +46,7 @@ router.post('/', function(req, res) {
 		regionNames.forEach(function (regionName) {
 			var zipCode = globalFunctions.getRegionZipCode(regionName);
 
-			var path = './resources/world_datastore/' + zipCode + '/' + regionName + '.json';
+			var path = './resources/world_datastore/z' + zipCode + '/r' + regionName + '.json';
 			fs.readFile(path, 'utf8', function (err, regionData) {
 				returnAllRegionsOnLoad(err, regionData, regionName);
 			});

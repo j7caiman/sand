@@ -27,6 +27,7 @@ while getopts ":r" opt; do
       echo starting server...
       cd /root/sand
       export NODE_ENV=production
+      export DEBUG=sand
       nohup nodejs src/www &
       cd -
       ;;

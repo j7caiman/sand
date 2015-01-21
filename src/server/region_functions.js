@@ -1,3 +1,4 @@
+var debug = require('debug')('sand');
 var fs = require('fs');
 
 var sand = {
@@ -59,7 +60,7 @@ ZipCodeHandler.prototype = {
 				if (ZipCodeHandler.fileLocks[zipCode] === undefined) {
 					that._createRegions(onComplete);
 				} else {
-					console.log("zip code: " + zipCode + " is locked. " +
+					debug("zip code: " + zipCode + " is locked. " +
 					"Waiting for 100ms, then attempting to read again once.");
 					setTimeout(function () {
 						if (ZipCodeHandler.fileLocks[zipCode] === undefined) {
@@ -71,7 +72,7 @@ ZipCodeHandler.prototype = {
 								}
 							});
 						} else {
-							console.log("zip code lookup failed. file: " + zipCode + " is locked.");
+							debug("zip code lookup failed. file: " + zipCode + " is locked.");
 							onComplete("zip code locked: " + zipCode);
 						}
 					}, 100);
@@ -102,7 +103,7 @@ ZipCodeHandler.prototype = {
 		fs.mkdir(tempDirectory, function (err) {
 			if (err) {
 				if (err.code == 'EEXIST') {
-					console.log("Path: " + tempDirectory + " already exists. Was the server recently restarted? " +
+					debug("Path: " + tempDirectory + " already exists. Was the server recently restarted? " +
 					"Overwriting file contents with new regions.");
 				} else {
 					throw err;

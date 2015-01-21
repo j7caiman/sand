@@ -1,4 +1,5 @@
 var express = require('express');
+var debug = require('debug')('sand');
 var router = express.Router();
 var fs = require('fs');
 var zlib = require('zlib');
@@ -38,7 +39,7 @@ router.post('/', function(req, res) {
 	function onRegionCreationComplete(error) {
 		if(error) {
 			var message = "region lookup failed: " + error;
-			console.log(message);
+			debug(message);
 			res.status("500").send(message);
 			return;
 		}
@@ -65,8 +66,8 @@ router.post('/', function(req, res) {
 			try {
 				data.regions[regionName] = JSON.parse(regionData);
 			} catch (error) {
-				console.log("error for region: " + regionName);
-				console.log("regionData: " + regionData);
+				debug("error for region: " + regionName);
+				debug("regionData: " + regionData);
 				throw error;
 			}
 

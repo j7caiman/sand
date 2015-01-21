@@ -14,6 +14,16 @@ var GameScene = cc.Scene.extend({
 
 		this.scheduleUpdate();
 
+		/**
+		 * Gives other players' sprites a unique integer.
+		 * Necessary because:
+		 * The elephant sprite must be removed when another player disconnects from the game.
+		 * The only way to remove a sprite is to call removeChildByTag.
+		 * Tags must be integers and cannot be strings.
+		 */
+		sand.cocosTagCounter = 0;
+		sand.otherPlayers = {};
+
 		sand.socket = io();
 		sand.socket.emit('playerData', {
 			uuid: sand.uuid,
@@ -32,27 +42,10 @@ var GameScene = cc.Scene.extend({
 			};
 		}
 
-		sand.socket.on('onConnect', function (currentPlayers) {
-			sand.otherPlayers = {};
-			/**
-			 * tags cannot be strings, and 'removeChildByName' is not in the API, so in order to remove players once
-			 * they disconnect, they must have a reference which is a unique integer.
-			 */
-			sand.cocosTagCounter = 0;
-
-			currentPlayers.forEach(function(playerData) {
-				var location = determineOtherPlayerLocation(playerData.lastPosition);
-				sand.otherPlayers[playerData.uuid] =  {
-					sprite: sand.elephantLayer.createElephant(location, sand.cocosTagCounter++),
-					timeSinceLastCommand: Date.now()
-				};
-			});
-		});
-
-		sand.socket.on('playerData', function (playerData) {
+		function createOrMoveOtherPlayerToLocation(playerData) {
 			var location = determineOtherPlayerLocation(playerData.lastPosition);
 			if(sand.otherPlayers[playerData.uuid] === undefined) {
-				sand.otherPlayers[playerData.uuid] =  {
+				sand.otherPlayers[playerData.uuid] = {
 					sprite: sand.elephantLayer.createElephant(location, sand.cocosTagCounter++),
 					timeSinceLastCommand: Date.now()
 				};
@@ -77,6 +70,21 @@ var GameScene = cc.Scene.extend({
 				}
 				otherPlayer.timeSinceLastCommand = now;
 			}
+		}
+
+		/**
+		 * the onConnect event can happen more than once:
+		 * It occurs when the client first connects to the server, and additionally whenever the server is restarted
+		 * and all the clients reconnect.
+		 */
+		sand.socket.on('onConnect', function (currentPlayers) {
+			currentPlayers.forEach(function(playerData) {
+				createOrMoveOtherPlayerToLocation(playerData);
+			});
+		});
+
+		sand.socket.on('playerData', function (playerData) {
+			createOrMoveOtherPlayerToLocation(playerData);
 		});
 
 		sand.socket.on('footprint', function (footprintData) {

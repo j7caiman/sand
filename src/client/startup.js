@@ -206,18 +206,20 @@ sand.globalFunctions = {
 
 		visibleRegionNames.forEach(function(regionName, index) {
 			var region = sand.allRegions[regionName];
-			var sprite = region.getSprite();
+			if(region !== undefined) {
+				var sprite = region.getSprite();
 
-			var regionOffset = {
-				x: index % numColumns,
-				y: Math.floor(index / numColumns)
-			};
+				var regionOffset = {
+					x: index % numColumns,
+					y: Math.floor(index / numColumns)
+				};
 
-			const epsilon = 1; // slightly overlap regions so that safari and firefox tears between regions are invisible
-			var x = currentRegionLocation.x - (sand.constants.kCanvasWidth - epsilon) * (currentRegionOffset.x - regionOffset.x);
-			var y = currentRegionLocation.y - (sand.constants.kCanvasWidth - epsilon) * (currentRegionOffset.y - regionOffset.y);
-			sprite.setPosition(x, y);
-			sprite.setVisible(true);
+				const epsilon = 1; // slightly overlap regions so that safari and firefox tears between regions are invisible
+				var x = currentRegionLocation.x - (sand.constants.kCanvasWidth - epsilon) * (currentRegionOffset.x - regionOffset.x);
+				var y = currentRegionLocation.y - (sand.constants.kCanvasWidth - epsilon) * (currentRegionOffset.y - regionOffset.y);
+				sprite.setPosition(x, y);
+				sprite.setVisible(true);
+			}
 		});
 	},
 
@@ -231,6 +233,12 @@ sand.globalFunctions = {
 		canvas.height = height;
 		document.body.appendChild(canvas);
 		return canvas;
+	},
+
+	_fly: function() {
+		sand.constants.kElephantSpeed *= 2;
+		sand.constants.kScrollSpeed *= 2;
+		sand.isPlayerFlying = true;
 	},
 
 	mod: function(a, n) { return ((a % n) + n) % n; },

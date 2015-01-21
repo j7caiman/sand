@@ -130,35 +130,40 @@ var GameScene = cc.Scene.extend({
 					brush = "walking";
 				}
 
-				sand.globalFunctions.addFootprintToQueue(printLocation, brush);
+				if (!sand.isPlayerFlying) {
+					sand.globalFunctions.addFootprintToQueue(printLocation, brush);
+				}
+
 				this._lastPrint = printLocation;
 			}
 
-			this.positionEmitterThrottler.throttle(function updateCookiesAndEmitPosition() {
-				function equalsWithEpsilon(num1, num2, epsilon) {
-					return Math.abs(num1 - num2) < epsilon;
-				}
+			if(!sand.isPlayerFlying) {
+				this.positionEmitterThrottler.throttle(function updateCookiesAndEmitPosition() {
+					function equalsWithEpsilon(num1, num2, epsilon) {
+						return Math.abs(num1 - num2) < epsilon;
+					}
 
-				// don't sent small movements from rounding errors
-				var roundedGlobalPosition = {
-					x: Math.round(sand.globalCoordinates.x),
-					y: Math.round(sand.globalCoordinates.y)
-				};
-
-				if (this.lastEmittedPosition === undefined
-					|| !equalsWithEpsilon(this.lastEmittedPosition.x, roundedGlobalPosition.x, 1)
-					|| !equalsWithEpsilon(this.lastEmittedPosition.y, roundedGlobalPosition.y, 1)) {
-
-					var playerData = {
-						uuid: sand.uuid,
-						lastPosition: roundedGlobalPosition
+					// don't sent small movements from rounding errors
+					var roundedGlobalPosition = {
+						x: Math.round(sand.globalCoordinates.x),
+						y: Math.round(sand.globalCoordinates.y)
 					};
-					this.lastEmittedPosition = roundedGlobalPosition;
 
-					sand.socket.emit('playerData', playerData);
-					$.cookie('playerData', playerData, {expires: 7});
-				}
-			}, this);
+					if (this.lastEmittedPosition === undefined
+						|| !equalsWithEpsilon(this.lastEmittedPosition.x, roundedGlobalPosition.x, 1)
+						|| !equalsWithEpsilon(this.lastEmittedPosition.y, roundedGlobalPosition.y, 1)) {
+
+						var playerData = {
+							uuid: sand.uuid,
+							lastPosition: roundedGlobalPosition
+						};
+						this.lastEmittedPosition = roundedGlobalPosition;
+
+						sand.socket.emit('playerData', playerData);
+						$.cookie('playerData', playerData, {expires: 7});
+					}
+				}, this);
+			}
 
 			function isOutOfBounds(position) {
 				return position.x > sand.constants.kCanvasWidth

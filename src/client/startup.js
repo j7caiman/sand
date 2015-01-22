@@ -162,10 +162,17 @@ sand.globalFunctions = {
 		return canvas;
 	},
 
-	_fly: function() {
+	_fly: function(disable) {
+		if(disable !== undefined) {
+			sand.constants.kElephantSpeed = 50;
+			sand.constants.kScrollSpeed = 80;
+			sand.isPlayerFlying = false;
+			return "landed."
+		}
 		sand.constants.kElephantSpeed *= 2;
 		sand.constants.kScrollSpeed *= 2;
 		sand.isPlayerFlying = true;
+		return "current speed: " + sand.constants.kElephantSpeed + " kilophants/hour."
 	},
 
 	mod: function(a, n) { return ((a % n) + n) % n; },

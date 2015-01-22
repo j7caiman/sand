@@ -6,15 +6,51 @@ sand.constants = sand.constants || require("./global_constants");
 sand.modifyRegion = sand.modifyRegion || {};
 
 sand.modifyRegion.brushes = {
-	painting: {
-		radius: 8,
-			pointOfImpact: 2
-	},
+	painting: [
+		{
+			frequency: 7,
+			radius: 6,
+			apply: function(regionData, positionOnCanvas) {
+				sand.modifyRegion.imprintSphere(
+					regionData,
+					positionOnCanvas,
+					4.5,
+					1,
+					false
+				)
+			}
+		},
+		{
+			radius: 6,
+			offset: {
+				x: -8.5,
+				y: -2
+			},
+			apply: function(regionData, positionOnCanvas) {
+				sand.modifyRegion.imprintSphere(
+					regionData,
+					positionOnCanvas,
+					5,
+					2,
+					true
+				)
+			}
+		}
+	],
 
-	walking: {
+	walking: [{
+		frequency: 15,
 		radius: 1.5,
-			pointOfImpact: 0
-	}
+		apply: function(regionData, positionOnCanvas) {
+			sand.modifyRegion.imprintSphere(
+				regionData,
+				positionOnCanvas,
+				1.5,
+				0,
+				false
+			)
+		}
+	}]
 };
 
 /**
@@ -30,8 +66,9 @@ sand.modifyRegion.brushes = {
  * pointOfImpact: the height at which the sphere which forms the crater is located
  *  - note that in the diagram above, pointOfImpact would be located slightly above the word "follows"
  *
+ * emboss: if true, raises the ground instead of lowering it
  */
-sand.modifyRegion.imprintSphere = function (regionData, positionOnCanvas, radius, pointOfImpactZ) {
+sand.modifyRegion.imprintSphere = function (regionData, positionOnCanvas, radius, pointOfImpactZ, emboss) {
 	const sandGrainWidth = sand.constants.kCanvasWidth / sand.constants.kRegionWidth; // blocks are square
 	var pointOfImpact = {
 		x: Math.floor(positionOnCanvas.x / sandGrainWidth),
@@ -55,10 +92,25 @@ sand.modifyRegion.imprintSphere = function (regionData, positionOnCanvas, radius
 
 			var newZ = Math.sqrt(radius * radius - ( delta.x * delta.x + delta.y * delta.y )) - pointOfImpact.z;
 			if (newZ > 0) {
-				regionData[y][x] -= Math.floor(newZ);
+				if(emboss === true) {
+					regionData[y][x] += Math.floor(newZ);
+				} else {
+					regionData[y][x] -= Math.floor(newZ);
+				}
 			}
 		}
 	}
+};
+
+/**
+ * the crater is shaped as follows:
+ * a sand pile is removed, then added to a spot adjacent.
+ *
+ * i.e. imprintSphere followed by "exprintSphere"
+ *
+ */
+sand.modifyRegion.imprintFurrow = function (regionData, positionOnCanvas) {
+	sand.modifyRegion.imprintSphere(regionData)
 };
 
 var module = module || {};

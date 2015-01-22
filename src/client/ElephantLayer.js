@@ -204,7 +204,7 @@ var ElephantLayer = cc.Layer.extend({
 				y: event.getLocationY() - sand.constants.kFootprintVerticalOffset
 			};
 			var distance = sand.globalFunctions.calculateDistance(lastVertex, newVertex);
-			if (distance >= sand.constants.kBrushPathMinimumLineSegmentWidth) {
+			if (distance >= sand.modifyRegion.brushes.painting[0].frequency) {
 				sand.elephantPath.push(newVertex);
 			}
 		}

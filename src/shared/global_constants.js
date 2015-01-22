@@ -8,7 +8,6 @@ sand.constants = {
 	kElephantSpeed: 50,
 	kScrollSpeed: 80,
 	kBeginScrollThreshold: 150, // distance from edge to start scrolling toward player
-	kBrushPathMinimumLineSegmentWidth: 10,
 	kFootprintVerticalOffset: 12 // vertical distance from center of elephant sprite to place footprints
 };
 

@@ -6,24 +6,40 @@ var RegionNode = require('../shared/RegionNode');
 var footprintBuffer = {};
 
 function processFootprint(footprintData) {
-	var area = globalFunctions.createBoundingBox(
-		footprintData.location,
-		footprintFunctions.brushes[footprintData.brush].radius
-	);
-	var regionNames = globalFunctions.findRegionsInRect(area);
-	regionNames.forEach(function (regionName) {
-		if (footprintBuffer[regionName] === undefined) {
-			footprintBuffer[regionName] = {
-				buffer: [],
-				locked: false,
-				lastFlushTimestamp: 0
-			};
+	var brush = footprintFunctions.brushes[footprintData.brush];
+	brush.forEach(function(brushComponent) {
+		var computedLocation = {
+			x: footprintData.location.x,
+			y: footprintData.location.y
+		};
+		if(brushComponent.offset !== undefined) {
+			computedLocation.x = brushComponent.offset.x + footprintData.location.x;
+			computedLocation.y = brushComponent.offset.y + footprintData.location.y;
 		}
-		footprintBuffer[regionName].buffer.push(footprintData);
 
-		if (!footprintBuffer[regionName].locked) {
-			_flushFootprintBuffer(regionName);
-		}
+		var area = globalFunctions.createBoundingBox(
+			computedLocation,
+			brushComponent.radius
+		);
+
+		var regionNames = globalFunctions.findRegionsInRect(area);
+		regionNames.forEach(function (regionName) {
+			if (footprintBuffer[regionName] === undefined) {
+				footprintBuffer[regionName] = {
+					buffer: [],
+					locked: false,
+					lastFlushTimestamp: 0
+				};
+			}
+			footprintBuffer[regionName].buffer.push({
+				location: computedLocation,
+				brush: brushComponent
+			});
+
+			if (!footprintBuffer[regionName].locked) {
+				_flushFootprintBuffer(regionName);
+			}
+		});
 	});
 }
 
@@ -47,12 +63,7 @@ function _flushFootprintBuffer(regionName) {
 
 		regionData = JSON.parse(regionData);
 		footprintsToFlush.forEach(function (print) {
-			footprintFunctions.imprintSphere(
-				regionData,
-				globalFunctions.toLocalCoordinates(print.location, region),
-				footprintFunctions.brushes[print.brush].radius,
-				footprintFunctions.brushes[print.brush].pointOfImpact
-			);
+			print.brush.apply(regionData, globalFunctions.toLocalCoordinates(print.location, region));
 		});
 
 		fs.writeFile(path, JSON.stringify(regionData), function (err) {

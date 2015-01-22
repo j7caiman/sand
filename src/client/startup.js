@@ -67,21 +67,6 @@ cc.game.onStart = function() {
 };
 
 sand.globalFunctions = {
-	addFootprintToQueue: function(location, brushStrokeType) {
-		var roundedLocation = {
-			x: Math.round(location.x),
-			y: Math.round(location.y)
-		};
-
-		var print = {
-			location: roundedLocation,
-			brush: brushStrokeType
-		};
-
-		sand.batchedFootprints.push(print);
-		sand.socket.emit('footprint', print);
-	},
-
 	addMoreRegions: function (onComplete, regionNames) {
 		if(regionNames === undefined) {
 			var padding = sand.constants.kLoadMoreRegionsThreshold;
@@ -163,64 +148,6 @@ sand.globalFunctions = {
 				}
 			});
 		}
-	},
-
-	updateBackgroundSpriteLocations: function() {
-		var playerScreenPosition = sand.elephantLayer.playerSprite.getPosition();
-		var bottomLeftCornerOfViewport = {
-			x:  sand.globalCoordinates.x - playerScreenPosition.x,
-			y:  sand.globalCoordinates.y - playerScreenPosition.y
-		};
-
-		var viewport = {
-			x: bottomLeftCornerOfViewport.x,
-			y: bottomLeftCornerOfViewport.y,
-			width: window.innerWidth,
-			height: window.innerHeight
-		};
-		var visibleRegionNames = sand.globalFunctions.findRegionsInRect(viewport);
-
-		var indexOfCurrentRegion = undefined;
-		var previousRegionYCoordinate;
-		var numColumns;
-		visibleRegionNames.forEach(function(regionName, index) {
-			if(sand.currentRegion.getName() === regionName) {
-				indexOfCurrentRegion = index;
-			}
-			var yCoordinate = regionName.split("_")[1];
-			if(numColumns === undefined && index !== 0 && yCoordinate !== previousRegionYCoordinate) {
-				numColumns = index;
-			}
-
-			previousRegionYCoordinate = yCoordinate;
-		});
-		if(numColumns === undefined) {
-			numColumns = 1;
-		}
-
-		var currentRegionOffset = {
-			x: indexOfCurrentRegion % numColumns,
-			y: Math.floor(indexOfCurrentRegion / numColumns)
-		};
-		var currentRegionLocation = sand.currentRegion.getSprite().getPosition();
-
-		visibleRegionNames.forEach(function(regionName, index) {
-			var region = sand.allRegions[regionName];
-			if(region !== undefined) {
-				var sprite = region.getSprite();
-
-				var regionOffset = {
-					x: index % numColumns,
-					y: Math.floor(index / numColumns)
-				};
-
-				const epsilon = 1; // slightly overlap regions so that safari and firefox tears between regions are invisible
-				var x = currentRegionLocation.x - (sand.constants.kCanvasWidth - epsilon) * (currentRegionOffset.x - regionOffset.x);
-				var y = currentRegionLocation.y - (sand.constants.kCanvasWidth - epsilon) * (currentRegionOffset.y - regionOffset.y);
-				sprite.setPosition(x, y);
-				sprite.setVisible(true);
-			}
-		});
 	},
 
 	createCanvas: function (id, width, height) {

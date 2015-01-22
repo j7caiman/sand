@@ -76,9 +76,23 @@ sand.modifyRegion.imprintSphere = function (regionData, positionOnCanvas, radius
 		z: pointOfImpactZ
 	};
 
-	const regionWidth = sand.constants.kRegionWidth;
-	for (var y = 0; y < regionWidth; y++) {
-		for (var x = 0; x < regionWidth; x++) {
+	var bounds = {
+		left: Math.max(
+			0, Math.floor(pointOfImpact.x - radius)
+		),
+		right: Math.min(
+			sand.constants.kRegionWidth, Math.ceil(pointOfImpact.x + radius)
+		),
+		bottom: Math.max(
+			0, Math.floor(pointOfImpact.y - radius)
+		),
+		top: Math.min(
+			sand.constants.kRegionWidth, Math.ceil(pointOfImpact.y + radius)
+		)
+	};
+
+	for (var y = bounds.bottom; y < bounds.top; y++) {
+		for (var x = bounds.left; x < bounds.right; x++) {
 			var localCoordinates = {
 				x: x,
 				y: y,
@@ -100,17 +114,6 @@ sand.modifyRegion.imprintSphere = function (regionData, positionOnCanvas, radius
 			}
 		}
 	}
-};
-
-/**
- * the crater is shaped as follows:
- * a sand pile is removed, then added to a spot adjacent.
- *
- * i.e. imprintSphere followed by "exprintSphere"
- *
- */
-sand.modifyRegion.imprintFurrow = function (regionData, positionOnCanvas) {
-	sand.modifyRegion.imprintSphere(regionData)
 };
 
 var module = module || {};

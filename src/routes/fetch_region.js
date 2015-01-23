@@ -63,12 +63,18 @@ router.post('/', function(req, res) {
 				throw err;
 			}
 
+			// When footprints are being written to the region file, the file is first truncated.
+			// So, occasionally, the read function will return an empty file. The proper way to solve this
+			// issue would be to have a lock on the file when it is being written to, however, I couldn't figure
+			// one out that didn't severely slow down the time taken to return a region.
 			try {
 				data.regions[regionName] = JSON.parse(regionData);
 			} catch (error) {
-				debug("error for region: " + regionName);
+				var zipCode = globalFunctions.getRegionZipCode(regionName);
+				debug("error for region: z" + zipCode + "/r" + regionName);
 				debug("regionData: " + regionData);
-				throw error;
+				res.status("500").send(message);
+				return;
 			}
 
 			numLoadedRegions++;

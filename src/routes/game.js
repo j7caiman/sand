@@ -4,7 +4,6 @@ var environment = express().get('env');
 
 router.get('/', function(req, res) {
 	res.render('game', {
-		title: 'Sand',
 		environment: environment
 	});
 });

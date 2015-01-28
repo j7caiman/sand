@@ -147,6 +147,11 @@ sand.globalFunctions = {
 					}
 				}
 			});
+			try {
+				ga('send', 'event', 'regions', 'addMore', newRegionNames, newRegionNames.length);				
+			} catch (err) {
+				//  Occasionally this function will throw an error when the client has blocked google analytics
+			}
 		}
 	},
 

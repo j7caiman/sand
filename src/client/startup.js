@@ -5,11 +5,12 @@ var sand = {
 };
 
 $(document).ready(function() {
-	sand.globalFunctions.createCanvas(
-		'cocos2d_gameCanvas', // game canvas is referenced in project.json
-		window.innerWidth,
-		window.innerHeight
-	);
+	var canvas = document.createElement('canvas');
+	canvas.id = 'cocos2d_gameCanvas'; // game canvas is referenced in project.json
+	canvas.width = window.innerWidth;
+	canvas.height = window.innerHeight;
+	document.body.appendChild(canvas);
+
 	cc.game.run();
 });
 
@@ -105,7 +106,10 @@ sand.globalFunctions = {
 							allRegions[regionName] = new RegionNode(regionName);
 							allRegions[regionName].setData(dataForNewRegions[regionName]);
 
-							var canvas = sand.globalFunctions.createCanvas(regionName, sand.constants.kCanvasWidth);
+							var canvas = document.createElement('canvas');
+							canvas.id = regionName;
+							canvas.width = sand.constants.kCanvasWidth;
+							canvas.height = (sand.constants.kCanvasWidth);
 							canvas.style.display = 'none';
 							allRegions[regionName].setCanvas(canvas);
 
@@ -153,18 +157,6 @@ sand.globalFunctions = {
 				//  Occasionally this function will throw an error when the client has blocked google analytics
 			}
 		}
-	},
-
-	createCanvas: function (id, width, height) {
-		if(height === undefined) { // creates square canvas
-			height = (width);
-		}
-		var canvas = document.createElement('canvas');
-		canvas.id = id;
-		canvas.width = width;
-		canvas.height = height;
-		document.body.appendChild(canvas);
-		return canvas;
 	},
 
 	_fly: function(disable) {

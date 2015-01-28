@@ -75,14 +75,29 @@ sand.canvasUpdate = {
 			y: (region.y * sand.constants.kRegionWidth) + sandGrainPosition.y
 		};
 
-		var whatever = sand.globalFunctions.mod((globalSandGrainPosition.x + globalSandGrainPosition.y), (colorChange * 3));
+		var moddedTaxicabDistance = sand.globalFunctions.mod(
+			(globalSandGrainPosition.x + globalSandGrainPosition.y),
+			(colorChange * 3)
+		);
 
-		if(whatever < colorChange) {
-			return sand.canvasUpdate._weightedColorAverage(yellow, pink, (whatever / colorChange));
-		} else if(whatever < 2 * colorChange) {
-			return sand.canvasUpdate._weightedColorAverage(pink, cyan, ((whatever - colorChange) / colorChange));
+		if(moddedTaxicabDistance < colorChange) {
+			return sand.canvasUpdate._weightedColorAverage(
+				yellow,
+				pink,
+				(moddedTaxicabDistance / colorChange)
+			);
+		} else if(moddedTaxicabDistance < 2 * colorChange) {
+			return sand.canvasUpdate._weightedColorAverage(
+				pink,
+				cyan,
+				((moddedTaxicabDistance - colorChange) / colorChange)
+			);
 		} else {
-			return sand.canvasUpdate._weightedColorAverage(cyan, yellow, ((whatever - 2 * colorChange) / colorChange));
+			return sand.canvasUpdate._weightedColorAverage(
+				cyan,
+				yellow,
+				((moddedTaxicabDistance - 2 * colorChange) / colorChange)
+			);
 		}
 	},
 

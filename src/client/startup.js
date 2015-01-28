@@ -1,7 +1,8 @@
 var sand = {
 	allRegions: {},
 	batchedFootprints: [],
-	elephantPath: []
+	elephantPath: [],
+	playerState: {}
 };
 
 $(document).ready(function() {
@@ -163,12 +164,12 @@ sand.globalFunctions = {
 		if(disable !== undefined) {
 			sand.constants.kElephantSpeed = 50;
 			sand.constants.kScrollSpeed = 80;
-			sand.isPlayerFlying = false;
+			sand.playerState.flying = false;
 			return "landed."
 		}
 		sand.constants.kElephantSpeed *= 2;
 		sand.constants.kScrollSpeed *= 2;
-		sand.isPlayerFlying = true;
+		sand.playerState.flying = true;
 		return "current speed: " + sand.constants.kElephantSpeed + " kilophants/hour."
 	},
 

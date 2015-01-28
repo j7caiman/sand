@@ -47,7 +47,11 @@ var GameScene = cc.Scene.extend({
 			var location = determineOtherPlayerLocation(playerData.lastPosition);
 			if(sand.otherPlayers[playerData.uuid] === undefined) {
 				sand.otherPlayers[playerData.uuid] = {
-					sprite: sand.elephantLayer.createElephant(location, sand.cocosTagCounter++),
+					sprite: sand.elephantLayer.createElephant(
+						location,
+						sand.elephantLayer.zOrders.otherElephants,
+						sand.cocosTagCounter++
+					),
 					timeSinceLastCommand: Date.now()
 				};
 			} else {
@@ -64,10 +68,10 @@ var GameScene = cc.Scene.extend({
 				 * compensate.
 				 */
 				if(!otherPlayer.sprite.getActionByTag("moveElephant")) {
-					sand.elephantLayer.moveElephantToLocation(otherPlayer.sprite, location);
+					sand.elephantLayer.moveOtherElephantToLocation(otherPlayer.sprite, location);
 				} else {
 					var duration = (now - otherPlayer.timeSinceLastCommand) / 1000;
-					sand.elephantLayer.moveElephantToLocation(otherPlayer.sprite, location, duration);
+					sand.elephantLayer.moveOtherElephantToLocation(otherPlayer.sprite, location, duration);
 				}
 				otherPlayer.timeSinceLastCommand = now;
 			}
@@ -118,7 +122,7 @@ var GameScene = cc.Scene.extend({
 
 
 			var brush;
-			if (sand.isPlayerPainting) {
+			if (sand.playerState.painting) {
 				brush = "painting";
 			} else {
 				brush = "walking";
@@ -131,14 +135,14 @@ var GameScene = cc.Scene.extend({
 			if (this._lastPrint === undefined
 				|| (sand.globalFunctions.calculateDistance(this._lastPrint, printLocation) >= frequency)) {
 
-				if (!sand.isPlayerFlying) {
+				if (!sand.playerState.flying) {
 					this.addFootprintToQueue(printLocation, brush);
 				}
 
 				this._lastPrint = printLocation;
 			}
 
-			if(!sand.isPlayerFlying) {
+			if(!sand.playerState.flying) {
 				this.positionEmitterThrottler.throttle(function updateCookiesAndEmitPosition() {
 					function equalsWithEpsilon(num1, num2, epsilon) {
 						return Math.abs(num1 - num2) < epsilon;
@@ -207,6 +211,13 @@ var GameScene = cc.Scene.extend({
 			}, this);
 
 			sand.batchedFootprints = [];
+		}
+
+		if(sand.playerState.selectedItem) {
+			sand.playerState.selectedItem.placedSprite.setPosition(
+				sand.elephantLayer.playerSprite.x,
+				sand.elephantLayer.playerSprite.y + sand.constants.kElephantHeightOffset
+			);
 		}
 
 		this.updateBackgroundSpriteLocations();

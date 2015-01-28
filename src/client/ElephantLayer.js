@@ -1,6 +1,3 @@
-/**
- * Layer which listens for the mouse and moves / animates the player character.
- */
 var ElephantLayer = cc.Layer.extend({
 	ctor: function () {
 		this._super();
@@ -11,12 +8,58 @@ var ElephantLayer = cc.Layer.extend({
 		var that = this;
 		that._super();
 
+		cc.spriteFrameCache.addSpriteFrames(res.ui_sprite_plist);
 		cc.spriteFrameCache.addSpriteFrames(res.elephant_sprite_plist);
 
-		that.playerSprite = that.createElephant({
-			x: window.innerWidth / 2,
-			y: window.innerHeight / 2
-		});
+		that.zOrders = {
+			itemsInInventory: 3,
+			inventoryBackground: 2,
+			itemsBeingCarried: 1,
+			playerElephant: 0,
+			otherElephants: -1,
+			itemsOnGround: -2
+		};
+
+		that.inventoryBackgroundSprite = new cc.Sprite("#ui_background.png");
+		that.inventoryBackgroundSprite.setPosition(80, 100);
+		that.inventoryBackgroundSprite.setAnchorPoint(0, 0.5);
+		that.inventoryBackgroundSprite.setZOrder(that.zOrders.inventoryBackground);
+		that.addChild(that.inventoryBackgroundSprite);
+
+		var itemPositionX = 100;
+		var InventoryItem = function(defaultFrame, selectedFrame, unavailableFrame) {
+			this.inventorySprite = new cc.Sprite('#' + defaultFrame);
+			this.placedSprite = new cc.Sprite('#' + defaultFrame);
+
+			this.defaultFrame = cc.spriteFrameCache.getSpriteFrame(defaultFrame);
+			this.selectedFrame = cc.spriteFrameCache.getSpriteFrame(selectedFrame);
+			this.unavailableFrame = cc.spriteFrameCache.getSpriteFrame(unavailableFrame);
+
+			this.available = true;
+
+			this.inventorySprite.setPosition(itemPositionX, 100);
+			itemPositionX += 20;
+			this.inventorySprite.setZOrder(that.zOrders.itemsInInventory);
+
+			that.addChild(this.inventorySprite);
+			that.addChild(this.placedSprite);
+		};
+
+		var inventory = [
+			new InventoryItem("rock.png", "rock_selected.png", "rock_unavailable.png"),
+			new InventoryItem("rock.png", "rock_selected.png", "rock_unavailable.png"),
+			new InventoryItem("rock.png", "rock_selected.png", "rock_unavailable.png"),
+			new InventoryItem("rock.png", "rock_selected.png", "rock_unavailable.png")
+		];
+		that.inventory = inventory;
+
+		that.playerSprite = that.createElephant(
+			{
+				x: window.innerWidth / 2,
+				y: window.innerHeight / 2
+			},
+			that.zOrders.playerElephant
+		);
 		that.playerSprite.setName("player");
 
 		(function initializeElephantFrames() {
@@ -154,46 +197,134 @@ var ElephantLayer = cc.Layer.extend({
 			};
 		})();
 
+		/**
+		 * This listener catches both touchscreen and mouse input.
+		 * All input events are processed here, including moving the elephant around and manipulating menus.
+		 *
+		 * Note: a more sensible way to do this would be to have a listener for each layer. However, there is no
+		 * way to prevent all the listeners from being triggered for every event, since the "swallowTouches"
+		 * property only works on cc.EventListener.TOUCH_ONE_BY_ONE, and that particular listener doesn't
+		 * properly capture mouse up and mouse drag events.
+		 */
 		cc.eventManager.addListener({
 			event: cc.EventListener.TOUCH_ALL_AT_ONCE,
 
 			onTouchesBegan: function (touches) {
-				sand.elephantPath = [];
-				sand.elephantPath.push({
-					x: touches[0].getLocationX(),
-					y: touches[0].getLocationY() - sand.constants.kFootprintVerticalOffset
-				});
-			},
-
-			onTouchesMoved: function (touches) {
-				var lastVertex = sand.elephantPath[sand.elephantPath.length - 1];
-				var newVertex = {
-					x: touches[0].getLocationX(),
-					y: touches[0].getLocationY() - sand.constants.kFootprintVerticalOffset
-				};
-				var distance = sand.globalFunctions.calculateDistance(lastVertex, newVertex);
-				if (distance >= sand.modifyRegion.brushes.painting[0].frequency) {
-					sand.elephantPath.push(newVertex);
+				var position = touches[0].getLocation();
+				if (!cc.rectContainsPoint(that.inventoryBackgroundSprite.getBoundingBox(), position)) {
+					sand.elephantPath = [];
+					sand.elephantPath.push({
+						x: position.x,
+						y: position.y - sand.constants.kFootprintVerticalOffset
+					});
 				}
 			},
 
-			onTouchesEnded: function () {
+			onTouchesMoved: function (touches) {
+				var position = touches[0].getLocation();
+				if (!cc.rectContainsPoint(that.inventoryBackgroundSprite.getBoundingBox(), position)) {
+					var lastVertex = sand.elephantPath[sand.elephantPath.length - 1];
+					var newVertex = {
+						x: position.x,
+						y: position.y - sand.constants.kFootprintVerticalOffset
+					};
+					var distance = sand.globalFunctions.calculateDistance(lastVertex, newVertex);
+					if (distance >= sand.modifyRegion.brushes.painting[0].frequency) {
+						sand.elephantPath.push(newVertex);
+					}
+				}
+			},
+
+			onTouchesEnded: function (touches) {
+				var position = touches[0].getLocation();
 				var sprite = sand.elephantLayer.playerSprite;
-				if (sand.elephantPath.length === 1) {
-					sand.elephantLayer.moveElephantToLocation(sprite, sand.elephantPath[0]);
-				} else {
-					sand.elephantLayer.moveElephantAlongPath(sprite, sand.elephantPath);
+
+				var inventoryItemClicked = (function processInventoryItem () {
+					return inventory.some(function (item) {
+						if (cc.rectContainsPoint(item.inventorySprite.getBoundingBox(), position)) {
+							if (item.available) {
+								sprite.stopActionByTag("moveElephant");
+								that._stopAllAnimations(sprite);
+
+								if (sand.playerState.selectedItem === item) { // deselect selected item
+									that._resetItem(item);
+									sand.playerState.selectedItem = false;
+								} else {
+									if(sand.playerState.selectedItem) { // select item, place on elephant's back
+										that._resetItem(sand.playerState.selectedItem);
+									}
+									sand.playerState.selectedItem = item;
+
+									item.inventorySprite.setSpriteFrame(item.selectedFrame);
+									item.placedSprite.setSpriteFrame(item.defaultFrame);
+									item.placedSprite.setVisible(true);
+									item.placedSprite.setZOrder(that.zOrders.itemsBeingCarried);
+								}
+							}
+
+							return true;
+						} else if (cc.rectContainsPoint(item.placedSprite.getBoundingBox(), position)) {
+							if (sand.playerState.selectedItem) {
+								that._resetItem(sand.playerState.selectedItem);
+								sand.playerState.selectedItem = false;
+							}
+
+							if (sand.playerState.putBackItem) {
+								sand.playerState.putBackItem.placedSprite.setSpriteFrame(sand.playerState.putBackItem.defaultFrame);
+							}
+
+							sand.playerState.putBackItem = item;
+							item.placedSprite.setSpriteFrame(item.selectedFrame);
+
+							sand.elephantLayer.movePlayerElephantToLocation(
+								sand.elephantLayer.playerSprite,
+								position,
+								function() {
+									that._resetItem(sand.playerState.putBackItem);
+									sand.playerState.putBackItem = false;
+								}
+							);
+
+							return true;
+						}
+					});
+				})();
+
+				if (!inventoryItemClicked) {
+					if (sand.playerState.putBackItem) {
+						sand.playerState.putBackItem.placedSprite.setSpriteFrame(sand.playerState.putBackItem.defaultFrame);
+						sand.playerState.putBackItem = false;
+					}
+
+					if (sand.playerState.selectedItem) {
+						sand.elephantLayer.movePlayerElephantToLocation(sprite, position, function () {
+							// place item on ground
+							sand.playerState.selectedItem.placedSprite.setPosition(
+								sand.elephantLayer.playerSprite.x,
+								sand.elephantLayer.playerSprite.y
+							);
+							sand.playerState.selectedItem.inventorySprite.setSpriteFrame(sand.playerState.selectedItem.unavailableFrame);
+							sand.playerState.selectedItem.placedSprite.setZOrder(that.zOrders.itemsOnGround);
+							sand.playerState.selectedItem.available = false;
+							sand.playerState.selectedItem = false;
+						});
+					} else if (sand.elephantPath.length === 1) {
+						sand.elephantLayer.movePlayerElephantToLocation(sprite, sand.elephantPath[0]);
+					} else {
+						sand.elephantLayer.moveElephantAlongPath(sprite, sand.elephantPath);
+					}
 				}
 			}
 		}, this);
 	},
 
-	createElephant: function (position, tag) { // tag is an optional parameter
+	createElephant: function (position, zOrder, tag) { // tag is an optional parameter
 		var sprite = new cc.Sprite("#elephant_sprite_sheet_01.png");
 
 		sprite.setPosition(position);
 		sprite.setScale(1.5);
 		sprite.setAnchorPoint(0.5, 0);
+		sprite.setZOrder(zOrder);
 
 		this.addChild(sprite, undefined, tag);
 		return sprite;
@@ -208,7 +339,7 @@ var ElephantLayer = cc.Layer.extend({
 
 		var elephantPath = [];
 		elephantPath.push(cc.callFunc(function () {
-			sand.isPlayerPainting = false;
+			sand.playerState.painting = false;
 		}));
 		brushStrokePath.forEach(function (element, index) {
 			endPosition = element;
@@ -239,7 +370,7 @@ var ElephantLayer = cc.Layer.extend({
 
 			if (index === 0) {
 				elephantPath.push(cc.callFunc(function () {
-					sand.isPlayerPainting = true;
+					sand.playerState.painting = true;
 				}));
 			}
 
@@ -247,7 +378,7 @@ var ElephantLayer = cc.Layer.extend({
 				elephantPath.push(cc.callFunc(function () {
 					that._stopAllAnimations(sprite);
 					sprite.setSpriteFrame(elephantAnimationData.standFrame);
-					sand.isPlayerPainting = false;
+					sand.playerState.painting = false;
 				}));
 			}
 
@@ -261,15 +392,13 @@ var ElephantLayer = cc.Layer.extend({
 		sprite.runAction(action);
 	},
 
-	moveElephantToLocation: function (sprite, destination, duration) {
+	movePlayerElephantToLocation: function (sprite, destination, onComplete) {
 		var that = this;
 
 		var elephantPosition = sprite.getPosition();
 
 		var distance = sand.globalFunctions.calculateDistance(elephantPosition, destination);
-		if (duration === undefined) {
-			duration = distance / sand.constants.kElephantSpeed;
-		}
+		var duration = distance / sand.constants.kElephantSpeed;
 
 		var angle = Math.atan2(
 			destination.y - elephantPosition.y,
@@ -291,7 +420,57 @@ var ElephantLayer = cc.Layer.extend({
 			var walkAnimation = cc.animate(elephantAnimationData.walkAnimation).repeatForever();
 			walkAnimation.setTag(elephantAnimationData.animationTag);
 			sprite.runAction(walkAnimation);
-		} else if (sprite.getName() !== "player" && sprite.getActionByTag(elephantAnimationData.animationTag)) {
+		}
+
+		sprite.flippedX = elephantAnimationData.spriteFlipped;
+
+		sprite.stopActionByTag("moveElephant");
+		var moveToAction = cc.moveTo(duration, destination);
+
+		var standAction = cc.callFunc(function () {
+			/**
+			 *  It's necessary to stop the "moveElephant" action because even though this action
+			 *  is supposedly only run after the cc.moveTo action is complete, the elephant still
+			 *  moves a little bit if a scroll action occurred while the elephant was walking.
+			 *  Root cause unknown, presumably a bug with cocos2d.
+			 */
+			sprite.stopActionByTag("moveElephant");
+			that._stopAllAnimations(sprite);
+			sprite.setSpriteFrame(elephantAnimationData.standFrame);
+
+			if (onComplete !== undefined) {
+				onComplete();
+			}
+		}, this);
+
+		var moveToThenStopAction = cc.sequence(moveToAction, standAction);
+		moveToThenStopAction.setTag("moveElephant");
+		sprite.runAction(moveToThenStopAction);
+	},
+
+	moveOtherElephantToLocation: function (sprite, destination, duration) {
+		var that = this;
+
+		var elephantPosition = sprite.getPosition();
+
+		var distance = sand.globalFunctions.calculateDistance(elephantPosition, destination);
+		if (duration === undefined) {
+			duration = distance / sand.constants.kElephantSpeed;
+		}
+
+		var angle = Math.atan2(
+			destination.y - elephantPosition.y,
+			destination.x - elephantPosition.x
+		);
+		var elephantAnimationData = that._chooseElephantAnimationData(angle);
+
+		if (!sprite.getActionByTag(elephantAnimationData.animationTag)) {
+			that._stopAllAnimations(sprite);
+
+			var walkAnimation = cc.animate(elephantAnimationData.walkAnimation).repeatForever();
+			walkAnimation.setTag(elephantAnimationData.animationTag);
+			sprite.runAction(walkAnimation);
+		} else {
 			/**
 			 * It would be preferable to only unschedule the callback
 			 * which is added with scheduleOnce below.
@@ -312,35 +491,18 @@ var ElephantLayer = cc.Layer.extend({
 
 		sprite.flippedX = elephantAnimationData.spriteFlipped;
 
-		if(sprite.getName() === "player") {
-			sand.isPlayerPainting = false;
-		}
-
 		sprite.stopActionByTag("moveElephant");
 		var moveToAction = cc.moveTo(duration, destination);
 
-		var standAction;
-		if (sprite.getName() === "player") {
-			standAction = cc.callFunc(function () {
-				/**
-				 *  It's necessary to stop the "moveElephant" action because even though this action
-				 *  is supposedly only run after the cc.moveTo action is complete, the elephant still
-				 *  moves a little bit if a scroll action occurred while the elephant was walking.
-				 *  Root cause unknown, presumably a bug with cocos2d.
-				 */
+		var standAction = cc.callFunc(function () {
+			sprite.scheduleOnce(function () {
 				sprite.stopActionByTag("moveElephant");
+
 				that._stopAllAnimations(sprite);
 				sprite.setSpriteFrame(elephantAnimationData.standFrame);
-			}, this);
-		} else {
-			standAction = cc.callFunc(function () {
-				sprite.stopActionByTag("moveElephant");
-				sprite.scheduleOnce(function () {
-					that._stopAllAnimations(sprite);
-					sprite.setSpriteFrame(elephantAnimationData.standFrame);
-				}, 0.5);
-			}, this);
-		}
+
+			}, 0.5);
+		}, this);
 
 		var moveToThenStopAction = cc.sequence(moveToAction, standAction);
 		moveToThenStopAction.setTag("moveElephant");
@@ -376,5 +538,11 @@ var ElephantLayer = cc.Layer.extend({
 		sprite.stopActionByTag("animate_northeast");
 		sprite.stopActionByTag("animate_north");
 		sprite.stopActionByTag("animate_northwest");
+	},
+
+	_resetItem: function (item) {
+		item.inventorySprite.setSpriteFrame(item.defaultFrame);
+		item.placedSprite.setVisible(false);
+		item.available = true;
 	}
 });

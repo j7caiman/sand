@@ -7,8 +7,9 @@ var GameScene = cc.Scene.extend({
 		this._super();
 		this.init();
 
-		sand.elephantLayer = new ElephantLayer();
 		sand.backgroundLayer = new BackgroundLayer();
+		sand.elephantLayer = new ElephantLayer();
+
 		this.addChild(sand.backgroundLayer);
 		this.addChild(sand.elephantLayer);
 

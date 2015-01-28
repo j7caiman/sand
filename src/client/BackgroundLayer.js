@@ -1,22 +1,16 @@
 /**
- * The canvases that render the sand are edited directly, without cocos2d,
+ * The sand is drawn through a grid of canvases.
+ * These canvases are edited directly, without cocos2d,
  * by manipulating the pixels in their imageData.
-
- * Up to four of those canvases may be partially visible at one time, such
- * as when approaching the corner of a region.
  *
  * Each canvas's imageData is put into a Texture2D, which is then
- * rendered inside a Sprite.
- *
- * There are, however, 9 sprites that form a 3x3 grid of regions, centered
- * around the region that the player is currently on. However, only 1-4
- * are active at a given time.
+ * rendered inside a Sprite. The Sprites are then moved appropriately
+ * for scroll events.
  *
  * I couldn't determine an efficient way of drawing with only cocos2d calls,
  * since calling drawRect() 30,000 times was taking too long, and I couldn't can't find
  * a way to edit the pixels with cocos2d directly. I suspect drawing 30,000 Sprites would
  * also take too long.
-
  */
 var BackgroundLayer = cc.Layer.extend({
 	ctor: function () {

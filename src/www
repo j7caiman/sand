@@ -32,6 +32,14 @@ io.on('connection', function (socket) {
 		processFootprint(footprintData);
 	});
 
+	socket.on('rockPickedUp', function (rockData) {
+		socket.broadcast.emit('rockPickedUp', rockData);
+	});
+
+	socket.on('rockPutDown', function (rockData) {
+		socket.broadcast.emit('rockPutDown', rockData);
+	});
+
 	socket.on('disconnect', function() {
 		// if the server is restarted while clients are connected, connectedClients will be empty and
 		// a client who disconnects will cause this exception

@@ -27,7 +27,9 @@ var ElephantLayer = cc.Layer.extend({
 		that.addChild(that.inventoryBackgroundSprite);
 
 		var itemPositionX = 100;
-		var InventoryItem = function(defaultFrame, selectedFrame, unavailableFrame) {
+		var InventoryItem = function(name, defaultFrame, selectedFrame, unavailableFrame) {
+			this.name = name;
+
 			this.inventorySprite = new cc.Sprite('#' + defaultFrame);
 			this.placedSprite = new cc.Sprite('#' + defaultFrame);
 
@@ -46,10 +48,10 @@ var ElephantLayer = cc.Layer.extend({
 		};
 
 		var inventory = [
-			new InventoryItem("rock.png", "rock_selected.png", "rock_unavailable.png"),
-			new InventoryItem("rock.png", "rock_selected.png", "rock_unavailable.png"),
-			new InventoryItem("rock.png", "rock_selected.png", "rock_unavailable.png"),
-			new InventoryItem("rock.png", "rock_selected.png", "rock_unavailable.png")
+			new InventoryItem("rock0", "rock.png", "rock_selected.png", "rock_unavailable.png"),
+			new InventoryItem("rock1", "rock.png", "rock_selected.png", "rock_unavailable.png"),
+			new InventoryItem("rock2", "rock.png", "rock_selected.png", "rock_unavailable.png"),
+			new InventoryItem("rock3", "rock.png", "rock_selected.png", "rock_unavailable.png")
 		];
 		that.inventory = inventory;
 
@@ -280,6 +282,11 @@ var ElephantLayer = cc.Layer.extend({
 								sand.elephantLayer.playerSprite,
 								position,
 								function() {
+									sand.socket.emit('rockPickedUp', {
+										uuid: sand.uuid,
+										rockName: sand.playerState.putBackItem.name
+									});
+
 									that._resetItem(sand.playerState.putBackItem);
 									sand.playerState.putBackItem = false;
 								}
@@ -298,6 +305,15 @@ var ElephantLayer = cc.Layer.extend({
 
 					if (sand.playerState.selectedItem) {
 						sand.elephantLayer.movePlayerElephantToLocation(sprite, position, function () {
+							sand.socket.emit('rockPutDown', {
+								uuid: sand.uuid,
+								rockName: sand.playerState.selectedItem.name,
+								position: {
+									x: Math.round(sand.globalCoordinates.x),
+									y: Math.round(sand.globalCoordinates.y)
+								}
+							});
+
 							// place item on ground
 							sand.playerState.selectedItem.placedSprite.setPosition(
 								sand.elephantLayer.playerSprite.x,

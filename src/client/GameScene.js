@@ -24,6 +24,7 @@ var GameScene = cc.Scene.extend({
 		 */
 		sand.cocosTagCounter = 0;
 		sand.otherPlayers = {};
+		sand.otherRocks = {};
 
 		sand.socket = io();
 		sand.socket.emit('playerData', {
@@ -34,7 +35,7 @@ var GameScene = cc.Scene.extend({
 			}
 		});
 
-		function determineOtherPlayerLocation(globalPosition) {
+		function determinePositionOnViewportFromGlobalCoordinates(globalPosition) {
 			var localPosition = sand.globalFunctions.toLocalCoordinates(globalPosition);
 			var currentViewport = sand.currentRegion.getSprite().getPosition();
 			return {
@@ -44,7 +45,7 @@ var GameScene = cc.Scene.extend({
 		}
 
 		function createOrMoveOtherPlayerToLocation(playerData) {
-			var location = determineOtherPlayerLocation(playerData.lastPosition);
+			var location = determinePositionOnViewportFromGlobalCoordinates(playerData.lastPosition);
 			if(sand.otherPlayers[playerData.uuid] === undefined) {
 				sand.otherPlayers[playerData.uuid] = {
 					sprite: sand.elephantLayer.createElephant(
@@ -100,6 +101,32 @@ var GameScene = cc.Scene.extend({
 			var spriteTag = sand.otherPlayers[uuid].sprite.getTag();
 			sand.elephantLayer.removeChildByTag(spriteTag);
 			delete sand.otherPlayers[uuid];
+		});
+
+		sand.socket.on('rockPutDown', function (rockData) {
+			var location = determinePositionOnViewportFromGlobalCoordinates(rockData.position);
+
+			if(sand.otherRocks[rockData.uuid] === undefined) {
+				sand.otherRocks[rockData.uuid] = {};
+			}
+			if(sand.otherRocks[rockData.uuid][rockData.rockName] === undefined) {
+				sand.otherRocks[rockData.uuid][rockData.rockName] = {
+					sprite: new cc.Sprite("#rock.png")
+				};
+				var sprite = sand.otherRocks[rockData.uuid][rockData.rockName].sprite;
+				sprite.setTag(sand.cocosTagCounter++);
+				sprite.setPosition(location);
+
+				sand.elephantLayer.addChild(sprite);
+			} else {
+				sand.otherRocks[rockData.uuid][rockData.rockName].sprite.setPosition(location);
+			}
+		});
+
+		sand.socket.on('rockPickedUp', function (rockData) {
+			var spriteTag = sand.otherRocks[rockData.uuid][rockData.rockName].sprite.getTag();
+			sand.elephantLayer.removeChildByTag(spriteTag);
+			delete sand.otherRocks[rockData.uuid][rockData.rockName];
 		});
 
 		this.positionEmitterThrottler = new this.Throttler(100);

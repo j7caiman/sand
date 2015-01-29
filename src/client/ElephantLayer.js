@@ -43,6 +43,8 @@ var ElephantLayer = cc.Layer.extend({
 			itemPositionX += 20;
 			this.inventorySprite.setZOrder(that.zOrders.itemsInInventory);
 
+			this.placedSprite.setVisible(false);
+
 			that.addChild(this.inventorySprite);
 			that.addChild(this.placedSprite);
 		};
@@ -252,7 +254,11 @@ var ElephantLayer = cc.Layer.extend({
 									that._resetItem(item);
 									sand.playerState.selectedItem = false;
 								} else {
-									if(sand.playerState.selectedItem) { // select item, place on elephant's back
+									if (sand.playerState.putBackItem) {
+										sand.playerState.putBackItem.placedSprite.setSpriteFrame(sand.playerState.putBackItem.defaultFrame);
+									}
+
+									if(sand.playerState.selectedItem) {
 										that._resetItem(sand.playerState.selectedItem);
 									}
 									sand.playerState.selectedItem = item;

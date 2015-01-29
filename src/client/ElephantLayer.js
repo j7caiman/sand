@@ -251,16 +251,11 @@ var ElephantLayer = cc.Layer.extend({
 								that._stopAllAnimations(sprite);
 
 								if (sand.playerState.selectedItem === item) { // deselect selected item
-									that._resetItem(item);
-									sand.playerState.selectedItem = false;
-								} else {
-									if (sand.playerState.putBackItem) {
-										sand.playerState.putBackItem.placedSprite.setSpriteFrame(sand.playerState.putBackItem.defaultFrame);
-									}
+									that._deselectSelectedItemInInventory();
+								} else { // select item in inventory, deselect other items
+									that._deselectSelectedItemInInventory();
+									that._deselectSelectedItemOnGround();
 
-									if(sand.playerState.selectedItem) {
-										that._resetItem(sand.playerState.selectedItem);
-									}
 									sand.playerState.selectedItem = item;
 
 									item.inventorySprite.setSpriteFrame(item.selectedFrame);
@@ -272,15 +267,11 @@ var ElephantLayer = cc.Layer.extend({
 
 							return true;
 						} else if (cc.rectContainsPoint(item.placedSprite.getBoundingBox(), position)) {
-							if (sand.playerState.selectedItem) {
-								that._resetItem(sand.playerState.selectedItem);
-								sand.playerState.selectedItem = false;
-							}
+							// deselect other items
+							that._deselectSelectedItemInInventory();
+							that._deselectSelectedItemOnGround();
 
-							if (sand.playerState.putBackItem) {
-								sand.playerState.putBackItem.placedSprite.setSpriteFrame(sand.playerState.putBackItem.defaultFrame);
-							}
-
+							// select item on ground, move elephant to fetch it
 							sand.playerState.putBackItem = item;
 							item.placedSprite.setSpriteFrame(item.selectedFrame);
 
@@ -303,12 +294,11 @@ var ElephantLayer = cc.Layer.extend({
 					});
 				})();
 
+				// ground was clicked
 				if (!inventoryItemClicked) {
-					if (sand.playerState.putBackItem) {
-						sand.playerState.putBackItem.placedSprite.setSpriteFrame(sand.playerState.putBackItem.defaultFrame);
-						sand.playerState.putBackItem = false;
-					}
+					that._deselectSelectedItemOnGround();
 
+					// move, then place selected item on ground
 					if (sand.playerState.selectedItem) {
 						sand.elephantLayer.movePlayerElephantToLocation(sprite, position, function () {
 							sand.socket.emit('rockPutDown', {
@@ -338,6 +328,26 @@ var ElephantLayer = cc.Layer.extend({
 				}
 			}
 		}, this);
+	},
+
+	_resetItem: function (item) {
+		item.inventorySprite.setSpriteFrame(item.defaultFrame);
+		item.placedSprite.setVisible(false);
+		item.available = true;
+	},
+
+	_deselectSelectedItemOnGround: function () {
+		if (sand.playerState.putBackItem) {
+			sand.playerState.putBackItem.placedSprite.setSpriteFrame(sand.playerState.putBackItem.defaultFrame);
+			sand.playerState.putBackItem = false;
+		}
+	},
+
+	_deselectSelectedItemInInventory: function () {
+		if (sand.playerState.selectedItem) {
+			this._resetItem(sand.playerState.selectedItem);
+			sand.playerState.selectedItem = false;
+		}
 	},
 
 	createElephant: function (position, zOrder, tag) { // tag is an optional parameter
@@ -560,11 +570,5 @@ var ElephantLayer = cc.Layer.extend({
 		sprite.stopActionByTag("animate_northeast");
 		sprite.stopActionByTag("animate_north");
 		sprite.stopActionByTag("animate_northwest");
-	},
-
-	_resetItem: function (item) {
-		item.inventorySprite.setSpriteFrame(item.defaultFrame);
-		item.placedSprite.setVisible(false);
-		item.available = true;
 	}
 });

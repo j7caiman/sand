@@ -5,7 +5,7 @@ html
 			name='description'
 			content='Explore an infinite desert as an elephant. Anything drawn in the sand remains forever.'
 		)
-		title= 'Sand'
+		title='Sand'
 
 		link(rel='stylesheet', href='/stylesheets/style.css')
 		script(src='http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js')
@@ -32,3 +32,11 @@ html
 			script(src='/footprint_functions.js')
 		else
 			script(src='/javascripts/min.js')
+	body
+		#signIn
+			form(name="login", action="/login", method="post")
+				input.signInInput(type="text", name="username", placeholder="username")
+				br
+				input.signInInput(type="password", name="password", placeholder="password")
+				br
+				input.signInInput(type="submit", value="login")

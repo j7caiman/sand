@@ -9,6 +9,7 @@
     "morgan": "~1.3.0",
     "debug": "~2.0.0",
     "jade": "~1.6.0",
-    "less-middleware": "1.0.x"
+    "less-middleware": "1.0.x",
+    "pg": "4.2.0"
   }
 }

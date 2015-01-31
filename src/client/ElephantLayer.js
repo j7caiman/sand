@@ -21,12 +21,13 @@ var ElephantLayer = cc.Layer.extend({
 		};
 
 		that.inventoryBackgroundSprite = new cc.Sprite("#ui_background.png");
-		that.inventoryBackgroundSprite.setPosition(100, 100);
+		that.inventoryBackgroundSprite.setPosition(20, 20);
+		that.inventoryBackgroundSprite.setScaleX(1.5);
 		that.inventoryBackgroundSprite.setAnchorPoint(0, 0);
 		that.inventoryBackgroundSprite.setZOrder(that.zOrders.inventoryBackground);
 		that.addChild(that.inventoryBackgroundSprite);
 
-		var itemPositionX = 120;
+		var itemPositionX = that.inventoryBackgroundSprite.getPositionX() + 20;
 		var InventoryItem = function(name, defaultFrame, selectedFrame, unavailableFrame) {
 			this.name = name;
 
@@ -39,7 +40,7 @@ var ElephantLayer = cc.Layer.extend({
 
 			this.available = true;
 
-			this.inventorySprite.setPosition(itemPositionX, 110);
+			this.inventorySprite.setPosition(itemPositionX, that.inventoryBackgroundSprite.getPositionY() + 10);
 			itemPositionX += 20;
 			this.inventorySprite.setZOrder(that.zOrders.itemsInInventory);
 

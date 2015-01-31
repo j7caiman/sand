@@ -30,13 +30,28 @@ html
 			script(src='/global_functions.js')
 			script(src='/dune_functions.js')
 			script(src='/footprint_functions.js')
+			script(src='/login_form.js')
 		else
 			script(src='/javascripts/min.js')
 	body
 		#signIn
-			form(name="login", action="/login", method="post")
-				input.signInInput(type="text", name="username", placeholder="username")
+			form#signInForm(action="/login")
+				input.inputStyle(type="text", name="email", placeholder="email")
 				br
-				input.signInInput(type="password", name="password", placeholder="password")
+				input.inputStyle(type="password", name="password", placeholder="password")
 				br
-				input.signInInput(type="submit", value="login")
+				input#signInInput.inputStyle(type="button", value="login")
+				br
+				label
+					input#rememberMeInput(type="checkbox", value="false")
+					p.inputStyle remember me?
+				a.inputStyle reset password
+
+			form#registerForm(action="/register")
+				input.inputStyle(type="text", name="email", placeholder="email")
+				br
+				input.inputStyle(type="password", name="password", placeholder="password")
+				br
+				input.inputStyle(type="password", name="confirmPassword", placeholder="confirm password")
+				br
+				input#registerInput.inputStyle(type="button", value="register")

@@ -1,6 +1,7 @@
-var express = require('express');
+var router = require('express').Router();
 var debug = require('debug')('sand');
-var router = express.Router();
+var jsonParser = require('body-parser').json({limit: '500kb'});
+
 var fs = require('fs');
 var zlib = require('zlib');
 var stream = require('stream');
@@ -8,7 +9,7 @@ var stream = require('stream');
 var regionFunctions = require('../server/region_functions');
 var globalFunctions = require('../shared/global_functions');
 
-router.post('/', function(req, res) {
+router.post('/', jsonParser, function(req, res) {
 	var regionNames = req.body;
 
 	(function validateInput() {

@@ -4,7 +4,11 @@ $(document).ready(function () {
 			"login",
 			$("#signInForm").serialize(),
 			function (data) {
-				console.log();
+				if(data.error) {
+
+				} else {
+					sand.elephantLayer.initializeInventory(data);
+				}
 			}
 		);
 	});

@@ -78,7 +78,15 @@ function _flushFootprintBuffer(regionName) {
 		}
 
 		function _writeFootprintsToRegion(regionData) {
-			regionData = JSON.parse(regionData);
+			try {
+				regionData = JSON.parse(regionData);
+			} catch (error) {
+				var zipCode = globalFunctions.getRegionZipCode(regionName);
+				debug("error for region: z" + zipCode + "/r" + regionName);
+				debug("regionData: " + regionData);
+				throw error;
+			}
+
 			footprintsToFlush.forEach(function (print) {
 				print.brush.apply(regionData, globalFunctions.toLocalCoordinates(print.location, region));
 			});

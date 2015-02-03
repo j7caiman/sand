@@ -173,6 +173,15 @@ sand.globalFunctions = {
 		return "current speed: " + sand.constants.kElephantSpeed + " kilophants/hour."
 	},
 
+	getPositionOnScreenFromGlobalCoordinates: function (globalPosition) {
+		var localPosition = sand.globalFunctions.toLocalCoordinates(globalPosition);
+		var currentViewport = sand.currentRegion.getSprite().getPosition();
+		return {
+			x: currentViewport.x + localPosition.x,
+			y: currentViewport.y + localPosition.y
+		};
+	},
+
 	mod: function(a, n) { return ((a % n) + n) % n; },
 
 	calculateDistance: function (point1, point2) {

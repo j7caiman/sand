@@ -3,8 +3,8 @@ var debug = require('debug')('sand');
 
 var urlEncodedParser = require('body-parser').urlencoded({extended: true});
 
-var postgres = require('pg');
-var connectionString = 'postgres://jon:@localhost/sand'; //postgres://<user>:<password>@<host>/<database>
+var query = require('../server/query_db');
+
 var bcrypt = require('bcrypt');
 
 router.post('/',
@@ -46,30 +46,32 @@ router.post('/',
 				return;
 			}
 
-			postgres.connect(connectionString, function (err, client, onQueryComplete) {
-				if (err) {
-					onQueryComplete(client);
-					debug('connection to database failed:' + err);
-					res.status('500').send();
-					return;
-				}
+			query('insert into users(email, password_hash) values($1, $2) returning id', [email, hash], onUserCreated);
 
-				client.query(
-					'insert into users(email, password_hash) values($1, $2)',
-					[email, hash],
-					function (err) {
-						if (err) {
-							onQueryComplete(err);
-							debug('database insert failed:' + err);
-							res.status('500').send();
-							return;
-						}
-
-						onQueryComplete();
-						res.send();
+			function onUserCreated(error, result) {
+				if (error) {
+					const unique_violation_code = "23505";
+					if(error.code === unique_violation_code) {
+						res.send({error: 'this email address has already been registered.' +
+						' click \'reset password\' to request a password reset.'});
+					} else {
+						res.status('500').send();
 					}
-				);
-			});
+				} else {
+					query(
+						'insert into rocks(owner_id) values ($1), ($1), ($1), ($1)',
+						[result.rows[0].id],
+						onRocksCreated);
+				}
+			}
+
+			function onRocksCreated(error, result) {
+				if(error) {
+					res.status('500').send();
+				} else {
+					res.send();
+				}
+			}
 		});
 	}
 );

@@ -27,25 +27,9 @@ var GameScene = cc.Scene.extend({
 		sand.otherRocks = {};
 
 		sand.socket = io();
-		sand.socket.emit('playerData', {
-			uuid: sand.uuid,
-			lastPosition: {
-				x: Math.round(sand.globalCoordinates.x),
-				y: Math.round(sand.globalCoordinates.y)
-			}
-		});
-
-		function determinePositionOnViewportFromGlobalCoordinates(globalPosition) {
-			var localPosition = sand.globalFunctions.toLocalCoordinates(globalPosition);
-			var currentViewport = sand.currentRegion.getSprite().getPosition();
-			return {
-				x: currentViewport.x + localPosition.x,
-				y: currentViewport.y + localPosition.y
-			};
-		}
 
 		function createOrMoveOtherPlayerToLocation(playerData) {
-			var location = determinePositionOnViewportFromGlobalCoordinates(playerData.lastPosition);
+			var location = sand.globalFunctions.getPositionOnScreenFromGlobalCoordinates(playerData.position);
 			if(sand.otherPlayers[playerData.uuid] === undefined) {
 				sand.otherPlayers[playerData.uuid] = {
 					sprite: sand.elephantLayer.createElephant(
@@ -81,15 +65,22 @@ var GameScene = cc.Scene.extend({
 		/**
 		 * the onConnect event can happen more than once:
 		 * It occurs when the client first connects to the server, and additionally whenever the server is restarted
-		 * and all the clients reconnect.
+		 * and all the clients have to reconnect.
 		 */
-		sand.socket.on('onConnect', function (currentPlayers) {
-			currentPlayers.forEach(function(playerData) {
+		sand.socket.on('onConnect', function (data) {
+			data.otherPlayers.forEach(function (playerData) {
 				createOrMoveOtherPlayerToLocation(playerData);
 			});
+			var rocks = data.rocks;
+			for (var index in rocks) {
+				if (rocks.hasOwnProperty(index)) {
+					var location = sand.globalFunctions.getPositionOnScreenFromGlobalCoordinates(rocks[index]);
+					sand.elephantLayer.createOtherRock(index, location);
+				}
+			}
 		});
 
-		sand.socket.on('playerData', function (playerData) {
+		sand.socket.on('playerMoved', function (playerData) {
 			createOrMoveOtherPlayerToLocation(playerData);
 		});
 
@@ -104,29 +95,17 @@ var GameScene = cc.Scene.extend({
 		});
 
 		sand.socket.on('rockPutDown', function (rockData) {
-			var location = determinePositionOnViewportFromGlobalCoordinates(rockData.position);
+			var location = sand.globalFunctions.getPositionOnScreenFromGlobalCoordinates(rockData.position);
 
-			if(sand.otherRocks[rockData.uuid] === undefined) {
-				sand.otherRocks[rockData.uuid] = {};
-			}
-			if(sand.otherRocks[rockData.uuid][rockData.rockName] === undefined) {
-				sand.otherRocks[rockData.uuid][rockData.rockName] = {
-					sprite: new cc.Sprite("#rock.png")
-				};
-				var sprite = sand.otherRocks[rockData.uuid][rockData.rockName].sprite;
-				sprite.setTag(sand.cocosTagCounter++);
-				sprite.setPosition(location);
-
-				sand.elephantLayer.addChild(sprite);
+			if (sand.otherRocks[rockData.id] === undefined) {
+				sand.elephantLayer.createOtherRock(rockData.id, location);
 			} else {
-				sand.otherRocks[rockData.uuid][rockData.rockName].sprite.setPosition(location);
+				sand.otherRocks[rockData.id].sprite.setPosition(location);
 			}
 		});
 
 		sand.socket.on('rockPickedUp', function (rockData) {
-			var spriteTag = sand.otherRocks[rockData.uuid][rockData.rockName].sprite.getTag();
-			sand.elephantLayer.removeChildByTag(spriteTag);
-			delete sand.otherRocks[rockData.uuid][rockData.rockName];
+			sand.elephantLayer.removeOtherRock(rockData.id);
 		});
 
 		this.positionEmitterThrottler = new this.Throttler(100);
@@ -185,14 +164,13 @@ var GameScene = cc.Scene.extend({
 						|| !equalsWithEpsilon(this.lastEmittedPosition.x, roundedGlobalPosition.x, 1)
 						|| !equalsWithEpsilon(this.lastEmittedPosition.y, roundedGlobalPosition.y, 1)) {
 
-						var playerData = {
-							uuid: sand.uuid,
-							lastPosition: roundedGlobalPosition
-						};
 						this.lastEmittedPosition = roundedGlobalPosition;
 
-						sand.socket.emit('playerData', playerData);
-						$.cookie('playerData', playerData, {expires: 7});
+						sand.socket.emit('updatePosition', roundedGlobalPosition);
+						$.cookie('playerData', {
+							uuid: sand.uuid,
+							lastPosition: roundedGlobalPosition
+						}, {expires: 7});
 					}
 				}, this);
 			}

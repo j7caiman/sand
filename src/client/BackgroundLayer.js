@@ -52,19 +52,17 @@ var BackgroundLayer = cc.Layer.extend({
 						}
 					}
 
-					var inventorySprites = sand.elephantLayer.inventory;
-					inventorySprites.forEach(function(item) {
-						sprites.push(item.placedSprite);
-					});
+					if(sand.elephantLayer.inventory.initialized) {
+						var inventorySprites = sand.elephantLayer.inventory.items;
+						inventorySprites.forEach(function (item) {
+							sprites.push(item.placedSprite);
+						});
+					}
 
 					var otherPlayerItems = sand.otherRocks;
-					for (uuid in otherPlayerItems) {
-						if (otherPlayerItems.hasOwnProperty(uuid)) {
-							for (var rockName in otherPlayerItems[uuid]) {
-								if (otherPlayerItems[uuid].hasOwnProperty(rockName)) {
-									sprites.push(otherPlayerItems[uuid][rockName].sprite);
-								}
-							}
+					for (var rockId in otherPlayerItems) {
+						if (otherPlayerItems.hasOwnProperty(rockId)) {
+							sprites.push(otherPlayerItems[rockId].sprite);
 						}
 					}
 

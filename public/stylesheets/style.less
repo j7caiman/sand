@@ -2,20 +2,73 @@ body {
   margin: 0;
 }
 
-#signIn {
-  position: absolute;
-  z-index: 1;
-  bottom: 40px;
-  left: 20px;
-  width: 146px;
+@itemWidth: 15em;
+@fieldPadding: 0.25em;
 
-  background-color: #E5E5E5;
-  border: solid #515151 2px;
-}
-
-.inputStyle {
+.fieldText {
   font-family: "Courier", monospace;
   font-size: small;
-  width: 146px;
-  display: inline;
+}
+
+.textButton {
+  &:extend(.fieldText);
+  &:hover {
+    color: #FF7F50;
+    cursor: pointer;
+  }
+
+  margin-top: 0.5em;
+  padding: @fieldPadding;
+  width: @itemWidth - 0.75em;
+  border: thin solid;
+  display: block;
+}
+
+.inputBox {
+  &:extend(.fieldText);
+  padding: @fieldPadding;
+  width: @itemWidth;
+}
+
+.panelStyle {
+  padding-left: 1em;
+  z-index: 1;
+  width: @itemWidth;
+
+  background-color: #E5E5E5;
+  border: thin solid #515151;
+}
+
+#panelTopRight {
+  &:extend(.panelStyle);
+  position: absolute;
+  top: 2em;
+  right: 2em;
+}
+
+#panelTopLeft {
+  &:extend(.panelStyle);
+  position: absolute;
+  top: 2em;
+  left: 2em;
+}
+
+#signIn {
+  display: none;
+}
+
+.responseDiv {
+  padding: @fieldPadding;
+  margin-bottom: 1em;
+}
+
+.errorText {
+  &:extend(.fieldText);
+  display: none;
+  color: #DA0003;
+}
+
+.confirmText {
+  &:extend(.fieldText);
+  display: none;
 }

@@ -1,0 +1,24 @@
+div#panelTopRight.panelStyle
+	#loading
+		p.fieldText loading . . .
+		br
+
+	#signIn.hidden
+		p.fieldText Sands of Eternity
+		form#signInForm
+			input.inputBox(type="email", name="email", placeholder="email")
+			input.inputBox(type="password", name="password", placeholder="password")
+			a#signInButton.textButton login
+			a#resetPasswordButton.textButton forgot password?
+		div.responseDiv
+			a#signInError.errorText
+			a#signInText.confirmText
+		br
+		form#registerForm
+			input.inputBox(type="email", name="email", placeholder="email")
+			input.inputBox(type="password", name="password", placeholder="password")
+			input.inputBox(type="password", name="confirmPassword", placeholder="confirm password")
+			a#registerButton.textButton register
+		div.responseDiv
+			a#registrationError.errorText
+			a#registrationText.confirmText

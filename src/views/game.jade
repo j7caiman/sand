@@ -34,24 +34,4 @@ html
 		else
 			script(src='/javascripts/min.js')
 	body
-		#signIn
-			form#signInForm(action="/login")
-				input.inputStyle(type="text", name="email", placeholder="email")
-				br
-				input.inputStyle(type="password", name="password", placeholder="password")
-				br
-				input#signInInput.inputStyle(type="button", value="login")
-				br
-				label
-					input#rememberMeInput(type="checkbox", value="false")
-					p.inputStyle remember me?
-				a.inputStyle reset password
-
-			form#registerForm(action="/register")
-				input.inputStyle(type="text", name="email", placeholder="email")
-				br
-				input.inputStyle(type="password", name="password", placeholder="password")
-				br
-				input.inputStyle(type="password", name="confirmPassword", placeholder="confirm password")
-				br
-				input#registerInput.inputStyle(type="button", value="register")
+		include sign_in

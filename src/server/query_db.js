@@ -1,7 +1,7 @@
 var debug = require('debug')('sand');
 
 var postgres = require('pg');
-var connectionString = 'postgres://jon:@localhost/sand'; // postgres://<user>:<password>@<host>/<database>
+var connectionString = 'postgres://' + process.env.POSTGRES_USER + ':@localhost/sand'; // postgres://<user>:<password>@<host>/<database>
 
 module.exports = function (queryString, queryParameters, onComplete) {
 	if (typeof queryParameters == 'function') { // normalize parameters

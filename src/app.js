@@ -5,11 +5,6 @@ var less = require('less-middleware');
 
 var app = express();
 
-var gameRoute = require('./routes/game')(app.get('env'));
-var fetchRegionRoute = require('./routes/fetch_region');
-var loginRoute = require('./routes/login');
-var registerRoute = require('./routes/register');
-
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 
@@ -22,11 +17,14 @@ if(app.get('env') === 'development') {
 	app.use(express.static(path.join(__dirname, 'shared')));
 }
 
-app.use('/', gameRoute);
-app.use('/fetch_region', fetchRegionRoute);
-app.use('/login', loginRoute);
-app.use('/register', registerRoute);
-
+app.use('/', require('./routes/game')(app.get('env')));
+app.use('/fetch_region', require('./routes/fetch_region'));
+app.use('/login', require('./routes/users/login'));
+app.use('/register', require('./routes/users/register'));
+app.use('/request_password_reset', require('./routes/users/request_password_reset'));
+app.use('/reset_password', require('./routes/users/reset_password'));
+app.use('/set_new_password', require('./routes/users/set_new_password'));
+app.use('/confirm_email', require('./routes/users/confirm_email'));
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

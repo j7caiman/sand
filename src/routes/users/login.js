@@ -4,12 +4,12 @@ var debug = require('debug')('sand');
 var urlEncodedParser = require('body-parser').urlencoded({extended: true});
 var cookieParser = require('cookie-parser')();
 
-var query = require('../server/query_db');
+var query = require('../../server/query_db');
 var bcrypt = require('bcrypt');
 
-var rockDAO = require('../server/rock_dao');
+var rockDAO = require('../../server/rock_dao');
 
-var multiplayer = require('../server/multiplayer');
+var multiplayer = require('../../server/multiplayer');
 
 router.post('/',
 	urlEncodedParser,
@@ -21,7 +21,7 @@ router.post('/',
 		try {
 			var uuid = JSON.parse(req.cookies.playerData).uuid;
 		} catch (e) {
-			res.send({error: 'please enable cookies in your browser'});
+			res.send({error: 'please enable cookies in your browser.'});
 			return;
 		}
 
@@ -35,7 +35,7 @@ router.post('/',
 			return;
 		}
 
-		query('select id, password_hash from users where email = $1', [email], onQueryComplete);
+		query('select id, email_validated, password_hash from users where email = $1', [email], onQueryComplete);
 
 		function onQueryComplete(error, result) {
 			if (error) {
@@ -45,6 +45,12 @@ router.post('/',
 
 			if (result.rows.length == 0) {
 				res.send({error: 'email not found.'});
+				return;
+			}
+
+			if (!result.rows[0].email_validated) {
+				res.send({error: 'please validate your email address ' +
+				'by clicking the link sent to you in the email confirmation message.'});
 				return;
 			}
 
@@ -71,7 +77,10 @@ router.post('/',
 				}
 
 				multiplayer.syncLoggedInUser(uuid, id, result.rows);
-				res.send(result.rows);
+				res.send({
+					text: "log in successful",
+					rocks: result.rows
+				});
 			});
 		}
 	}

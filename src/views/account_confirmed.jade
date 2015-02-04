@@ -1,0 +1,16 @@
+html
+	head(lang='en')
+		meta(charset='UTF-8')
+		title='Sand: set new password'
+		link(rel='stylesheet', href='/stylesheets/style.css')
+		script.
+			function goHome() {
+				setTimeout(function () {
+					window.location.href = "#{sandUrl}";
+				}, 1000);
+			}
+
+	body(onload='goHome();')
+		img(src="/images/icons/elephant_icon.png")
+		div#panelTopLeft.panelStyle
+			p.fieldText account confirmed! entering desert...

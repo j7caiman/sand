@@ -1,23 +1,16 @@
 var router = require('express').Router();
 var debug = require('debug')('sand');
-
 var urlEncodedParser = require('body-parser').urlencoded({extended: true});
 
-var query = require('../server/query_db');
+var query = require('../../server/query_db');
 
 var bcrypt = require('bcrypt');
 
-router.post('/',
+router.post('/:token',
 	urlEncodedParser,
 	function (req, res) {
-		var email = req.body.email;
 		var password = req.body.password;
 		var confirmPassword = req.body.confirmPassword;
-
-		if (email.length === 0) {
-			res.send({error: 'please enter an email address.'});
-			return;
-		}
 
 		if (password.length === 0) {
 			res.send({error: 'please enter a password.'});
@@ -46,33 +39,27 @@ router.post('/',
 				return;
 			}
 
-			query('insert into users(email, password_hash) values($1, $2) returning id', [email, hash], onUserCreated);
-
-			function onUserCreated(error, result) {
-				if (error) {
-					const unique_violation_code = "23505";
-					if(error.code === unique_violation_code) {
-						res.send({error: 'this email address has already been registered.' +
-						' click \'reset password\' to request a password reset.'});
-					} else {
-						res.status('500').send();
-					}
-				} else {
-					query(
-						'insert into rocks(owner_id) values ($1), ($1), ($1), ($1)',
-						[result.rows[0].id],
-						onRocksCreated);
-				}
-			}
-
-			function onRocksCreated(error, result) {
-				if(error) {
-					res.status('500').send();
-				} else {
-					res.send();
-				}
-			}
+			query('update users set ' +
+				'(password_hash, ' +
+				'password_reset_token, ' +
+				'password_reset_token_expiry, ' +
+				'email_validated, ' +
+				'email_confirmation_token) ' +
+				'= ($1, null, null, true, null) where password_reset_token = $2',
+				[hash, req.params.token],
+				onQueryComplete);
 		});
+
+		function onQueryComplete(err) {
+			if(err) {
+				res.status('500').send();
+			} else {
+				res.send({
+					text: 'password change successful. Returning to desert...',
+					url: 'http://' + req.headers.host
+				});
+			}
+		}
 	}
 );
 

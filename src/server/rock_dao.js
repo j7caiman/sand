@@ -18,6 +18,11 @@ module.exports = {
 	},
 
 	updateRockPosition: function (id, position, onComplete) {
+		if(typeof position == 'function') {
+			onComplete = position;
+			position = undefined;
+		}
+
 		if (position === undefined) {
 			query('update rocks set (x, y) = (null, null) where id = $1', [id], onComplete);
 		} else {

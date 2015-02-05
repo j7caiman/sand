@@ -253,6 +253,7 @@ var ElephantLayer = cc.Layer.extend({
 									position,
 									function () {
 										sand.socket.emit('rockPickedUp', {
+											uuid: sand.uuid,
 											id: sand.playerState.putBackItem.id
 										});
 
@@ -274,6 +275,7 @@ var ElephantLayer = cc.Layer.extend({
 				if (that.inventory.initialized && sand.playerState.selectedItem) {
 					sand.elephantLayer.movePlayerElephantToLocation(sprite, position, function () {
 						sand.socket.emit('rockPutDown', {
+							uuid: sand.uuid,
 							id: sand.playerState.selectedItem.id,
 							position: {
 								x: Math.round(sand.globalCoordinates.x),

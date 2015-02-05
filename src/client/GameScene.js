@@ -26,7 +26,11 @@ var GameScene = cc.Scene.extend({
 		sand.otherPlayers = {};
 		sand.otherRocks = {};
 
-		sand.socket = io();
+		sand.socket = io({
+			query: 'uuid=' + sand.uuid
+			+ '&x=' + Math.round(sand.globalCoordinates.x)
+			+ '&y=' + Math.round(sand.globalCoordinates.y)
+		});
 
 		function createOrMoveOtherPlayerToLocation(playerData) {
 			var location = sand.globalFunctions.getPositionOnScreenFromGlobalCoordinates(playerData.position);
@@ -68,8 +72,10 @@ var GameScene = cc.Scene.extend({
 		 * and all the clients have to reconnect.
 		 */
 		sand.socket.on('onConnect', function (data) {
-			data.otherPlayers.forEach(function (playerData) {
-				createOrMoveOtherPlayerToLocation(playerData);
+			data.players.forEach(function (playerData) {
+				if(playerData.uuid !== sand.uuid) {
+					createOrMoveOtherPlayerToLocation(playerData);
+				}
 			});
 			var rocks = data.rocks;
 			for (var index in rocks) {
@@ -89,9 +95,11 @@ var GameScene = cc.Scene.extend({
 		});
 
 		sand.socket.on('playerDisconnected', function (uuid) {
-			var spriteTag = sand.otherPlayers[uuid].sprite.getTag();
-			sand.elephantLayer.removeChildByTag(spriteTag);
-			delete sand.otherPlayers[uuid];
+			if(sand.otherPlayers[uuid] !== undefined) {
+				var spriteTag = sand.otherPlayers[uuid].sprite.getTag();
+				sand.elephantLayer.removeChildByTag(spriteTag);
+				delete sand.otherPlayers[uuid];
+			}
 		});
 
 		sand.socket.on('rockPutDown', function (rockData) {
@@ -154,7 +162,7 @@ var GameScene = cc.Scene.extend({
 						return Math.abs(num1 - num2) < epsilon;
 					}
 
-					// don't sent small movements from rounding errors
+					// don't send small movements from rounding errors
 					var roundedGlobalPosition = {
 						x: Math.round(sand.globalCoordinates.x),
 						y: Math.round(sand.globalCoordinates.y)
@@ -166,7 +174,11 @@ var GameScene = cc.Scene.extend({
 
 						this.lastEmittedPosition = roundedGlobalPosition;
 
-						sand.socket.emit('updatePosition', roundedGlobalPosition);
+						sand.socket.emit('updatePosition', {
+							uuid: sand.uuid,
+							position: roundedGlobalPosition
+						});
+
 						$.cookie('playerData', {
 							uuid: sand.uuid,
 							lastPosition: roundedGlobalPosition

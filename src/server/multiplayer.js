@@ -1,7 +1,5 @@
 var debug = require('debug')('sand');
 var processFootprint = require('./process_footprint');
-var cookie = require('cookie');
-
 var rockDAO = require('./rock_dao');
 
 var connectedClients = {

@@ -226,11 +226,7 @@ sand.modifyRegion._createCone = function (regionData, positionOnCanvas, highestP
 
 	for (var y = bounds.bottom; y < bounds.top; y++) {
 		for (var x = bounds.left; x < bounds.right; x++) {
-			var lateralDistance = (function (p1, p2) {
-				var xDelta = p2.x - p1.x;
-				var yDelta = p2.y - p1.y;
-				return Math.sqrt((xDelta * xDelta) + (yDelta * yDelta));
-			})({x: x, y: y}, positionOnRegion);
+			var lateralDistance = sand.globalFunctions.calculateDistance({x: x, y: y}, positionOnRegion);
 
 			var height = Math.floor(positionOnRegion.z - Math.tan(angleOfRepose) * lateralDistance);
 			if (regionData[y] !== undefined && height > 0) {

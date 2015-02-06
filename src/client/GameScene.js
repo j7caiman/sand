@@ -150,7 +150,7 @@ var GameScene = cc.Scene.extend({
 				|| (sand.globalFunctions.calculateDistance(this._lastPrint, printLocation) >= frequency)) {
 
 				if (!sand.playerState.flying) {
-					this.addFootprintToQueue(printLocation, brush);
+					sand.globalFunctions.addFootprintToQueue(printLocation, brush);
 				}
 
 				this._lastPrint = printLocation;
@@ -251,21 +251,6 @@ var GameScene = cc.Scene.extend({
 			this.counter = 0;
 			callback.call(thisArg);
 		}
-	},
-
-	addFootprintToQueue: function(location, brushStrokeType) {
-		var roundedLocation = {
-			x: Math.round(location.x),
-			y: Math.round(location.y)
-		};
-
-		var print = {
-			location: roundedLocation,
-			brush: brushStrokeType
-		};
-
-		sand.batchedFootprints.push(print);
-		sand.socket.emit('footprint', print);
 	},
 
 	triggerScrolling: function() {

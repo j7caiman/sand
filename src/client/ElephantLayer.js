@@ -286,6 +286,34 @@ var ElephantLayer = cc.Layer.extend({
 						that._placeItemOnGround(sand.playerState.selectedItem, sand.elephantLayer.playerSprite);
 						sand.playerState.selectedItem = false;
 
+						var allRocksPlaced = (function areAllFourRocksPlaced() {
+							return that.inventory.items.every(function (item) {
+								return !item.available;
+							});
+						})();
+						if (allRocksPlaced) {
+							var rockLocations = that.inventory.items.map(function (item) {
+								return sand.globalFunctions.convertOnScreenPositionToGlobalCoordinates(item.placedSprite);
+							});
+
+							var borderPath = sand.modifyRegion.detectConvexQuadrangle(rockLocations);
+							borderPath = sand.modifyRegion.createPointsAlongPath(borderPath);
+
+							var totalDuration = 2000; // 1 second
+
+							for(var i = 0; i < borderPath.length / 2; i++) {
+								setTimeout((function (i) {
+									return function() {
+										sand.globalFunctions.addFootprintToQueue(borderPath[i], "walking");
+										var j = borderPath.length - 1 - i;
+										if (j !== i) {
+											sand.globalFunctions.addFootprintToQueue(borderPath[parseInt(borderPath.length - 1 - i)], "walking");
+										}
+									}
+								})(i), ((i + 1) / borderPath.length) * 2 * totalDuration);
+							}
+						}
+
 					});
 				} else if (sand.elephantPath.length === 1) {
 					sand.elephantLayer.movePlayerElephantToLocation(sprite, sand.elephantPath[0]);

@@ -99,6 +99,11 @@ sand.globalFunctions.findRegionsInRect = function (rect) {
 	return regionNames;
 };
 
+sand.globalFunctions.calculateDistance = function (point1, point2) {
+	var xDelta = point2.x - point1.x;
+	var yDelta = point2.y - point1.y;
+	return Math.sqrt((xDelta * xDelta) + (yDelta * yDelta));
+};
 
 var module = module || {};
 module.exports = sand.globalFunctions;

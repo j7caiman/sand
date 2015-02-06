@@ -176,6 +176,21 @@ sand.globalFunctions = {
 		return "current speed: " + sand.constants.kElephantSpeed + " kilophants/hour."
 	},
 
+	addFootprintToQueue: function(location, brushStrokeType) {
+		var roundedLocation = {
+			x: Math.round(location.x),
+			y: Math.round(location.y)
+		};
+
+		var print = {
+			location: roundedLocation,
+			brush: brushStrokeType
+		};
+
+		sand.batchedFootprints.push(print);
+		sand.socket.emit('footprint', print);
+	},
+
 	getPositionOnScreenFromGlobalCoordinates: function (globalPosition) {
 		var localPosition = sand.globalFunctions.toLocalCoordinates(globalPosition);
 		var currentViewport = sand.currentRegion.getSprite().getPosition();
@@ -185,11 +200,15 @@ sand.globalFunctions = {
 		};
 	},
 
-	mod: function(a, n) { return ((a % n) + n) % n; },
+	convertOnScreenPositionToGlobalCoordinates: function (onScreenPosition) {
+		var backgroundPosition = sand.currentRegion.getSprite();
+		var localPosition = {
+			x: onScreenPosition.x - backgroundPosition.x,
+			y: onScreenPosition.y - backgroundPosition.y
+		};
 
-	calculateDistance: function (point1, point2) {
-		var xDelta = point2.x - point1.x;
-		var yDelta = point2.y - point1.y;
-		return Math.sqrt((xDelta * xDelta) + (yDelta * yDelta));
-	}
+		return sand.globalFunctions.toGlobalCoordinates(localPosition);
+	},
+
+	mod: function(a, n) { return ((a % n) + n) % n; }
 };

@@ -50,6 +50,9 @@ cc.game.onStart = function() {
 	function onRegionInitializationComplete() {
 		$('#loading').hide();
 		$('#signIn').show();
+		if(typeof userRemembered === 'function') {
+			userRemembered();
+		}
 
 		var currentRegionName = sand.globalFunctions.findRegionNameFromAbsolutePosition(sand.globalCoordinates);
 		sand.currentRegion = sand.allRegions[currentRegionName];

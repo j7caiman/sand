@@ -1,7 +1,7 @@
 var query = require('../server/query_db');
 
 module.exports = {
-	fetchAllRocks: function (onComplete) {
+	fetchRocksOnGround: function (onComplete) {
 		query('select id, x, y from rocks where x is not null and y is not null', onQueryComplete);
 
 		function onQueryComplete(error, result) {

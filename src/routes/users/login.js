@@ -17,6 +17,7 @@ router.post('/',
 	function (req, res) {
 		var email = req.body.email;
 		var password = req.body.password;
+		var rememberMe = req.body.rememberMe;
 
 		try {
 			var uuid = JSON.parse(req.cookies.playerData).uuid;
@@ -70,13 +71,17 @@ router.post('/',
 		}
 
 		function onPasswordConfirmed(id) {
+			if (rememberMe) {
+				query('update users set uuid = $2 where id = $1', [id, uuid]);
+			}
+
 			rockDAO.fetchRocksForPlayer(id, function (error, result) {
 				if (error) {
 					res.status('500').send();
 					return;
 				}
 
-				multiplayer.syncLoggedInUser(uuid, id, result.rows);
+				multiplayer.addLoggedInUser(uuid, id, result.rows);
 				res.send({
 					text: "log in successful",
 					rocks: result.rows

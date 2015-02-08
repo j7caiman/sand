@@ -5,16 +5,9 @@ var rockDAO = require('./rock_dao');
 var connectedClients = {
 	_uuidToDataMap: {},
 
-	getPlayerByUuid: function (uuid) {
-		return this._uuidToDataMap[uuid];
-	},
-
-	addOrUpdatePlayer: function (uuid, position, socketId) {
+	addOrUpdatePlayer: function (uuid, position) {
 		if (this._uuidToDataMap[uuid] === undefined) {
 			this._uuidToDataMap[uuid] = {};
-		} else if (this._uuidToDataMap[uuid].socketId !== socketId) {
-			debug('player: ' + uuid + 'changed socketId from: ' + this._uuidToDataMap[uuid].socketId + ' to ' + socketId);
-			this._uuidToDataMap[uuid].socketId = socketId;
 		}
 
 		this._uuidToDataMap[uuid].position = position;
@@ -39,95 +32,119 @@ var connectedClients = {
 			}
 		}
 		return currentPlayers;
-	},
-
-	syncLoggedInUser: function (uuid, userId, rocks) {
-		if (this._uuidToDataMap[uuid] === undefined) {
-			debug('player: ' + uuid + ', userId: ' + userId + ' logged in, but was not in connected users cache.');
-			this._uuidToDataMap[uuid] = {};
-		}
-
-		this._uuidToDataMap[uuid].userId = userId;
-		this._uuidToDataMap[uuid].rocks = {};
-		rocks.forEach(function (rock) {
-			this._uuidToDataMap[uuid].rocks[rock.id] = {
-				x: rock.x,
-				y: rock.y
-			}
-		}, this);
 	}
 };
 
-var rocksOnGround = {};
-rockDAO.fetchAllRocks(function (error, rocks) {
-	if (error) {
-		throw error;
-	}
+var caches = {
+	_rocksOnGround: {},
+	_users: {},
 
-	rocks.forEach(function (rock) {
-		rocksOnGround[rock.id] = {
-			x: rock.x,
-			y: rock.y
+	initialize: function() {
+		var that = this;
+		rockDAO.fetchRocksOnGround(function (error, rocks) {
+			if (error) {
+				throw error;
+			}
+
+			rocks.forEach(function (rock) {
+				that._rocksOnGround[rock.id] = {
+					x: rock.x,
+					y: rock.y
+				}
+			});
+		});
+	},
+
+	getRocksOnGround: function() {
+		return this._rocksOnGround;
+	},
+
+	rockPickedUpUpdate: function (data, onComplete) {
+		var uuid = data.uuid;
+		var rockId = data.id;
+
+		var player = this._users[uuid];
+		if (player.rocks === undefined) {
+			debug("rockPickedUp: user with id: " + player.userId + ", uuid: " + player.uuid + " attempted to move a rock, but has none.");
+		} else {
+			var that = this;
+			rockDAO.updateRockPosition(rockId, function (error) {
+				if (!error) {
+					delete that._rocksOnGround[rockId];
+					player.rocks[rockId] = null;
+
+					onComplete();
+				}
+			});
 		}
-	});
-});
+	},
 
-function rockPickedUpUpdate(data, onComplete) {
-	var uuid = data.uuid;
-	var rockId = data.id;
+	rockPutDownUpdate: function (data, onComplete) {
+		var uuid = data.uuid;
+		var rockId = data.id;
+		var position = data.position;
 
-	var player = connectedClients.getPlayerByUuid(uuid);
-	if (player.rocks === undefined) {
-		debug("rockPickedUp: user with id: " + player.userId + ", uuid: " + player.uuid + " attempted to move a rock, but has none.");
-	} else {
-		rockDAO.updateRockPosition(rockId, function (error) {
-			if (!error) {
-				delete rocksOnGround[rockId];
-				player.rocks[rockId] = null;
+		var player = this._users[uuid];
+		if (player.rocks === undefined) {
+			debug("rockPutDown: user with id: " + player.userId + ", uuid: " + player.uuid + " attempted to move a rock, but has none.");
+		} else {
+			var that = this;
+			rockDAO.updateRockPosition(rockId, position, function (error) {
+				if (!error) {
+					that._rocksOnGround[rockId] = position;
+					player.rocks[rockId] = position;
 
-				onComplete();
+					onComplete();
+				}
+			});
+		}
+	},
+
+	addLoggedInUser: function(uuid, userId, rocks) {
+		this._users[uuid] = {
+			userId: userId,
+			rocks: rocks
+		};
+
+		rocks.forEach(function (rock) {
+			if(rock.x && rock.y) {
+				this._rocksOnGround[rock.id] = {
+					x: rock.x,
+					y: rock.y
+				}
 			}
-		});
+		}, this)
 	}
-}
+};
 
-function rockPutDownUpdate(data, onComplete) {
-	var uuid = data.uuid;
-	var rockId = data.id;
-	var position = data.position;
-
-	var player = connectedClients.getPlayerByUuid(uuid);
-	if (player.rocks === undefined) {
-		debug("rockPutDown: user with id: " + player.userId + ", uuid: " + player.uuid + " attempted to move a rock, but has none.");
-	} else {
-		rockDAO.updateRockPosition(rockId, position, function (error) {
-			if (!error) {
-				rocksOnGround[rockId] = position;
-				player.rocks[rockId] = position;
-
-				onComplete();
-			}
-		});
-	}
-}
+exports.addLoggedInUser = function(uuid, userId, rocks) {
+	caches.addLoggedInUser(uuid, userId, rocks);
+};
 
 exports.initMultiplayer = function (server) {
+	caches.initialize();
+
 	var io = require('socket.io')(server);
 
 	io.use(function (socket, next) {
-		connectedClients.addOrUpdatePlayer(
-			socket.handshake.query.uuid,
-			{
-				x: socket.handshake.query.x,
-				y: socket.handshake.query.y
-			});
+		var uuid = socket.handshake.query.uuid;
+		var position = {
+			x: socket.handshake.query.x,
+			y: socket.handshake.query.y
+		};
+
+		connectedClients.addOrUpdatePlayer(uuid, position);
+		socket.broadcast.emit('playerMoved', {
+			uuid: uuid,
+			position: position
+		});
 		next();
 	});
 
 	io.on('connection', function (socket) {
 		socket.emit('onConnect', {
 			players: connectedClients.getCurrentPlayers(),
-			rocks: rocksOnGround
+			rocks: caches.getRocksOnGround()
 		});
 
 		socket.on('updatePosition', function (data) {
@@ -146,21 +163,17 @@ exports.initMultiplayer = function (server) {
 		});
 
 		socket.on('rockPickedUp', function (data) {
-			rockPickedUpUpdate(data, function () {
+			caches.rockPickedUpUpdate(data, function () {
 				socket.broadcast.emit('rockPickedUp', data);
 			});
 		});
 
 		socket.on('rockPutDown', function (data) {
-			rockPutDownUpdate(data, function () {
+			caches.rockPutDownUpdate(data, function () {
 				socket.broadcast.emit('rockPutDown', data);
 			});
 		});
 	});
 
 	return io;
-};
-
-exports.syncLoggedInUser = function (uuid, id, rocks) {
-	connectedClients.syncLoggedInUser(uuid, id, rocks);
 };

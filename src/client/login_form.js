@@ -17,22 +17,7 @@ $(document).ready(function () {
 					$('#signInError').show().text(data.error);
 					$('#signInText').hide();
 				} else if (data.text) {
-					$('#signInError').hide();
-					$('#signInText').show().text(data.text);
-
-					setTimeout(function () {
-						var panel = $('#panelTopRight');
-						panel.animate({
-							height: "20px",
-							width: "100px",
-							right: "+=" + (window.innerWidth - 180) + "px",
-							top: "+=" + (window.innerHeight - 80) + "px"
-						}, 1000, function () {
-							panel.find('*').hide();
-							panel.remove();
-							sand.elephantLayer.initializeInventory(data.rocks);
-						});
-					}, 1000);
+					initializeLoggedInUser(data.text, data.rocks, 1000);
 				}
 			}
 		);
@@ -70,3 +55,23 @@ $(document).ready(function () {
 		);
 	});
 });
+
+function initializeLoggedInUser(text, rocks, delay) {
+	$('#signInError').hide();
+	$('#signInText').show().text(text);
+
+	setTimeout(function () {
+		var panel = $('#panelTopRight');
+		panel.animate({
+			height: "20px",
+			width: "100px",
+			right: "+=" + (window.innerWidth - 180) + "px",
+			top: "+=" + (window.innerHeight - 80) + "px"
+		}, 1000, function () {
+			panel.find('*').hide();
+			panel.remove();
+
+			sand.elephantLayer.initializeInventory(rocks);
+		});
+	}, delay);
+}

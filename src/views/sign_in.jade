@@ -6,10 +6,21 @@ div#panelTopRight.panelStyle
 	#signIn.hidden
 		p.fieldText Sands of Eternity
 		form#signInForm
-			input.inputBox(type="email", name="email", placeholder="email")
+			if (email)
+				input.inputBox(type="email", name="email", value="#{email}")
+				script.
+					function userRemembered() {
+						initializeLoggedInUser("user remembered: log in successful", !{rocks}, 3000);
+					}
+			else
+				input.inputBox(type="email", name="email", placeholder="email")
+
 			input.inputBox(type="password", name="password", placeholder="password")
 			a#signInButton.textButton login
 			a#resetPasswordButton.textButton forgot password?
+			label
+				input(type="checkbox", name="rememberMe" checked="true")
+				p.fieldText.inline remember me?
 		div.responseDiv
 			a#signInError.errorText
 			a#signInText.confirmText

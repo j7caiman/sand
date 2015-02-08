@@ -13,7 +13,9 @@ module.exports = function (queryString, queryParameters, onComplete) {
 		if (err) {
 			debug('error: connection to database failed. connection string: \"' + connectionString + '\" error: ' + err);
 			recycleConnection(err);
-			onComplete(err);
+			if(onComplete !== undefined) {
+				onComplete(err);
+			}
 			return;
 		}
 
@@ -25,9 +27,10 @@ module.exports = function (queryString, queryParameters, onComplete) {
 
 				if (err) {
 					debug('error: query failed: \"' + queryString + '\", \"' + queryParameters + "\" error: " + err);
-					onComplete(err);
-				} else {
-					onComplete(null, result);
+				}
+
+				if(onComplete !== undefined) {
+					onComplete(err, result);
 				}
 			}
 		);

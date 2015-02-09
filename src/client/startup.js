@@ -48,12 +48,6 @@ cc.game.onStart = function() {
 	sand.globalFunctions.addMoreRegions(onRegionInitializationComplete);
 
 	function onRegionInitializationComplete() {
-		$('#loading').hide();
-		$('#signIn').show();
-		if(typeof userRemembered === 'function') {
-			userRemembered();
-		}
-
 		var currentRegionName = sand.globalFunctions.findRegionNameFromAbsolutePosition(sand.globalCoordinates);
 		sand.currentRegion = sand.allRegions[currentRegionName];
 

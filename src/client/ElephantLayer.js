@@ -322,6 +322,12 @@ var ElephantLayer = cc.Layer.extend({
 				}
 			}
 		}, this);
+
+		$('#loading').hide();
+		$('#signIn').show();
+		if(typeof userRemembered === 'function') {
+			userRemembered();
+		}
 	},
 
 	initializeInventory: function (rocks) {

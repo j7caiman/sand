@@ -25,6 +25,7 @@ var GameScene = cc.Scene.extend({
 		sand.cocosTagCounter = 0;
 		sand.otherPlayers = {};
 		sand.otherRocks = {};
+		sand.reservedAreas = {};
 
 		sand.socket = io({
 			query: 'uuid=' + sand.uuid
@@ -77,6 +78,7 @@ var GameScene = cc.Scene.extend({
 					createOrMoveOtherPlayerToLocation(playerData);
 				}
 			});
+
 			var rocks = data.rocks;
 			for (var index in rocks) {
 				if (rocks.hasOwnProperty(index)) {
@@ -84,6 +86,8 @@ var GameScene = cc.Scene.extend({
 					sand.elephantLayer.createOtherRock(index, location);
 				}
 			}
+
+			sand.reservedAreas = data.reservedAreas;
 		});
 
 		sand.socket.on('playerMoved', function (playerData) {
@@ -107,13 +111,27 @@ var GameScene = cc.Scene.extend({
 
 			if (sand.otherRocks[rockData.id] === undefined) {
 				sand.elephantLayer.createOtherRock(rockData.id, location);
-			} else {
+			} else { // unknown whether this happens, or is possible
 				sand.otherRocks[rockData.id].sprite.setPosition(location);
 			}
 		});
 
-		sand.socket.on('rockPickedUp', function (rockData) {
-			sand.elephantLayer.removeOtherRock(rockData.id);
+		sand.socket.on('rockPickedUp', function (data) {
+			if(data.areaId !== undefined) {
+				delete sand.reservedAreas[data.areaId];
+				data.deactiveatedRockIds.forEach(function(rockId) {
+					sand.otherRocks[rockId].sprite.setSpriteFrame(sand.elephantLayer._rock_default_frame);
+				});
+			}
+
+			sand.elephantLayer.removeOtherRock(data.rockId);
+		});
+
+		sand.socket.on('areaReserved', function (data) {
+			sand.reservedAreas[data.areaId] = data.path;
+			data.rockIds.forEach(function (rockId) {
+				sand.otherRocks[rockId].sprite.setSpriteFrame(sand.elephantLayer._rock_activated_frame);
+			});
 		});
 
 		this.positionEmitterThrottler = new this.Throttler(100);
@@ -217,9 +235,7 @@ var GameScene = cc.Scene.extend({
 		if(sand.batchedFootprints.length != 0) {
 			sand.batchedFootprints.forEach(function(print) {
 				sand.modifyRegion.makeFootprint(print.location, print.brush);
-			}, this);
 
-			sand.batchedFootprints.forEach(function(print) {
 				var area = sand.globalFunctions.createBoundingBox(
 					print.location,
 					sand.constants.kAffectedRegionWidth / 2

@@ -1,8 +1,12 @@
+var debug = require('debug')('sand');
 var fs = require('fs');
 var globalFunctions = require('../shared/global_functions');
 var footprintFunctions = require('../shared/footprint_functions');
 var RegionNode = require('../shared/RegionNode');
 var regionFunctions = require('./region_functions');
+
+var reservedAreas = require('./caches').getReservedAreas();
+var pointInsidePolygon = require('./../shared/shared_rock_functions').pointInsidePolygon;
 
 var footprintBuffer = {};
 
@@ -87,9 +91,29 @@ function _flushFootprintBuffer(regionName) {
 				throw error;
 			}
 
+			var printsNotFlushed = "";
 			footprintsToFlush.forEach(function (print) {
-				print.brush.apply(regionData, globalFunctions.toLocalCoordinates(print.location, region));
+				var notInReservedArea = true;
+				for (var id in reservedAreas) {
+					if(reservedAreas.hasOwnProperty(id)) {
+						var path = reservedAreas[id];
+						if(pointInsidePolygon(print.location, path)) {
+							notInReservedArea = false;
+							break;
+						}
+					}
+				}
+
+				if(notInReservedArea) {
+					print.brush.apply(regionData, globalFunctions.toLocalCoordinates(print.location, region));
+				} else {
+					printsNotFlushed += "(" + print.location.x + ", " + print.location.y + "), ";
+				}
 			});
+
+			if(printsNotFlushed.length !== 0) {
+				debug("footprints: " + printsNotFlushed + " are inside a reserved area. Not writing them to disk.");
+			}
 
 			fs.writeFile(path, JSON.stringify(regionData), function (err) {
 				if (err) {

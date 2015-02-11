@@ -174,18 +174,32 @@ sand.globalFunctions = {
 	},
 
 	addFootprintToQueue: function(location, brushStrokeType) {
-		var roundedLocation = {
-			x: Math.round(location.x),
-			y: Math.round(location.y)
-		};
+		var reservedAreas = sand.reservedAreas;
+		var notInReservedArea = true;
+		for (var id in reservedAreas) {
+			if(reservedAreas.hasOwnProperty(id)) {
+				var path = reservedAreas[id];
+				if(sand.modifyRegion.pointInsidePolygon(location, path)) {
+					notInReservedArea = false;
+					break;
+				}
+			}
+		}
 
-		var print = {
-			location: roundedLocation,
-			brush: brushStrokeType
-		};
+		if(notInReservedArea) {
+			var roundedLocation = {
+				x: Math.round(location.x),
+				y: Math.round(location.y)
+			};
 
-		sand.batchedFootprints.push(print);
-		sand.socket.emit('footprint', print);
+			var print = {
+				location: roundedLocation,
+				brush: brushStrokeType
+			};
+
+			sand.batchedFootprints.push(print);
+			sand.socket.emit('footprint', print);
+		}
 	},
 
 	getPositionOnScreenFromGlobalCoordinates: function (globalPosition) {

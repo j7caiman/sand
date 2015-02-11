@@ -11,7 +11,7 @@ module.exports = function (queryString, queryParameters, onComplete) {
 
 	postgres.connect(connectionString, function (err, client, recycleConnection) {
 		if (err) {
-			debug('error: connection to database failed. connection string: \"' + connectionString + '\" error: ' + err);
+			debug('error: connection to database failed. connection string: \"' + connectionString + '\" ' + err);
 			recycleConnection(err);
 			if(onComplete !== undefined) {
 				onComplete(err);
@@ -26,7 +26,7 @@ module.exports = function (queryString, queryParameters, onComplete) {
 				recycleConnection();
 
 				if (err) {
-					debug('error: query failed: \"' + queryString + '\", \"' + queryParameters + "\" error: " + err);
+					debug('error: query failed: \"' + queryString + '\", \"' + queryParameters + "\" " + err);
 				}
 
 				if(onComplete !== undefined) {

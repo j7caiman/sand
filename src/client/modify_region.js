@@ -59,5 +59,40 @@ sand.modifyRegion = {
 				sand.canvasUpdate.drawRegionToCanvas(region);
 			}, this);
 		}
+	},
+
+	createPointsAlongPath: function (path) {
+		const spacing = 10;
+
+		var points = [];
+		for (var i = 0; i < path.length; i++) {
+			var point = path[i];
+			var nextPoint = path[(i + 1) % path.length];
+
+			var distance = (function (point1, point2) {
+				var xDelta = point2.x - point1.x;
+				var yDelta = point2.y - point1.y;
+				return {
+					x: xDelta,
+					y: yDelta,
+					h: Math.sqrt((xDelta * xDelta) + (yDelta * yDelta))
+				}
+			})(point, nextPoint);
+
+			var displacement = {
+				x: spacing * (distance.x / distance.h),
+				y: spacing * (distance.y / distance.h)
+			};
+
+			var k = 0;
+			for (var j = 0; j < distance.h; j += spacing) {
+				points.push({
+					x: point.x + (k * displacement.x),
+					y: point.y + (k++ * displacement.y)
+				});
+			}
+		}
+
+		return points;
 	}
 };

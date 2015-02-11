@@ -9,7 +9,7 @@ var bcrypt = require('bcrypt');
 
 var rockDAO = require('../../server/rock_dao');
 
-var multiplayer = require('../../server/multiplayer');
+var caches = require('../../server/caches');
 
 router.post('/',
 	urlEncodedParser,
@@ -81,7 +81,7 @@ router.post('/',
 					return;
 				}
 
-				multiplayer.addLoggedInUser(uuid, id, result.rows);
+				caches.addLoggedInUser(uuid, id, result.rows);
 				res.send({
 					text: "log in successful",
 					rocks: result.rows

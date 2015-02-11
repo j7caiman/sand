@@ -5,7 +5,7 @@ var cookieParser = require('cookie-parser')();
 
 var query = require('../server/query_db');
 var rockDAO = require('../server/rock_dao');
-var multiplayer = require('../server/multiplayer');
+var caches = require('../server/caches');
 
 module.exports = function (environment) {
 	return router.get('/',
@@ -62,7 +62,7 @@ module.exports = function (environment) {
 						return;
 					}
 
-					multiplayer.addLoggedInUser(uuid, id, result.rows);
+					caches.addLoggedInUser(uuid, id, result.rows);
 					renderGame(email, JSON.stringify(result.rows));
 				});
 			});

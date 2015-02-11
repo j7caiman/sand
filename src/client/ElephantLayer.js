@@ -23,6 +23,7 @@ var ElephantLayer = cc.Layer.extend({
 		that.inventory = {
 			initialized: false
 		};
+		that.footprintTimeouts = [];
 
 		that.playerSprite = that.createElephant(
 			{
@@ -259,6 +260,18 @@ var ElephantLayer = cc.Layer.extend({
 
 										that._resetItem(sand.playerState.putBackItem);
 										sand.playerState.putBackItem = false;
+										that.footprintTimeouts.forEach(function (timeoutId) {
+											clearTimeout(timeoutId);
+										});
+
+										if(sand.reservedAreas[sand.uuid] !== undefined) {
+											delete sand.reservedAreas[sand.uuid];
+											that.inventory.items.forEach(function(item) {
+												if(item.placedSprite !== undefined) {
+													item.placedSprite.setSpriteFrame(sand.elephantLayer._rock_default_frame);
+												}
+											});
+										}
 									}
 								);
 
@@ -286,32 +299,44 @@ var ElephantLayer = cc.Layer.extend({
 						that._placeItemOnGround(sand.playerState.selectedItem, sand.elephantLayer.playerSprite);
 						sand.playerState.selectedItem = false;
 
-						var allRocksPlaced = (function areAllFourRocksPlaced() {
-							return that.inventory.items.every(function (item) {
-								return !item.available;
-							});
-						})();
+						var points = [];
+						var allRocksPlaced = that.inventory.items.every(function (item) {
+							if(item.placedSprite !== undefined) {
+								var point = sand.globalFunctions.convertOnScreenPositionToGlobalCoordinates(item.placedSprite.getPosition());
+								points.push(point);
+							}
+							return !item.available;
+						});
+
 						if (allRocksPlaced) {
-							var rockLocations = that.inventory.items.map(function (item) {
-								return sand.globalFunctions.convertOnScreenPositionToGlobalCoordinates(item.placedSprite);
-							});
+							var perimeter = sand.modifyRegion.getReservedPerimeterIfValid(points);
+						}
 
-							var borderPath = sand.modifyRegion.detectConvexQuadrangle(rockLocations);
-							borderPath = sand.modifyRegion.createPointsAlongPath(borderPath);
+						if(allRocksPlaced && perimeter) {
+							var borderPath = sand.modifyRegion.createPointsAlongPath(perimeter);
 
+							that.footprintTimeouts = [];
 							var totalDuration = 2000; // 1 second
-
-							for(var i = 0; i < borderPath.length / 2; i++) {
-								setTimeout((function (i) {
-									return function() {
+							for (var i = 0; i < borderPath.length / 2; i++) {
+								that.footprintTimeouts.push(setTimeout((function (i) {
+									return function () {
 										sand.globalFunctions.addFootprintToQueue(borderPath[i], "walking");
 										var j = borderPath.length - 1 - i;
 										if (j !== i) {
 											sand.globalFunctions.addFootprintToQueue(borderPath[parseInt(borderPath.length - 1 - i)], "walking");
 										}
 									}
-								})(i), ((i + 1) / borderPath.length) * 2 * totalDuration);
+								})(i), ((i + 1) / borderPath.length) * 2 * totalDuration));
 							}
+							that.footprintTimeouts.push(setTimeout(function () {
+								sand.reservedAreas[sand.uuid] = perimeter;
+								that.inventory.items.forEach(function (item) {
+									item.placedSprite.setSpriteFrame(sand.elephantLayer._rock_activated_frame);
+								});
+								sand.socket.emit('reserveArea', {
+									uuid: sand.uuid
+								});
+							}, totalDuration));
 						}
 
 					});
@@ -328,6 +353,9 @@ var ElephantLayer = cc.Layer.extend({
 		if(typeof userRemembered === 'function') {
 			userRemembered();
 		}
+
+		this._rock_default_frame = cc.spriteFrameCache.getSpriteFrame("rock.png");
+		this._rock_activated_frame = cc.spriteFrameCache.getSpriteFrame("rock_activated.png");
 	},
 
 	initializeInventory: function (rocks) {
@@ -340,7 +368,7 @@ var ElephantLayer = cc.Layer.extend({
 		that.addChild(that.inventory.background);
 
 		var itemPositionX = that.inventory.background.getPositionX() + 20;
-		var InventoryItem = function (id, defaultFrame, selectedFrame, unavailableFrame) {
+		var InventoryItem = function (id, defaultFrame, selectedFrame, unavailableFrame, activatedFrame, activatedAndSelectedFrame) {
 			this.id = id;
 
 			this.inventorySprite = new cc.Sprite('#' + defaultFrame);
@@ -349,6 +377,8 @@ var ElephantLayer = cc.Layer.extend({
 			this.defaultFrame = cc.spriteFrameCache.getSpriteFrame(defaultFrame);
 			this.selectedFrame = cc.spriteFrameCache.getSpriteFrame(selectedFrame);
 			this.unavailableFrame = cc.spriteFrameCache.getSpriteFrame(unavailableFrame);
+			this.activatedFrame = cc.spriteFrameCache.getSpriteFrame(activatedFrame);
+			this.activatedAndSelectedFrame = cc.spriteFrameCache.getSpriteFrame(activatedAndSelectedFrame);
 
 			this.available = true;
 
@@ -364,7 +394,13 @@ var ElephantLayer = cc.Layer.extend({
 
 		that.inventory.items = [];
 		rocks.forEach(function(rock) {
-			var item = new InventoryItem(rock.id, "rock.png", "rock_selected.png", "rock_unavailable.png");
+			var item = new InventoryItem(rock.id,
+				"rock.png",
+				"rock_selected.png",
+				"rock_unavailable.png",
+				"rock_activated.png",
+				"rock_activated_selected.png");
+
 			if(rock.x && rock.y) {
 				that.removeOtherRock(rock.id);
 

@@ -587,6 +587,7 @@ var ElephantLayer = cc.Layer.extend({
 			sprite.runAction(walkAnimation);
 		}
 
+		sand.playerState.painting = false;
 		sprite.flippedX = elephantAnimationData.spriteFlipped;
 
 		sprite.stopActionByTag("moveElephant");

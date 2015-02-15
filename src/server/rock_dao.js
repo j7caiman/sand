@@ -2,7 +2,7 @@ var query = require('../server/query_db');
 
 module.exports = {
 	fetchRocksOnGround: function (onComplete) {
-		query('select id, x, y from rocks where x is not null and y is not null', function (error, result) {
+		query('select id, x, y, reserved_area_id from rocks where x is not null and y is not null', function (error, result) {
 			if (error) {
 				onComplete(error);
 				return;
@@ -16,7 +16,7 @@ module.exports = {
 	},
 
 	fetchReservedAreas: function(onComplete) {
-		query('select id, path from reserved_areas', onComplete);
+		query('select id, path, owner_uuid from reserved_areas', onComplete);
 	},
 
 	updateRockPosition: function (id, position, onComplete) {
@@ -38,7 +38,7 @@ module.exports = {
 				return;
 			}
 
-			query("delete from reserved_areas where id = $1", [areaId], function(err) {
+			query("delete from reserved_areas where owner_uuid = $1", [areaId], function(err) {
 				if (err) {
 					return;
 				}
@@ -48,9 +48,9 @@ module.exports = {
 		});
 	},
 
-	writeReservedAreaToTables: function (rockIds, path, onComplete) {
+	writeReservedAreaToTables: function (rockIds, path, uuid, onComplete) {
 		var queryParameters = [];
-		var queryString = "insert into reserved_areas (path) values (array[";
+		var queryString = "insert into reserved_areas (path, owner_uuid) values (array[";
 		var counter = 1;
 		path.forEach(function (point, index) {
 			queryParameters.push(point.x);
@@ -61,7 +61,8 @@ module.exports = {
 				queryString += ",array[$" + counter++ + "::integer,$" + counter++ + "::integer]";
 			}
 		});
-		queryString += "]) returning id";
+		queryParameters.push(uuid);
+		queryString += "], $" + counter++ + ") returning id";
 
 		query(queryString, queryParameters,
 			function (err, result) {
@@ -85,7 +86,7 @@ module.exports = {
 							return;
 						}
 
-						onComplete(reservedAreaId);
+						onComplete();
 					}
 				);
 			}

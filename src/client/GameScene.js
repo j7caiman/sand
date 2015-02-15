@@ -80,10 +80,13 @@ var GameScene = cc.Scene.extend({
 			});
 
 			var rocks = data.rocks;
-			for (var index in rocks) {
-				if (rocks.hasOwnProperty(index)) {
-					var location = sand.globalFunctions.getPositionOnScreenFromGlobalCoordinates(rocks[index]);
-					sand.elephantLayer.createOtherRock(index, location);
+			for (var rockId in rocks) {
+				if (rocks.hasOwnProperty(rockId)) {
+					var location = sand.globalFunctions.getPositionOnScreenFromGlobalCoordinates(rocks[rockId]);
+					var createdRock = sand.elephantLayer.createOtherRock(rockId, location);
+					if(rocks[rockId].areaId !== undefined) {
+						createdRock.sprite.setSpriteFrame(sand.elephantLayer._rockActivatedFrame);
+					}
 				}
 			}
 
@@ -120,7 +123,7 @@ var GameScene = cc.Scene.extend({
 			if(data.areaId !== undefined) {
 				delete sand.reservedAreas[data.areaId];
 				data.deactiveatedRockIds.forEach(function(rockId) {
-					sand.otherRocks[rockId].sprite.setSpriteFrame(sand.elephantLayer._rock_default_frame);
+					sand.otherRocks[rockId].sprite.setSpriteFrame(sand.elephantLayer._rockDefaultFrame);
 				});
 			}
 
@@ -130,7 +133,7 @@ var GameScene = cc.Scene.extend({
 		sand.socket.on('areaReserved', function (data) {
 			sand.reservedAreas[data.areaId] = data.path;
 			data.rockIds.forEach(function (rockId) {
-				sand.otherRocks[rockId].sprite.setSpriteFrame(sand.elephantLayer._rock_activated_frame);
+				sand.otherRocks[rockId].sprite.setSpriteFrame(sand.elephantLayer._rockActivatedFrame);
 			});
 		});
 

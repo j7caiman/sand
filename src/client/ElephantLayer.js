@@ -246,7 +246,11 @@ var ElephantLayer = cc.Layer.extend({
 
 								// select item on ground
 								sand.playerState.putBackItem = item;
-								item.placedSprite.setSpriteFrame(item.selectedFrame);
+								if(item.activated) {
+									item.placedSprite.setSpriteFrame(sand.elephantLayer._rockActivatedAndSelectedFrame);
+								} else {
+									item.placedSprite.setSpriteFrame(item.selectedFrame);
+								}
 
 								// move elephant, then pick up item
 								sand.elephantLayer.movePlayerElephantToLocation(
@@ -268,7 +272,8 @@ var ElephantLayer = cc.Layer.extend({
 											delete sand.reservedAreas[sand.uuid];
 											that.inventory.items.forEach(function(item) {
 												if(item.placedSprite !== undefined) {
-													item.placedSprite.setSpriteFrame(sand.elephantLayer._rock_default_frame);
+													item.placedSprite.setSpriteFrame(sand.elephantLayer._rockDefaultFrame);
+													item.activated = false;
 												}
 											});
 										}
@@ -331,7 +336,8 @@ var ElephantLayer = cc.Layer.extend({
 							that.footprintTimeouts.push(setTimeout(function () {
 								sand.reservedAreas[sand.uuid] = perimeter;
 								that.inventory.items.forEach(function (item) {
-									item.placedSprite.setSpriteFrame(sand.elephantLayer._rock_activated_frame);
+									item.placedSprite.setSpriteFrame(sand.elephantLayer._rockActivatedFrame);
+									item.activated = true;
 								});
 								sand.socket.emit('reserveArea', {
 									uuid: sand.uuid
@@ -354,8 +360,9 @@ var ElephantLayer = cc.Layer.extend({
 			userRemembered();
 		}
 
-		this._rock_default_frame = cc.spriteFrameCache.getSpriteFrame("rock.png");
-		this._rock_activated_frame = cc.spriteFrameCache.getSpriteFrame("rock_activated.png");
+		this._rockDefaultFrame = cc.spriteFrameCache.getSpriteFrame("rock.png");
+		this._rockActivatedFrame = cc.spriteFrameCache.getSpriteFrame("rock_activated.png");
+		this._rockActivatedAndSelectedFrame = cc.spriteFrameCache.getSpriteFrame("rock_activated_selected.png");
 	},
 
 	initializeInventory: function (rocks) {
@@ -368,7 +375,7 @@ var ElephantLayer = cc.Layer.extend({
 		that.addChild(that.inventory.background);
 
 		var itemPositionX = that.inventory.background.getPositionX() + 20;
-		var InventoryItem = function (id, defaultFrame, selectedFrame, unavailableFrame, activatedFrame, activatedAndSelectedFrame) {
+		var InventoryItem = function (id, defaultFrame, selectedFrame, unavailableFrame) {
 			this.id = id;
 
 			this.inventorySprite = new cc.Sprite('#' + defaultFrame);
@@ -377,8 +384,6 @@ var ElephantLayer = cc.Layer.extend({
 			this.defaultFrame = cc.spriteFrameCache.getSpriteFrame(defaultFrame);
 			this.selectedFrame = cc.spriteFrameCache.getSpriteFrame(selectedFrame);
 			this.unavailableFrame = cc.spriteFrameCache.getSpriteFrame(unavailableFrame);
-			this.activatedFrame = cc.spriteFrameCache.getSpriteFrame(activatedFrame);
-			this.activatedAndSelectedFrame = cc.spriteFrameCache.getSpriteFrame(activatedAndSelectedFrame);
 
 			this.available = true;
 
@@ -397,15 +402,18 @@ var ElephantLayer = cc.Layer.extend({
 			var item = new InventoryItem(rock.id,
 				"rock.png",
 				"rock_selected.png",
-				"rock_unavailable.png",
-				"rock_activated.png",
-				"rock_activated_selected.png");
+				"rock_unavailable.png");
 
 			if(rock.x && rock.y) {
+				var activated = rock.reserved_area_id !== null;
 				that.removeOtherRock(rock.id);
 
 				var position = sand.globalFunctions.getPositionOnScreenFromGlobalCoordinates(rock);
 				that._placeItemOnGround(item, position);
+				if(activated) {
+					item.activated = true;
+					item.placedSprite.setSpriteFrame(sand.elephantLayer._rockActivatedFrame);
+				}
 			}
 
 			that.inventory.items.push(item);
@@ -432,7 +440,14 @@ var ElephantLayer = cc.Layer.extend({
 
 	_deselectSelectedItemOnGround: function () {
 		if (sand.playerState.putBackItem) {
-			sand.playerState.putBackItem.placedSprite.setSpriteFrame(sand.playerState.putBackItem.defaultFrame);
+			var frame;
+			if(sand.playerState.putBackItem.activated) {
+				frame = sand.elephantLayer._rockActivatedFrame;
+			} else {
+				frame = sand.playerState.putBackItem.defaultFrame;
+			}
+
+			sand.playerState.putBackItem.placedSprite.setSpriteFrame(frame);
 			sand.playerState.putBackItem = false;
 		}
 	},
@@ -456,6 +471,8 @@ var ElephantLayer = cc.Layer.extend({
 				sprite: sprite
 			};
 		}
+
+		return sand.otherRocks[id];
 	},
 
 	removeOtherRock: function (id) {

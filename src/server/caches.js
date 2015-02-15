@@ -20,11 +20,15 @@ module.exports = {
 				that._rocksOnGround[rock.id] = {
 					x: rock.x,
 					y: rock.y
+				};
+
+				if (rock.reserved_area_id !== null) {
+					that._rocksOnGround[rock.id].areaId = rock.reserved_area_id;
 				}
 			});
 
 			queriesToComplete--;
-			if(queriesToComplete === 0) {
+			if (queriesToComplete === 0) {
 				onComplete();
 			}
 		});
@@ -34,8 +38,8 @@ module.exports = {
 				throw error;
 			}
 
-			result.rows.forEach(function(row) {
-				that._reservedAreas[row.id] = row.path.map(function(point) {
+			result.rows.forEach(function (row) {
+				that._reservedAreas[row.owner_uuid] = row.path.map(function (point) {
 					return {
 						x: point[0],
 						y: point[1]
@@ -44,7 +48,7 @@ module.exports = {
 			});
 
 			queriesToComplete--;
-			if(queriesToComplete === 0) {
+			if (queriesToComplete === 0) {
 				onComplete();
 			}
 		});
@@ -54,7 +58,7 @@ module.exports = {
 		return this._rocksOnGround;
 	},
 
-	getReservedAreas: function() {
+	getReservedAreas: function () {
 		return this._reservedAreas;
 	},
 
@@ -76,7 +80,7 @@ module.exports = {
 					player.rocks[rockId].x = null;
 					player.rocks[rockId].y = null;
 
-					if(player.rocks[rockId].areaId !== undefined) {
+					if (player.rocks[rockId].areaId !== undefined) {
 						that.removeReservedArea(player.rocks, onComplete);
 					} else {
 						onComplete();
@@ -166,7 +170,7 @@ module.exports = {
 		}
 
 		var path = rockFunctions.getReservedPerimeterIfValid(points);
-		if(!path) {
+		if (!path) {
 			return;
 		}
 
@@ -178,10 +182,12 @@ module.exports = {
 		}
 
 		var that = this;
-		rockDAO.writeReservedAreaToTables(rockIds, path, function(reservedAreaId) {
+		rockDAO.writeReservedAreaToTables(rockIds, path, uuid, function () {
+			var reservedAreaId = uuid;
 			for (var rockId in rocks) {
 				if (rocks.hasOwnProperty(rockId)) {
 					rocks[rockId].areaId = reservedAreaId;
+					that._rocksOnGround[rockId].areaId = reservedAreaId;
 				}
 			}
 
@@ -202,10 +208,13 @@ module.exports = {
 		}
 
 		var that = this;
-		rockDAO.removeReservedAreaFromTables(rockIds, areaId, function() {
+		rockDAO.removeReservedAreaFromTables(rockIds, areaId, function () {
 			for (var rockId in rocks) {
 				if (rocks.hasOwnProperty(rockId)) {
 					delete rocks[rockId].areaId;
+					if(that._rocksOnGround[rockId] !== undefined) {
+						delete that._rocksOnGround[rockId].areaId;
+					}
 				}
 			}
 

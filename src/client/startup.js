@@ -33,8 +33,8 @@ cc.game.onStart = function() {
 			var playerData = {
 				uuid: generateUUID(),
 				lastPosition: {
-					x: 100,
-					y: 100
+					x: 5750,
+					y: 610
 				}
 			};
 			$.cookie('playerData', playerData, {expires: 7});

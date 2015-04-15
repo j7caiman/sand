@@ -6,10 +6,10 @@ sand.constants = sand.constants || require("./global_constants");
 sand.modifyRegion = sand.modifyRegion || {};
 
 sand.modifyRegion.brushes = {
-	painting: [
+	digging: [
 		{
 			frequency: 7,
-			radius: 6,
+			radius: 4.5,
 			apply: function(regionData, positionOnCanvas) {
 				sand.modifyRegion.imprintSphere(
 					regionData,
@@ -21,7 +21,7 @@ sand.modifyRegion.brushes = {
 			}
 		},
 		{
-			radius: 6,
+			radius: 5,
 			offset: {
 				x: -8.5,
 				y: -2
@@ -50,7 +50,54 @@ sand.modifyRegion.brushes = {
 				false
 			)
 		}
+	}],
+
+	erasing: [{
+		frequency: 7,
+		radius: 10,
+		apply: function(regionData, positionOnCanvas) {
+			sand.modifyRegion.erase(regionData, positionOnCanvas, 10);
+		}
 	}]
+};
+
+/**
+ * flattens surrounding area, gradually bringing things to 0 height.
+ */
+sand.modifyRegion.erase = function (regionData, positionOnCanvas, radius) {
+	const sandGrainWidth = sand.constants.kCanvasWidth / sand.constants.kRegionWidth; // blocks are square
+	var pointOfImpact = {
+		x: Math.floor(positionOnCanvas.x / sandGrainWidth),
+		y: Math.floor(positionOnCanvas.y / sandGrainWidth)
+	};
+
+	var bounds = {
+		left: Math.max(
+			0, Math.floor(pointOfImpact.x - radius)
+		),
+		right: Math.min(
+			sand.constants.kRegionWidth, Math.ceil(pointOfImpact.x + radius)
+		),
+		bottom: Math.max(
+			0, Math.floor(pointOfImpact.y - radius)
+		),
+		top: Math.min(
+			sand.constants.kRegionWidth, Math.ceil(pointOfImpact.y + radius)
+		)
+	};
+
+	for (var y = bounds.bottom; y < bounds.top; y++) {
+		for (var x = bounds.left; x < bounds.right; x++) {
+			var distanceFromCenter = sand.globalFunctions.calculateDistance(pointOfImpact, { x: x, y: y });
+			if(distanceFromCenter < radius) {
+				if (regionData[y][x] < 0) {
+					regionData[y][x]++;
+				} else if(regionData[y][x] > 0) {
+					regionData[y][x]--;
+				}
+			}
+		}
+	}
 };
 
 /**
@@ -110,6 +157,15 @@ sand.modifyRegion.imprintSphere = function (regionData, positionOnCanvas, radius
 					regionData[y][x] += Math.floor(newZ);
 				} else {
 					regionData[y][x] -= Math.floor(newZ);
+				}
+			}
+
+			var distanceFromCenter = sand.globalFunctions.calculateDistance(pointOfImpact, { x: x, y: y });
+			if(distanceFromCenter < radius) {
+				if (regionData[y][x] < 0) {
+					regionData[y][x]++;
+				} else if(regionData[y][x] > 0) {
+					regionData[y][x]--;
 				}
 			}
 		}

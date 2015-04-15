@@ -198,7 +198,7 @@ var ElephantLayer = cc.Layer.extend({
 					y: position.y - sand.constants.kFootprintVerticalOffset
 				};
 				var distance = sand.globalFunctions.calculateDistance(lastVertex, newVertex);
-				if (distance >= sand.modifyRegion.brushes.painting[0].frequency) {
+				if (distance >= sand.modifyRegion.brushes.digging[0].frequency) {
 					sand.elephantPath.push(newVertex);
 				}
 			},
@@ -210,6 +210,18 @@ var ElephantLayer = cc.Layer.extend({
 				if (that.inventory.initialized) {
 					var inventoryItems = that.inventory.items;
 					if (cc.rectContainsPoint(that.inventory.background.getBoundingBox(), position)) {
+						if (cc.rectContainsPoint(that.inventory.shovelButton.getBoundingBox(), position)) {
+							that.inventory.shovelButton.setSpriteFrame(that._shovelSelectedFrame);
+							that.inventory.eraserButton.setSpriteFrame(that._eraserDefaultFrame);
+							sand.playerState.mouseDragAction = "digging";
+							return;
+						} else if (cc.rectContainsPoint(that.inventory.eraserButton.getBoundingBox(), position)) {
+							that.inventory.eraserButton.setSpriteFrame(that._eraserSelectedFrame);
+							that.inventory.shovelButton.setSpriteFrame(that._shovelDefaultFrame);
+							sand.playerState.mouseDragAction = "erasing";
+							return;
+						}
+
 						inventoryItems.forEach(function (item) {
 							if (cc.rectContainsPoint(item.inventorySprite.getBoundingBox(), position)) {
 								if (item.available) {
@@ -363,6 +375,12 @@ var ElephantLayer = cc.Layer.extend({
 		this._rockDefaultFrame = cc.spriteFrameCache.getSpriteFrame("rock.png");
 		this._rockActivatedFrame = cc.spriteFrameCache.getSpriteFrame("rock_activated.png");
 		this._rockActivatedAndSelectedFrame = cc.spriteFrameCache.getSpriteFrame("rock_activated_selected.png");
+
+		this._shovelSelectedFrame = cc.spriteFrameCache.getSpriteFrame("shovel_icon_selected.png");
+		this._shovelDefaultFrame = cc.spriteFrameCache.getSpriteFrame("shovel_icon.png");
+
+		this._eraserSelectedFrame = cc.spriteFrameCache.getSpriteFrame("eraser_icon_selected.png");
+		this._eraserDefaultFrame = cc.spriteFrameCache.getSpriteFrame("eraser_icon.png");
 	},
 
 	initializeInventory: function (rocks) {
@@ -374,7 +392,18 @@ var ElephantLayer = cc.Layer.extend({
 		that.inventory.background.setZOrder(that.zOrders.inventoryBackground);
 		that.addChild(that.inventory.background);
 
-		var itemPositionX = that.inventory.background.getPositionX() + 20;
+		var itemPositionX = that.inventory.background.getPositionX();
+
+		that.inventory.shovelButton = new cc.Sprite("#shovel_icon.png");
+		that.inventory.shovelButton.setPosition(itemPositionX += 20, that.inventory.background.getPositionY() + 10);
+		that.inventory.shovelButton.setZOrder(that.zOrders.itemsInInventory);
+		that.addChild(that.inventory.shovelButton);
+
+		that.inventory.eraserButton = new cc.Sprite("#eraser_icon.png");
+		that.inventory.eraserButton.setPosition(itemPositionX += 20, that.inventory.background.getPositionY() + 10);
+		that.inventory.eraserButton.setZOrder(that.zOrders.itemsInInventory);
+		that.addChild(that.inventory.eraserButton);
+
 		var InventoryItem = function (id, defaultFrame, selectedFrame, unavailableFrame) {
 			this.id = id;
 
@@ -387,8 +416,7 @@ var ElephantLayer = cc.Layer.extend({
 
 			this.available = true;
 
-			this.inventorySprite.setPosition(itemPositionX, that.inventory.background.getPositionY() + 10);
-			itemPositionX += 20;
+			this.inventorySprite.setPosition(itemPositionX += 20, that.inventory.background.getPositionY() + 10);
 			this.inventorySprite.setZOrder(that.zOrders.itemsInInventory);
 
 			this.placedSprite.setVisible(false);
@@ -504,7 +532,7 @@ var ElephantLayer = cc.Layer.extend({
 
 		var elephantPath = [];
 		elephantPath.push(cc.callFunc(function () {
-			sand.playerState.painting = false;
+			sand.playerState.currentAction = sand.playerState.mouseClickAction;
 		}));
 		brushStrokePath.forEach(function (element, index) {
 			endPosition = element;
@@ -535,7 +563,7 @@ var ElephantLayer = cc.Layer.extend({
 
 			if (index === 0) {
 				elephantPath.push(cc.callFunc(function () {
-					sand.playerState.painting = true;
+					sand.playerState.currentAction = sand.playerState.mouseDragAction;
 				}));
 			}
 
@@ -543,7 +571,7 @@ var ElephantLayer = cc.Layer.extend({
 				elephantPath.push(cc.callFunc(function () {
 					that._stopAllAnimations(sprite);
 					sprite.setSpriteFrame(elephantAnimationData.standFrame);
-					sand.playerState.painting = false;
+					sand.playerState.currentAction = sand.playerState.mouseClickAction;
 				}));
 			}
 
@@ -587,7 +615,7 @@ var ElephantLayer = cc.Layer.extend({
 			sprite.runAction(walkAnimation);
 		}
 
-		sand.playerState.painting = false;
+		sand.playerState.currentAction = sand.playerState.mouseClickAction;
 		sprite.flippedX = elephantAnimationData.spriteFlipped;
 
 		sprite.stopActionByTag("moveElephant");

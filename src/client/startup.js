@@ -2,7 +2,10 @@ var sand = {
 	allRegions: {},
 	batchedFootprints: [],
 	elephantPath: [],
-	playerState: {}
+	playerState: {
+		mouseClickAction: "walking",
+		mouseDragAction: "digging"
+	}
 };
 
 $(document).ready(function() {

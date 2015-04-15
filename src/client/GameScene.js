@@ -155,13 +155,7 @@ var GameScene = cc.Scene.extend({
 
 			sand.globalCoordinates = globalCoordinates;
 
-
-			var brush;
-			if (sand.playerState.painting) {
-				brush = "painting";
-			} else {
-				brush = "walking";
-			}
+			var brush = sand.playerState.currentAction;
 			var frequency = sand.modifyRegion.brushes[brush][0].frequency;
 			var printLocation = {
 				x: sand.globalCoordinates.x,

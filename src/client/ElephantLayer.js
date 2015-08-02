@@ -50,21 +50,6 @@ var ElephantLayer = cc.Layer.extend({
 				return cc.spriteFrameCache.getSpriteFrame(name);
 			})();
 
-			var walkNorthwest = (function () {
-				var frames = [];
-				for (var i = 10; i <= 10; i++) {
-					var name = "elephant_sprite_sheet_" + i + ".png";
-					var frame = cc.spriteFrameCache.getSpriteFrame(name);
-					frames.push(frame);
-				}
-				return new cc.Animation(frames, 0.3);
-			})();
-
-			var standNorthwest = (function () {
-				var name = "elephant_sprite_sheet_10.png";
-				return cc.spriteFrameCache.getSpriteFrame(name);
-			})();
-
 			var walkWest = (function () {
 				var frames = [];
 				for (var i = 2; i <= 9; i++) {
@@ -77,21 +62,6 @@ var ElephantLayer = cc.Layer.extend({
 
 			var standWest = (function () {
 				var name = "elephant_sprite_sheet_01.png";
-				return cc.spriteFrameCache.getSpriteFrame(name);
-			})();
-
-			var walkSouthwest = (function () {
-				var frames = [];
-				for (var i = 14; i <= 14; i++) {
-					var name = "elephant_sprite_sheet_" + i + ".png";
-					var frame = cc.spriteFrameCache.getSpriteFrame(name);
-					frames.push(frame);
-				}
-				return new cc.Animation(frames, 0.3);
-			})();
-
-			var standSouthwest = (function () {
-				var name = "elephant_sprite_sheet_14.png";
 				return cc.spriteFrameCache.getSpriteFrame(name);
 			})();
 
@@ -118,24 +88,10 @@ var ElephantLayer = cc.Layer.extend({
 					spriteFlipped: false
 				},
 
-				northwest: {
-					walkAnimation: walkNorthwest,
-					standFrame: standNorthwest,
-					animationTag: "animate_northwest",
-					spriteFlipped: false
-				},
-
 				west: {
 					walkAnimation: walkWest,
 					standFrame: standWest,
 					animationTag: "animate_west",
-					spriteFlipped: false
-				},
-
-				southwest: {
-					walkAnimation: walkSouthwest,
-					standFrame: standSouthwest,
-					animationTag: "animate_southwest",
 					spriteFlipped: false
 				},
 
@@ -146,24 +102,10 @@ var ElephantLayer = cc.Layer.extend({
 					spriteFlipped: false
 				},
 
-				southeast: {
-					walkAnimation: walkSouthwest,
-					standFrame: standSouthwest,
-					animationTag: "animate_southeast",
-					spriteFlipped: true
-				},
-
 				east: {
 					walkAnimation: walkWest,
 					standFrame: standWest,
 					animationTag: "animate_east",
-					spriteFlipped: true
-				},
-
-				northeast: {
-					walkAnimation: walkNorthwest,
-					standFrame: standNorthwest,
-					animationTag: "animate_northeast",
 					spriteFlipped: true
 				}
 			};
@@ -704,33 +646,21 @@ var ElephantLayer = cc.Layer.extend({
 	},
 
 	_chooseElephantAnimationData: function (angle) {
-		if (Math.abs(angle) > 7 * Math.PI / 8) {
+		if (Math.abs(angle) > 3 * Math.PI / 4) {
 			return this.elephantAnimationData.west;
-		} else if (angle < -5 * Math.PI / 8) {
-			return this.elephantAnimationData.southwest;
-		} else if (angle < -3 * Math.PI / 8) {
+		} else if (angle < - Math.PI / 4) {
 			return this.elephantAnimationData.south;
-		} else if (angle < -Math.PI / 8) {
-			return this.elephantAnimationData.southeast;
-		} else if (angle < Math.PI / 8) {
+		} else if (angle < Math.PI / 4) {
 			return this.elephantAnimationData.east;
-		} else if (angle < 3 * Math.PI / 8) {
-			return this.elephantAnimationData.northeast;
-		} else if (angle < 5 * Math.PI / 8) {
-			return this.elephantAnimationData.north;
 		} else {
-			return this.elephantAnimationData.northwest;
+			return this.elephantAnimationData.north;
 		}
 	},
 
 	_stopAllAnimations: function (sprite) {
 		sprite.stopActionByTag("animate_west");
-		sprite.stopActionByTag("animate_southwest");
 		sprite.stopActionByTag("animate_south");
-		sprite.stopActionByTag("animate_southeast");
 		sprite.stopActionByTag("animate_east");
-		sprite.stopActionByTag("animate_northeast");
 		sprite.stopActionByTag("animate_north");
-		sprite.stopActionByTag("animate_northwest");
 	}
 });

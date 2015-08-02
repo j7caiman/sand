@@ -105,5 +105,11 @@ sand.globalFunctions.calculateDistance = function (point1, point2) {
 	return Math.sqrt((xDelta * xDelta) + (yDelta * yDelta));
 };
 
+sand.globalFunctions.isInteger = function (value) {
+	return !isNaN(value)
+		&& parseInt(Number(value)) == value
+		&& !isNaN(parseInt(value, 10));
+};
+
 var module = module || {};
 module.exports = sand.globalFunctions;

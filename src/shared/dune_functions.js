@@ -231,9 +231,9 @@ sand.modifyRegion._createCone = function (regionData, positionOnCanvas, highestP
 			var height = Math.floor(positionOnRegion.z - Math.tan(angleOfRepose) * lateralDistance);
 			if (regionData[y] !== undefined && height > 0) {
 				if (isAdditive) {
-					regionData[y][x] += height;
-				} else if (height > regionData[y][x]) {
-					regionData[y][x] = height;
+					regionData[y][x][0] += height;
+				} else if (height > regionData[y][x][0]) {
+					regionData[y][x][0] = height;
 				}
 			}
 		}

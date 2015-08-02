@@ -218,7 +218,7 @@ var ElephantLayer = cc.Layer.extend({
 						} else if (cc.rectContainsPoint(that.inventory.eraserButton.getBoundingBox(), position)) {
 							that.inventory.eraserButton.setSpriteFrame(that._eraserSelectedFrame);
 							that.inventory.shovelButton.setSpriteFrame(that._shovelDefaultFrame);
-							sand.playerState.mouseDragAction = "erasing";
+							sand.playerState.mouseDragAction = "painting";
 							return;
 						}
 

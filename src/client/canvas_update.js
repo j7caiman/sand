@@ -111,20 +111,35 @@ sand.canvasUpdate = {
 
 	localDepthDeltaLightingDraw: function (blockIndex, region) {
 		// finds depth difference of block to the left
-		var data = region.getData();
-		var depthOfCurrentBlock = data[blockIndex.y][blockIndex.x];
+		var regionData = region.getData();
+		var depthOfCurrentBlock;
+		//if (sand.globalFunctions.isInteger(regionData[blockIndex.y][blockIndex.x])) {
+		//	depthOfCurrentBlock = regionData[blockIndex.y][blockIndex.x];
+		//} else {
+			depthOfCurrentBlock = regionData[blockIndex.y][blockIndex.x][0];
+		//}
+
 		var depthOfLeftBlock;
 		if (blockIndex.x == 0) {
 			var westRegion = region.getAdjacentNodes()[3];
 			if (westRegion !== undefined) {
-				depthOfLeftBlock = westRegion.getData()[blockIndex.y][sand.constants.kRegionWidth - 1];
+				var westRegionSandGrain = westRegion.getData()[blockIndex.y][sand.constants.kRegionWidth - 1];
+				//if(sand.globalFunctions.isInteger(westRegionSandGrain)) {
+				//	depthOfLeftBlock = westRegionSandGrain;
+				//} else {
+					depthOfLeftBlock = westRegionSandGrain[0];
+				//}
 			} else {
 				depthOfLeftBlock = 0;
 			}
 		} else {
-			depthOfLeftBlock = data[blockIndex.y][blockIndex.x - 1];
+			//if(sand.globalFunctions.isInteger(regionData[blockIndex.y][blockIndex.x - 1])) {
+			//	depthOfLeftBlock = regionData[blockIndex.y][blockIndex.x - 1];
+			//} else {
+				depthOfLeftBlock = regionData[blockIndex.y][blockIndex.x - 1][0];
+			//}
 		}
-		var difference =  depthOfLeftBlock - depthOfCurrentBlock;
+		var difference = depthOfLeftBlock - depthOfCurrentBlock;
 
 		if (difference >= 2) {
 			const dark = 100;
@@ -157,15 +172,28 @@ sand.canvasUpdate = {
 		}
 	},
 
+	paintColorDraw: function (blockIndex, region) {
+		const darkenBy = 20;
+
+		var regionData = region.getData();
+		//if (sand.globalFunctions.isInteger(regionData[blockIndex.y][blockIndex.x])) {
+		//	return 0;
+		//} else {
+			return regionData[blockIndex.y][blockIndex.x][1] * darkenBy;
+		//}
+	},
+
 	compositeDraw: function (blockIndex, region) {
 		var firstColor = sand.canvasUpdate.eternalSunsetDraw(blockIndex, region);
 		var secondColor = sand.canvasUpdate.localDepthDeltaLightingDraw(blockIndex, region);
 
+		var paintColor = sand.canvasUpdate.paintColorDraw(blockIndex, region);
+
 		return {
-			red: Math.floor((firstColor.red - secondColor.red)),
-			green: Math.floor((firstColor.green - secondColor.green)),
-			blue: Math.floor((firstColor.blue - secondColor.blue))
-		}
+			red: Math.floor((firstColor.red - secondColor.red)) + paintColor,
+			green: Math.floor((firstColor.green - secondColor.green)) + paintColor,
+			blue: Math.floor((firstColor.blue - secondColor.blue)) + paintColor
+		};
 	},
 
 	/**

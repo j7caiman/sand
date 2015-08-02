@@ -14,7 +14,7 @@ RegionNode.prototype = {
 	 */
 	initializeAdjacentNodes: function () {
 		if (sand.allRegions === undefined) {
-			throw "sand.currentRegion undefined.\nIs this function being called improperly from the server?"
+			throw "sand.allRegions undefined.\nIs this function being called improperly from the server?"
 		}
 
 		var adjacentNodes = [];

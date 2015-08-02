@@ -22,13 +22,7 @@ router.post('/', jsonParser, function(req, res) {
 			if (coordinates.length != 2) {
 				throw "Invalid region name: " + regionName;
 			} else {
-				function isInteger(value) {
-					return !isNaN(value)
-						&& parseInt(Number(value)) == value
-						&& !isNaN(parseInt(value, 10));
-				}
-
-				if (!isInteger(coordinates[0]) || !isInteger(coordinates[1])) {
+				if (!globalFunctions.isInteger(coordinates[0]) || !globalFunctions.isInteger(coordinates[1])) {
 					throw "Invalid region name: " + regionName;
 				}
 			}

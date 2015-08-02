@@ -42,7 +42,7 @@ sand.modifyRegion = {
 				(function zeroOutRegion(regionData, width) {
 					for (var y = 0; y < width; y++) {
 						for (var x = 0; x < width; x++) {
-							regionData[y][x] = 0;
+							regionData[y][x] = [0, 0];
 						}
 					}
 				})(sand.allRegions[regionName].getData(), sand.constants.kRegionWidth);

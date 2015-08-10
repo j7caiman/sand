@@ -71,7 +71,7 @@ function initializeLoggedInUser(text, rocks, delay) {
 			panel.find('*').hide();
 			panel.remove();
 
-			sand.elephantLayer.initializeInventory(rocks);
+			sand.entitiesLayer.initializeInventory(rocks);
 		});
 	}, delay);
 }

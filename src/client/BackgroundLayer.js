@@ -52,8 +52,8 @@ var BackgroundLayer = cc.Layer.extend({
 						}
 					}
 
-					if(sand.elephantLayer.inventory.initialized) {
-						var inventorySprites = sand.elephantLayer.inventory.items;
+					if(sand.entitiesLayer.inventory.initialized) {
+						var inventorySprites = sand.entitiesLayer.inventory.items;
 						inventorySprites.forEach(function (item) {
 							sprites.push(item.placedSprite);
 						});
@@ -66,7 +66,7 @@ var BackgroundLayer = cc.Layer.extend({
 						}
 					}
 
-					sprites.push(sand.elephantLayer.playerSprite);
+					sprites.push(sand.entitiesLayer.playerSprite);
 					return sprites;
 				})();
 

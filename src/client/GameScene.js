@@ -8,10 +8,10 @@ var GameScene = cc.Scene.extend({
 		this.init();
 
 		sand.backgroundLayer = new BackgroundLayer();
-		sand.elephantLayer = new ElephantLayer();
+		sand.entitiesLayer = new EntitiesLayer();
 
 		this.addChild(sand.backgroundLayer);
-		this.addChild(sand.elephantLayer);
+		this.addChild(sand.entitiesLayer);
 
 		this.scheduleUpdate();
 
@@ -37,9 +37,9 @@ var GameScene = cc.Scene.extend({
 			var location = sand.globalFunctions.getPositionOnScreenFromGlobalCoordinates(playerData.position);
 			if(sand.otherPlayers[playerData.uuid] === undefined) {
 				sand.otherPlayers[playerData.uuid] = {
-					sprite: sand.elephantLayer.createElephant(
+					sprite: sand.entitiesLayer.createElephant(
 						location,
-						sand.elephantLayer.zOrders.otherElephants,
+						sand.entitiesLayer.zOrders.otherElephants,
 						sand.cocosTagCounter++
 					),
 					timeSinceLastCommand: Date.now()
@@ -58,10 +58,10 @@ var GameScene = cc.Scene.extend({
 				 * compensate.
 				 */
 				if(!otherPlayer.sprite.getActionByTag("moveElephant")) {
-					sand.elephantLayer.moveOtherElephantToLocation(otherPlayer.sprite, location);
+					sand.entitiesLayer.moveOtherElephantToLocation(otherPlayer.sprite, location);
 				} else {
 					var duration = (now - otherPlayer.timeSinceLastCommand) / 1000;
-					sand.elephantLayer.moveOtherElephantToLocation(otherPlayer.sprite, location, duration);
+					sand.entitiesLayer.moveOtherElephantToLocation(otherPlayer.sprite, location, duration);
 				}
 				otherPlayer.timeSinceLastCommand = now;
 			}
@@ -83,9 +83,9 @@ var GameScene = cc.Scene.extend({
 			for (var rockId in rocks) {
 				if (rocks.hasOwnProperty(rockId)) {
 					var location = sand.globalFunctions.getPositionOnScreenFromGlobalCoordinates(rocks[rockId]);
-					var createdRock = sand.elephantLayer.createOtherRock(rockId, location);
+					var createdRock = sand.entitiesLayer.createOtherRock(rockId, location);
 					if(rocks[rockId].areaId !== undefined) {
-						createdRock.sprite.setSpriteFrame(sand.elephantLayer._rockActivatedFrame);
+						createdRock.sprite.setSpriteFrame(sand.entitiesLayer._rockActivatedFrame);
 					}
 				}
 			}
@@ -104,7 +104,7 @@ var GameScene = cc.Scene.extend({
 		sand.socket.on('playerDisconnected', function (uuid) {
 			if(sand.otherPlayers[uuid] !== undefined) {
 				var spriteTag = sand.otherPlayers[uuid].sprite.getTag();
-				sand.elephantLayer.removeChildByTag(spriteTag);
+				sand.entitiesLayer.removeChildByTag(spriteTag);
 				delete sand.otherPlayers[uuid];
 			}
 		});
@@ -113,7 +113,7 @@ var GameScene = cc.Scene.extend({
 			var location = sand.globalFunctions.getPositionOnScreenFromGlobalCoordinates(rockData.position);
 
 			if (sand.otherRocks[rockData.id] === undefined) {
-				sand.elephantLayer.createOtherRock(rockData.id, location);
+				sand.entitiesLayer.createOtherRock(rockData.id, location);
 			} else { // unknown whether this happens, or is possible
 				sand.otherRocks[rockData.id].sprite.setPosition(location);
 			}
@@ -123,17 +123,17 @@ var GameScene = cc.Scene.extend({
 			if(data.areaId !== undefined) {
 				delete sand.reservedAreas[data.areaId];
 				data.deactiveatedRockIds.forEach(function(rockId) {
-					sand.otherRocks[rockId].sprite.setSpriteFrame(sand.elephantLayer._rockDefaultFrame);
+					sand.otherRocks[rockId].sprite.setSpriteFrame(sand.entitiesLayer._rockDefaultFrame);
 				});
 			}
 
-			sand.elephantLayer.removeOtherRock(data.rockId);
+			sand.entitiesLayer.removeOtherRock(data.rockId);
 		});
 
 		sand.socket.on('areaReserved', function (data) {
 			sand.reservedAreas[data.areaId] = data.path;
 			data.rockIds.forEach(function (rockId) {
-				sand.otherRocks[rockId].sprite.setSpriteFrame(sand.elephantLayer._rockActivatedFrame);
+				sand.otherRocks[rockId].sprite.setSpriteFrame(sand.entitiesLayer._rockActivatedFrame);
 			});
 		});
 
@@ -146,8 +146,8 @@ var GameScene = cc.Scene.extend({
 
 		var backgroundPosition = sand.currentRegion.getSprite();
 		var localPosition = {
-			x: sand.elephantLayer.playerSprite.x - backgroundPosition.x,
-			y: sand.elephantLayer.playerSprite.y - backgroundPosition.y
+			x: sand.entitiesLayer.playerSprite.x - backgroundPosition.x,
+			y: sand.entitiesLayer.playerSprite.y - backgroundPosition.y
 		};
 		var globalCoordinates = sand.globalFunctions.toGlobalCoordinates(localPosition);
 		if (sand.globalCoordinates.x != globalCoordinates.x
@@ -245,8 +245,8 @@ var GameScene = cc.Scene.extend({
 
 		if(sand.playerState.selectedItem) {
 			sand.playerState.selectedItem.placedSprite.setPosition(
-				sand.elephantLayer.playerSprite.x,
-				sand.elephantLayer.playerSprite.y + sand.constants.kElephantHeightOffset
+				sand.entitiesLayer.playerSprite.x,
+				sand.entitiesLayer.playerSprite.y + sand.constants.kElephantHeightOffset
 			);
 		}
 
@@ -268,11 +268,11 @@ var GameScene = cc.Scene.extend({
 
 	triggerScrolling: function() {
 		// if already scrolling, don't attempt to scroll more
-		if(sand.elephantLayer.playerSprite.getActionByTag("scroll")) {
+		if(sand.entitiesLayer.playerSprite.getActionByTag("scroll")) {
 			return;
 		}
 
-		var elephantPosition = sand.elephantLayer.playerSprite.getPosition();
+		var elephantPosition = sand.entitiesLayer.playerSprite.getPosition();
 
 		var boundary = {
 			left: sand.constants.kBeginScrollThreshold,
@@ -301,7 +301,7 @@ var GameScene = cc.Scene.extend({
 	},
 
 	updateBackgroundSpriteLocations: function() {
-		var playerScreenPosition = sand.elephantLayer.playerSprite.getPosition();
+		var playerScreenPosition = sand.entitiesLayer.playerSprite.getPosition();
 		var bottomLeftCornerOfViewport = {
 			x:  sand.globalCoordinates.x - playerScreenPosition.x,
 			y:  sand.globalCoordinates.y - playerScreenPosition.y

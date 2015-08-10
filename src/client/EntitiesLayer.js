@@ -1,4 +1,4 @@
-var ElephantLayer = cc.Layer.extend({
+var EntitiesLayer = cc.Layer.extend({
 	ctor: function () {
 		this._super();
 		this.init();
@@ -147,7 +147,7 @@ var ElephantLayer = cc.Layer.extend({
 
 			onTouchesEnded: function (touches) {
 				var position = touches[0].getLocation();
-				var sprite = sand.elephantLayer.playerSprite;
+				var sprite = sand.entitiesLayer.playerSprite;
 
 				if (that.inventory.initialized) {
 					var inventoryItems = that.inventory.items;
@@ -201,14 +201,14 @@ var ElephantLayer = cc.Layer.extend({
 								// select item on ground
 								sand.playerState.putBackItem = item;
 								if(item.activated) {
-									item.placedSprite.setSpriteFrame(sand.elephantLayer._rockActivatedAndSelectedFrame);
+									item.placedSprite.setSpriteFrame(sand.entitiesLayer._rockActivatedAndSelectedFrame);
 								} else {
 									item.placedSprite.setSpriteFrame(item.selectedFrame);
 								}
 
 								// move elephant, then pick up item
-								sand.elephantLayer.movePlayerElephantToLocation(
-									sand.elephantLayer.playerSprite,
+								sand.entitiesLayer.movePlayerElephantToLocation(
+									sand.entitiesLayer.playerSprite,
 									position,
 									function () {
 										sand.socket.emit('rockPickedUp', {
@@ -226,7 +226,7 @@ var ElephantLayer = cc.Layer.extend({
 											delete sand.reservedAreas[sand.uuid];
 											that.inventory.items.forEach(function(item) {
 												if(item.placedSprite !== undefined) {
-													item.placedSprite.setSpriteFrame(sand.elephantLayer._rockDefaultFrame);
+													item.placedSprite.setSpriteFrame(sand.entitiesLayer._rockDefaultFrame);
 													item.activated = false;
 												}
 											});
@@ -245,7 +245,7 @@ var ElephantLayer = cc.Layer.extend({
 
 				// move, then place selected item on ground
 				if (that.inventory.initialized && sand.playerState.selectedItem) {
-					sand.elephantLayer.movePlayerElephantToLocation(sprite, position, function () {
+					sand.entitiesLayer.movePlayerElephantToLocation(sprite, position, function () {
 						sand.socket.emit('rockPutDown', {
 							uuid: sand.uuid,
 							id: sand.playerState.selectedItem.id,
@@ -255,7 +255,7 @@ var ElephantLayer = cc.Layer.extend({
 							}
 						});
 
-						that._placeItemOnGround(sand.playerState.selectedItem, sand.elephantLayer.playerSprite);
+						that._placeItemOnGround(sand.playerState.selectedItem, sand.entitiesLayer.playerSprite);
 						sand.playerState.selectedItem = false;
 
 						var points = [];
@@ -290,7 +290,7 @@ var ElephantLayer = cc.Layer.extend({
 							that.footprintTimeouts.push(setTimeout(function () {
 								sand.reservedAreas[sand.uuid] = perimeter;
 								that.inventory.items.forEach(function (item) {
-									item.placedSprite.setSpriteFrame(sand.elephantLayer._rockActivatedFrame);
+									item.placedSprite.setSpriteFrame(sand.entitiesLayer._rockActivatedFrame);
 									item.activated = true;
 								});
 								sand.socket.emit('reserveArea', {
@@ -301,9 +301,9 @@ var ElephantLayer = cc.Layer.extend({
 
 					});
 				} else if (sand.elephantPath.length === 1) {
-					sand.elephantLayer.movePlayerElephantToLocation(sprite, sand.elephantPath[0]);
+					sand.entitiesLayer.movePlayerElephantToLocation(sprite, sand.elephantPath[0]);
 				} else {
-					sand.elephantLayer.moveElephantAlongPath(sprite, sand.elephantPath);
+					sand.entitiesLayer.moveElephantAlongPath(sprite, sand.elephantPath);
 				}
 			}
 		}, this);
@@ -382,7 +382,7 @@ var ElephantLayer = cc.Layer.extend({
 				that._placeItemOnGround(item, position);
 				if(activated) {
 					item.activated = true;
-					item.placedSprite.setSpriteFrame(sand.elephantLayer._rockActivatedFrame);
+					item.placedSprite.setSpriteFrame(sand.entitiesLayer._rockActivatedFrame);
 				}
 			}
 
@@ -412,7 +412,7 @@ var ElephantLayer = cc.Layer.extend({
 		if (sand.playerState.putBackItem) {
 			var frame;
 			if(sand.playerState.putBackItem.activated) {
-				frame = sand.elephantLayer._rockActivatedFrame;
+				frame = sand.entitiesLayer._rockActivatedFrame;
 			} else {
 				frame = sand.playerState.putBackItem.defaultFrame;
 			}
@@ -448,7 +448,7 @@ var ElephantLayer = cc.Layer.extend({
 	removeOtherRock: function (id) {
 		if (sand.otherRocks[id] !== undefined) {
 			var spriteTag = sand.otherRocks[id].sprite.getTag();
-			sand.elephantLayer.removeChildByTag(spriteTag);
+			sand.entitiesLayer.removeChildByTag(spriteTag);
 			delete sand.otherRocks[id];
 		}
 	},

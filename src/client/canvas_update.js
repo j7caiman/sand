@@ -1,8 +1,8 @@
-sand.canvasUpdate = {
+sand.canvasUpdate = (function () {
 	/**
 	 * note: rectToDraw is in global coordinates
 	 */
-	updateHtmlCanvases: function (rectToDraw) {
+	var updateHtmlCanvases = function (rectToDraw) {
 		var regionNames = sand.globalFunctions.findRegionsInRect(rectToDraw);
 		regionNames.forEach(function (regionName) {
 			var region = sand.allRegions[regionName];
@@ -44,13 +44,13 @@ sand.canvasUpdate = {
 				}
 			}
 		});
-	},
+	};
 
-	drawRegionToCanvas: function (region, rectToDraw) {
-		sand.canvasUpdate.canvasDrawHelper(region, rectToDraw, sand.canvasUpdate.compositeDraw);
-	},
+	var drawRegionToCanvas = function (region, rectToDraw) {
+		canvasDrawHelper(region, rectToDraw, compositeDraw);
+	};
 
-	eternalSunsetDraw: function (sandGrainPosition, region) {
+	var eternalSunsetDraw = function (sandGrainPosition, region) {
 		const pink = {
 			red: 255,
 			green: 168,
@@ -80,64 +80,52 @@ sand.canvasUpdate = {
 			(colorChange * 3)
 		);
 
-		if(moddedTaxicabDistance < colorChange) {
-			return sand.canvasUpdate._weightedColorAverage(
+		if (moddedTaxicabDistance < colorChange) {
+			return weightedColorAverage(
 				yellow,
 				pink,
 				(moddedTaxicabDistance / colorChange)
 			);
-		} else if(moddedTaxicabDistance < 2 * colorChange) {
-			return sand.canvasUpdate._weightedColorAverage(
+		} else if (moddedTaxicabDistance < 2 * colorChange) {
+			return weightedColorAverage(
 				pink,
 				cyan,
 				((moddedTaxicabDistance - colorChange) / colorChange)
 			);
 		} else {
-			return sand.canvasUpdate._weightedColorAverage(
+			return weightedColorAverage(
 				cyan,
 				yellow,
 				((moddedTaxicabDistance - 2 * colorChange) / colorChange)
 			);
 		}
-	},
+	};
 
-	_weightedColorAverage: function(color1, color2, weight) {
+	var weightedColorAverage = function (color1, color2, weight) {
 		return {
 			red: (color1.red * (1 - weight)) + (color2.red * weight),
-			green: (color1.green * (1 - weight)) + (color2.green *  weight),
+			green: (color1.green * (1 - weight)) + (color2.green * weight),
 			blue: (color1.blue * (1 - weight)) + (color2.blue * weight)
 		}
-	},
+	};
 
-	localDepthDeltaLightingDraw: function (blockIndex, region) {
+	var localDepthDeltaLightingDraw = function (blockIndex, region) {
 		// finds depth difference of block to the left
 		var regionData = region.getData();
 		var depthOfCurrentBlock;
-		//if (sand.globalFunctions.isInteger(regionData[blockIndex.y][blockIndex.x])) {
-		//	depthOfCurrentBlock = regionData[blockIndex.y][blockIndex.x];
-		//} else {
-			depthOfCurrentBlock = regionData[blockIndex.y][blockIndex.x][0];
-		//}
+		depthOfCurrentBlock = regionData[blockIndex.y][blockIndex.x][0];
 
 		var depthOfLeftBlock;
 		if (blockIndex.x == 0) {
 			var westRegion = region.getAdjacentNodes()[3];
 			if (westRegion !== undefined) {
 				var westRegionSandGrain = westRegion.getData()[blockIndex.y][sand.constants.kRegionWidth - 1];
-				//if(sand.globalFunctions.isInteger(westRegionSandGrain)) {
-				//	depthOfLeftBlock = westRegionSandGrain;
-				//} else {
-					depthOfLeftBlock = westRegionSandGrain[0];
-				//}
+				depthOfLeftBlock = westRegionSandGrain[0];
 			} else {
 				depthOfLeftBlock = 0;
 			}
 		} else {
-			//if(sand.globalFunctions.isInteger(regionData[blockIndex.y][blockIndex.x - 1])) {
-			//	depthOfLeftBlock = regionData[blockIndex.y][blockIndex.x - 1];
-			//} else {
-				depthOfLeftBlock = regionData[blockIndex.y][blockIndex.x - 1][0];
-			//}
+			depthOfLeftBlock = regionData[blockIndex.y][blockIndex.x - 1][0];
 		}
 		var difference = depthOfLeftBlock - depthOfCurrentBlock;
 
@@ -170,31 +158,25 @@ sand.canvasUpdate = {
 				blue: bright
 			}
 		}
-	},
+	};
 
-	paintColorDraw: function (blockIndex, region) {
+	var paintColorDraw = function (blockIndex, region) {
 		const darkenBy = 20;
+		return region.getData()[blockIndex.y][blockIndex.x][1] * darkenBy;
+	};
 
-		var regionData = region.getData();
-		//if (sand.globalFunctions.isInteger(regionData[blockIndex.y][blockIndex.x])) {
-		//	return 0;
-		//} else {
-			return regionData[blockIndex.y][blockIndex.x][1] * darkenBy;
-		//}
-	},
+	var compositeDraw = function (blockIndex, region) {
+		var firstColor = eternalSunsetDraw(blockIndex, region);
+		var secondColor = localDepthDeltaLightingDraw(blockIndex, region);
 
-	compositeDraw: function (blockIndex, region) {
-		var firstColor = sand.canvasUpdate.eternalSunsetDraw(blockIndex, region);
-		var secondColor = sand.canvasUpdate.localDepthDeltaLightingDraw(blockIndex, region);
-
-		var paintColor = sand.canvasUpdate.paintColorDraw(blockIndex, region);
+		var paintColor = paintColorDraw(blockIndex, region);
 
 		return {
-			red: Math.floor((firstColor.red - secondColor.red)) + paintColor,
-			green: Math.floor((firstColor.green - secondColor.green)) + paintColor,
-			blue: Math.floor((firstColor.blue - secondColor.blue)) + paintColor
+			red: Math.floor((firstColor.red - secondColor.red)) - paintColor,
+			green: Math.floor((firstColor.green - secondColor.green)) - paintColor,
+			blue: Math.floor((firstColor.blue - secondColor.blue)) - paintColor
 		};
-	},
+	};
 
 	/**
 	 * canvas coordinate system is opposite cocos2d's coordinate system along the y axis
@@ -209,7 +191,7 @@ sand.canvasUpdate = {
 	 * therefore, the imageData is written upside down here: ((canvasWidth - 1) - y)
 	 * so that it is displayed right side up.
 	 */
-	canvasDrawHelper: function (region, drawRect, choosePixelColorFunction) {
+	var canvasDrawHelper = function (region, drawRect, choosePixelColorFunction) {
 		if (drawRect === undefined) {
 			drawRect = {
 				x: 0,
@@ -265,5 +247,10 @@ sand.canvasUpdate = {
 		}
 
 		context.putImageData(imageData, drawRect.x, drawRect.invertedY);
+	};
+
+	return {
+		updateHtmlCanvases: updateHtmlCanvases,
+		drawRegionToCanvas: drawRegionToCanvas
 	}
-};
+})();

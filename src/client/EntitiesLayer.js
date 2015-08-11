@@ -8,8 +8,8 @@ var EntitiesLayer = cc.Layer.extend({
 		var that = this;
 		that._super();
 
-		cc.spriteFrameCache.addSpriteFrames(res.ui_sprite_plist);
-		cc.spriteFrameCache.addSpriteFrames(res.elephant_sprite_plist);
+		cc.spriteFrameCache.addSpriteFrames(resources.ui_sprite_plist);
+		cc.spriteFrameCache.addSpriteFrames(resources.elephant_sprite_plist);
 
 		that.zOrders = {
 			itemsInInventory: 3,

@@ -65,7 +65,14 @@ cc.game.onStart = function() {
 		cc.view.setResolutionPolicy(cc.ResolutionPolicy.NO_BORDER);
 		cc.view.resizeWithBrowserSize(true);
 		cc.view.adjustViewPort(true);
-		cc.LoaderScene.preload(g_resources, function () {
+
+		var resourceArray = [];
+		for (var resource in resources) {
+			if (resources.hasOwnProperty(resource)) {
+				resourceArray.push(resources[resource]);
+			}
+		}
+		cc.LoaderScene.preload(resourceArray, function () {
 			cc.director.runScene(new GameScene());
 		}, this);
 	}

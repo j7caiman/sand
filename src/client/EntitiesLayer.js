@@ -4,6 +4,20 @@ var EntitiesLayer = cc.Layer.extend({
 		this.init();
 	},
 
+	zOrders: {
+		itemsInInventory: 3,
+		inventoryBackground: 2,
+		itemsBeingCarried: 1,
+		playerElephant: 0,
+		traveller: -1,
+		otherElephants: -2,
+		itemsOnGround: -3
+	},
+
+	inventory: {
+		initialized: false
+	},
+
 	init: function () {
 		var that = this;
 		that._super();
@@ -11,18 +25,6 @@ var EntitiesLayer = cc.Layer.extend({
 		cc.spriteFrameCache.addSpriteFrames(resources.ui_sprite_plist);
 		cc.spriteFrameCache.addSpriteFrames(resources.elephant_sprite_plist);
 
-		that.zOrders = {
-			itemsInInventory: 3,
-			inventoryBackground: 2,
-			itemsBeingCarried: 1,
-			playerElephant: 0,
-			otherElephants: -1,
-			itemsOnGround: -2
-		};
-
-		that.inventory = {
-			initialized: false
-		};
 		that.footprintTimeouts = [];
 
 		that.playerSprite = that.createElephant(
@@ -308,6 +310,7 @@ var EntitiesLayer = cc.Layer.extend({
 			}
 		}, this);
 
+		// calls initializeInventory
 		$('#loading').hide();
 		$('#signIn').show();
 		if(typeof userRemembered === 'function') {

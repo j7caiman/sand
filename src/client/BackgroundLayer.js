@@ -22,31 +22,33 @@ var BackgroundLayer = cc.Layer.extend({
 		this._super();
 
 		var allRegions = sand.allRegions;
-		for(var region in allRegions) {
-			if(allRegions.hasOwnProperty(region)) {
+		for (var region in allRegions) {
+			if (allRegions.hasOwnProperty(region)) {
 				this.addChild(allRegions[region].getSprite());
 			}
 		}
 
 		/**
 		 * Custom listener reacts to scroll commands.
-		 * Slides the player and background by (x,y) amount.
+		 * Slides objects and background by (x,y) amount.
 		 */
+		var that = this;
 		cc.eventManager.addListener({
 			event: cc.EventListener.CUSTOM,
 			eventName: "scrollTrigger",
 			callback: function (event) {
 				var spritesToScroll = (function getAllScrollableSprites() {
 					var sprites = [];
+
 					var allRegions = sand.allRegions;
 					for (var regionName in allRegions) {
 						if (allRegions.hasOwnProperty(regionName)) {
 							sprites.push(allRegions[regionName].getSprite());
 						}
 					}
+
 					var otherPlayers = sand.otherPlayers;
-					var uuid;
-					for (uuid in otherPlayers) {
+					for (var uuid in otherPlayers) {
 						if (otherPlayers.hasOwnProperty(uuid)) {
 							sprites.push(otherPlayers[uuid].sprite);
 						}
@@ -60,6 +62,7 @@ var BackgroundLayer = cc.Layer.extend({
 					}
 
 					sprites.push(sand.entitiesLayer.playerSprite);
+
 					return sprites;
 				})();
 
@@ -78,11 +81,50 @@ var BackgroundLayer = cc.Layer.extend({
 				var duration = distance / sand.constants.kScrollSpeed;
 
 				spritesToScroll.forEach(function (sprite) {
-					var scrollAction = cc.moveBy(duration, scrollVector.x, scrollVector.y);
+					var scrollAction = cc.moveBy(duration, scrollVector);
 					scrollAction.setTag("scroll");
 					sprite.runAction(scrollAction);
 				});
+
+				that.currentScroll = {
+					startTime: Date.now(),
+					durationSeconds: duration,
+					x: scrollVector.x,
+					y: scrollVector.y
+				};
 			}
 		}, this);
+	},
+
+	/**
+	 * Entities that are created after a scroll action has begun will not have
+	 * a scroll action attached to them. Thus, a scroll action must be added
+	 * to them for the remaining amount of scrolling.
+	 *
+	 * @param sprite
+	 */
+	addScrollActionToNewSprite: function (sprite) {
+		var currentScroll = this.currentScroll;
+		if (currentScroll === undefined) {
+			return;
+		}
+
+		var currentTimeMillis = Date.now();
+		var endTimeMillis = currentScroll.startTime + currentScroll.durationSeconds * 1000;
+		if (currentTimeMillis >= endTimeMillis) {
+			delete this.currentScroll;
+			return;
+		}
+
+		var remainingDurationSeconds = (endTimeMillis - currentTimeMillis) / 1000;
+		var scrollAmountRemaining = (remainingDurationSeconds / currentScroll.durationSeconds);
+		var scrollVector = {
+			x: currentScroll.x * scrollAmountRemaining,
+			y: currentScroll.y * scrollAmountRemaining
+		};
+
+		var scrollAction = cc.moveBy(remainingDurationSeconds, scrollVector);
+		scrollAction.setTag("scroll");
+		sprite.runAction(scrollAction);
 	}
 });

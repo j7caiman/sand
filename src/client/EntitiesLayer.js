@@ -162,15 +162,20 @@ var EntitiesLayer = cc.Layer.extend({
 		}
 	},
 
-	createElephant: function (position, zOrder, tag) { // tag is an optional parameter
+	createElephant: function (position, zOrder, tag) {
 		var sprite = new cc.Sprite("#elephant_sprite_sheet_01.png");
 
+		if(tag !== undefined) {
+			sprite.setTag(tag);
+		}
 		sprite.setPosition(position);
 		sprite.setScale(1.5);
 		sprite.setAnchorPoint(0.5, 0);
 		sprite.setZOrder(zOrder);
 
-		this.addChild(sprite, undefined, tag);
+		sand.backgroundLayer.addScrollActionToNewSprite(sprite);
+
+		this.addChild(sprite);
 		return sprite;
 	},
 

@@ -118,6 +118,8 @@ sand.reserveAreasModule = (function () {
 			sprite.setTag(sand.cocosTagCounter++);
 			sprite.setPosition(location);
 			sprite.setZOrder(sand.entitiesLayer.zOrders.itemsOnGround);
+
+			sand.backgroundLayer.addScrollActionToNewSprite(sprite);
 			sand.entitiesLayer.addChild(sprite);
 
 			rocksOnGround[id] = sprite;

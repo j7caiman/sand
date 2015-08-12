@@ -2,39 +2,6 @@ var debug = require('debug')('sand');
 var processFootprint = require('./process_footprint');
 var caches = require('./caches');
 
-var connectedClients = {
-	_uuidToDataMap: {},
-
-	addOrUpdatePlayer: function (uuid, position) {
-		if (this._uuidToDataMap[uuid] === undefined) {
-			this._uuidToDataMap[uuid] = {};
-		}
-
-		this._uuidToDataMap[uuid].position = position;
-	},
-
-	removePlayer: function (uuid) {
-		if (this._uuidToDataMap[uuid] === undefined) {
-			debug('disconnect event received from player: ' + uuid + 'but player was not present');
-		} else {
-			delete this._uuidToDataMap[uuid];
-		}
-	},
-
-	getCurrentPlayers: function () {
-		var currentPlayers = [];
-		for (var uuid in this._uuidToDataMap) {
-			if (this._uuidToDataMap.hasOwnProperty(uuid)) {
-				currentPlayers.push({
-					uuid: uuid,
-					position: this._uuidToDataMap[uuid].position
-				});
-			}
-		}
-		return currentPlayers;
-	}
-};
-
 exports.initMultiplayer = function (server) {
 	caches.initialize(onCacheInitializationComplete);
 
@@ -48,7 +15,7 @@ exports.initMultiplayer = function (server) {
 				y: socket.handshake.query.y
 			};
 
-			connectedClients.addOrUpdatePlayer(uuid, position);
+			caches.addOrUpdatePlayer(uuid, position);
 			socket.broadcast.emit('playerMoved', {
 				uuid: uuid,
 				position: position
@@ -58,18 +25,18 @@ exports.initMultiplayer = function (server) {
 
 		io.on('connection', function (socket) {
 			socket.emit('onConnect', {
-				players: connectedClients.getCurrentPlayers(),
+				players: caches.getCurrentPlayers(),
 				rocks: caches.getRocksOnGround(),
 				reservedAreas: caches.getReservedAreas()
 			});
 
 			socket.on('updatePosition', function (data) {
-				connectedClients.addOrUpdatePlayer(data.uuid, data.position);
+				caches.addOrUpdatePlayer(data.uuid, data.position);
 				socket.broadcast.emit('playerMoved', data);
 			});
 
 			socket.on('disconnect', function () {
-				connectedClients.removePlayer(socket.handshake.query.uuid);
+				caches.removePlayer(socket.handshake.query.uuid);
 				io.emit('playerDisconnected', socket.handshake.query.uuid);
 			});
 
@@ -80,8 +47,8 @@ exports.initMultiplayer = function (server) {
 
 			socket.on('rockPickedUp', function (data) {
 				caches.rockPickedUpUpdate(data, function (areaId, rockIds) {
-					var dataToEmit = { rockId: data.id };
-					if(areaId !== undefined && rockIds !== undefined) {
+					var dataToEmit = {rockId: data.id};
+					if (areaId !== undefined && rockIds !== undefined) {
 						dataToEmit.areaId = data.uuid;
 						dataToEmit.deactiveatedRockIds = rockIds;
 					}

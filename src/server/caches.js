@@ -6,6 +6,7 @@ module.exports = {
 	_rocksOnGround: {},
 	_reservedAreas: {},
 	_users: {},
+	_uuidToDataMap: {}, // data: position
 
 	initialize: function (onComplete) {
 		var that = this;
@@ -52,6 +53,36 @@ module.exports = {
 				onComplete();
 			}
 		});
+	},
+
+	addOrUpdatePlayer: function (uuid, position) {
+		if (this._uuidToDataMap[uuid] === undefined) {
+			this._uuidToDataMap[uuid] = {};
+		}
+
+		this._uuidToDataMap[uuid].position = position;
+	},
+
+	removePlayer: function (uuid) {
+		if (this._uuidToDataMap[uuid] === undefined) {
+			debug('disconnect event received from player: ' + uuid + 'but player was not present');
+		} else {
+			delete this._uuidToDataMap[uuid];
+		}
+	},
+
+	getCurrentPlayers: function () {
+		var currentPlayers = [];
+		var that = this;
+		for (var uuid in that._uuidToDataMap) {
+			if (that._uuidToDataMap.hasOwnProperty(uuid)) {
+				currentPlayers.push({
+					uuid: uuid,
+					position: that._uuidToDataMap[uuid].position
+				});
+			}
+		}
+		return currentPlayers;
 	},
 
 	getRocksOnGround: function () {
@@ -123,10 +154,10 @@ module.exports = {
 
 	addLoggedInUser: function (uuid, userId, rocks) {
 		this._users[uuid] = {
-			userId: userId
+			userId: userId,
+			rocks: {}
 		};
 
-		this._users[uuid].rocks = {};
 		rocks.forEach(function (rock) {
 			if (rock.x && rock.y) {
 				this._users[uuid].rocks[rock.id] = {

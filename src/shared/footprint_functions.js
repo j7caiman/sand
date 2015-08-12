@@ -215,15 +215,6 @@ sand.modifyRegion.imprintSphere = function (regionData, positionOnCanvas, radius
 					regionData[y][x][0] -= Math.floor(newZ);
 				}
 			}
-
-			var distanceFromCenter = sand.globalFunctions.calculateDistance(pointOfImpact, { x: x, y: y });
-			if(distanceFromCenter < radius) {
-				if (regionData[y][x][0] < 0) {
-					regionData[y][x][0]++;
-				} else if(regionData[y][x][0] > 0) {
-					regionData[y][x][0]--;
-				}
-			}
 		}
 	}
 };

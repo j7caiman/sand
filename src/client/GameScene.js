@@ -24,14 +24,14 @@ var GameScene = cc.Scene.extend({
 		 */
 		sand.cocosTagCounter = 0;
 		sand.otherPlayers = {};
-		sand.otherRocks = {};
-		sand.reservedAreas = {};
 
 		sand.socket = io({
 			query: 'uuid=' + sand.uuid
 			+ '&x=' + Math.round(sand.globalCoordinates.x)
 			+ '&y=' + Math.round(sand.globalCoordinates.y)
 		});
+
+		sand.reserveAreasModule.initializeSocketsAndSpriteFrames();
 
 		function createOrMoveOtherPlayerToLocation(playerData) {
 			var location = sand.globalFunctions.getPositionOnScreenFromGlobalCoordinates(playerData.position);
@@ -79,18 +79,7 @@ var GameScene = cc.Scene.extend({
 				}
 			});
 
-			var rocks = data.rocks;
-			for (var rockId in rocks) {
-				if (rocks.hasOwnProperty(rockId)) {
-					var location = sand.globalFunctions.getPositionOnScreenFromGlobalCoordinates(rocks[rockId]);
-					var createdRock = sand.entitiesLayer.createOtherRock(rockId, location);
-					if(rocks[rockId].areaId !== undefined) {
-						createdRock.sprite.setSpriteFrame(sand.entitiesLayer._rockActivatedFrame);
-					}
-				}
-			}
-
-			sand.reservedAreas = data.reservedAreas;
+			sand.reserveAreasModule.initializeRocksAndReservedAreas(data.rocks, data.reservedAreas);
 		});
 
 		sand.socket.on('playerMoved', function (playerData) {
@@ -107,34 +96,6 @@ var GameScene = cc.Scene.extend({
 				sand.entitiesLayer.removeChildByTag(spriteTag);
 				delete sand.otherPlayers[uuid];
 			}
-		});
-
-		sand.socket.on('rockPutDown', function (rockData) {
-			var location = sand.globalFunctions.getPositionOnScreenFromGlobalCoordinates(rockData.position);
-
-			if (sand.otherRocks[rockData.id] === undefined) {
-				sand.entitiesLayer.createOtherRock(rockData.id, location);
-			} else { // unknown whether this happens, or is possible
-				sand.otherRocks[rockData.id].sprite.setPosition(location);
-			}
-		});
-
-		sand.socket.on('rockPickedUp', function (data) {
-			if(data.areaId !== undefined) {
-				delete sand.reservedAreas[data.areaId];
-				data.deactiveatedRockIds.forEach(function(rockId) {
-					sand.otherRocks[rockId].sprite.setSpriteFrame(sand.entitiesLayer._rockDefaultFrame);
-				});
-			}
-
-			sand.entitiesLayer.removeOtherRock(data.rockId);
-		});
-
-		sand.socket.on('areaReserved', function (data) {
-			sand.reservedAreas[data.areaId] = data.path;
-			data.rockIds.forEach(function (rockId) {
-				sand.otherRocks[rockId].sprite.setSpriteFrame(sand.entitiesLayer._rockActivatedFrame);
-			});
 		});
 
 		this.positionEmitterThrottler = new this.Throttler(100);
@@ -243,12 +204,7 @@ var GameScene = cc.Scene.extend({
 			sand.batchedFootprints = [];
 		}
 
-		if(sand.playerState.selectedItem) {
-			sand.playerState.selectedItem.placedSprite.setPosition(
-				sand.entitiesLayer.playerSprite.x,
-				sand.entitiesLayer.playerSprite.y + sand.constants.kElephantHeightOffset
-			);
-		}
+		sand.reserveAreasModule.updateCarriedSpritePosition();
 
 		this.updateBackgroundSpriteLocations();
 	},

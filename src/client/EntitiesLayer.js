@@ -14,18 +14,12 @@ var EntitiesLayer = cc.Layer.extend({
 		itemsOnGround: -3
 	},
 
-	inventory: {
-		initialized: false
-	},
-
 	init: function () {
 		var that = this;
 		that._super();
 
 		cc.spriteFrameCache.addSpriteFrames(resources.ui_sprite_plist);
 		cc.spriteFrameCache.addSpriteFrames(resources.elephant_sprite_plist);
-
-		that.footprintTimeouts = [];
 
 		that.playerSprite = that.createElephant(
 			{
@@ -149,310 +143,22 @@ var EntitiesLayer = cc.Layer.extend({
 
 			onTouchesEnded: function (touches) {
 				var position = touches[0].getLocation();
-				var sprite = sand.entitiesLayer.playerSprite;
-
-				if (that.inventory.initialized) {
-					var inventoryItems = that.inventory.items;
-					if (cc.rectContainsPoint(that.inventory.background.getBoundingBox(), position)) {
-						if (cc.rectContainsPoint(that.inventory.shovelButton.getBoundingBox(), position)) {
-							that.inventory.shovelButton.setSpriteFrame(that._shovelSelectedFrame);
-							that.inventory.eraserButton.setSpriteFrame(that._eraserDefaultFrame);
-							sand.playerState.mouseDragAction = "digging";
-							return;
-						} else if (cc.rectContainsPoint(that.inventory.eraserButton.getBoundingBox(), position)) {
-							that.inventory.eraserButton.setSpriteFrame(that._eraserSelectedFrame);
-							that.inventory.shovelButton.setSpriteFrame(that._shovelDefaultFrame);
-							sand.playerState.mouseDragAction = "painting";
-							return;
-						}
-
-						inventoryItems.forEach(function (item) {
-							if (cc.rectContainsPoint(item.inventorySprite.getBoundingBox(), position)) {
-								if (item.available) {
-									sprite.stopActionByTag("moveElephant");
-									that._stopAllAnimations(sprite);
-
-									if (sand.playerState.selectedItem === item) { // deselect selected item
-										that._deselectSelectedItemInInventory();
-									} else { // select item in inventory, deselect other items
-										that._deselectSelectedItemInInventory();
-										that._deselectSelectedItemOnGround();
-
-										sand.playerState.selectedItem = item;
-
-										item.inventorySprite.setSpriteFrame(item.selectedFrame);
-										item.placedSprite.setSpriteFrame(item.defaultFrame);
-										item.placedSprite.setVisible(true);
-										item.placedSprite.setZOrder(that.zOrders.itemsBeingCarried);
-									}
-								}
-							}
-						});
-
-						return;
-					}
-
-					for (var index in inventoryItems) {
-						if (inventoryItems.hasOwnProperty(index)) {
-							var item = inventoryItems[index];
-							if (cc.rectContainsPoint(item.placedSprite.getBoundingBox(), position)) {
-								// deselect other items
-								that._deselectSelectedItemInInventory();
-								that._deselectSelectedItemOnGround();
-
-								// select item on ground
-								sand.playerState.putBackItem = item;
-								if(item.activated) {
-									item.placedSprite.setSpriteFrame(sand.entitiesLayer._rockActivatedAndSelectedFrame);
-								} else {
-									item.placedSprite.setSpriteFrame(item.selectedFrame);
-								}
-
-								// move elephant, then pick up item
-								sand.entitiesLayer.movePlayerElephantToLocation(
-									sand.entitiesLayer.playerSprite,
-									position,
-									function () {
-										sand.socket.emit('rockPickedUp', {
-											uuid: sand.uuid,
-											id: sand.playerState.putBackItem.id
-										});
-
-										that._resetItem(sand.playerState.putBackItem);
-										sand.playerState.putBackItem = false;
-										that.footprintTimeouts.forEach(function (timeoutId) {
-											clearTimeout(timeoutId);
-										});
-
-										if(sand.reservedAreas[sand.uuid] !== undefined) {
-											delete sand.reservedAreas[sand.uuid];
-											that.inventory.items.forEach(function(item) {
-												if(item.placedSprite !== undefined) {
-													item.placedSprite.setSpriteFrame(sand.entitiesLayer._rockDefaultFrame);
-													item.activated = false;
-												}
-											});
-										}
-									}
-								);
-
-								return;
-							}
+				sand.reserveAreasModule.handleTouchEvent(position,
+					function () {
+						if (sand.elephantPath.length === 1) {
+							sand.entitiesLayer.movePlayerElephantToLocation(sand.elephantPath[0]);
+						} else {
+							sand.entitiesLayer.moveElephantAlongPath(sand.entitiesLayer.playerSprite, sand.elephantPath);
 						}
 					}
-				}
-
-				// ground was clicked
-				that._deselectSelectedItemOnGround();
-
-				// move, then place selected item on ground
-				if (that.inventory.initialized && sand.playerState.selectedItem) {
-					sand.entitiesLayer.movePlayerElephantToLocation(sprite, position, function () {
-						sand.socket.emit('rockPutDown', {
-							uuid: sand.uuid,
-							id: sand.playerState.selectedItem.id,
-							position: {
-								x: Math.round(sand.globalCoordinates.x),
-								y: Math.round(sand.globalCoordinates.y)
-							}
-						});
-
-						that._placeItemOnGround(sand.playerState.selectedItem, sand.entitiesLayer.playerSprite);
-						sand.playerState.selectedItem = false;
-
-						var points = [];
-						var allRocksPlaced = that.inventory.items.every(function (item) {
-							if(item.placedSprite !== undefined) {
-								var point = sand.globalFunctions.convertOnScreenPositionToGlobalCoordinates(item.placedSprite.getPosition());
-								points.push(point);
-							}
-							return !item.available;
-						});
-
-						if (allRocksPlaced) {
-							var perimeter = sand.modifyRegion.getReservedPerimeterIfValid(points);
-						}
-
-						if(allRocksPlaced && perimeter) {
-							var borderPath = sand.modifyRegion.createPointsAlongPath(perimeter);
-
-							that.footprintTimeouts = [];
-							var totalDuration = 2000; // 1 second
-							for (var i = 0; i < borderPath.length / 2; i++) {
-								that.footprintTimeouts.push(setTimeout((function (i) {
-									return function () {
-										sand.globalFunctions.addFootprintToQueue(borderPath[i], "walking");
-										var j = borderPath.length - 1 - i;
-										if (j !== i) {
-											sand.globalFunctions.addFootprintToQueue(borderPath[parseInt(borderPath.length - 1 - i)], "walking");
-										}
-									}
-								})(i), ((i + 1) / borderPath.length) * 2 * totalDuration));
-							}
-							that.footprintTimeouts.push(setTimeout(function () {
-								sand.reservedAreas[sand.uuid] = perimeter;
-								that.inventory.items.forEach(function (item) {
-									item.placedSprite.setSpriteFrame(sand.entitiesLayer._rockActivatedFrame);
-									item.activated = true;
-								});
-								sand.socket.emit('reserveArea', {
-									uuid: sand.uuid
-								});
-							}, totalDuration));
-						}
-
-					});
-				} else if (sand.elephantPath.length === 1) {
-					sand.entitiesLayer.movePlayerElephantToLocation(sprite, sand.elephantPath[0]);
-				} else {
-					sand.entitiesLayer.moveElephantAlongPath(sprite, sand.elephantPath);
-				}
+				);
 			}
 		}, this);
 
-		// calls initializeInventory
 		$('#loading').hide();
 		$('#signIn').show();
 		if(typeof userRemembered === 'function') {
 			userRemembered();
-		}
-
-		this._rockDefaultFrame = cc.spriteFrameCache.getSpriteFrame("rock.png");
-		this._rockActivatedFrame = cc.spriteFrameCache.getSpriteFrame("rock_activated.png");
-		this._rockActivatedAndSelectedFrame = cc.spriteFrameCache.getSpriteFrame("rock_activated_selected.png");
-
-		this._shovelSelectedFrame = cc.spriteFrameCache.getSpriteFrame("shovel_icon_selected.png");
-		this._shovelDefaultFrame = cc.spriteFrameCache.getSpriteFrame("shovel_icon.png");
-
-		this._eraserSelectedFrame = cc.spriteFrameCache.getSpriteFrame("eraser_icon_selected.png");
-		this._eraserDefaultFrame = cc.spriteFrameCache.getSpriteFrame("eraser_icon.png");
-	},
-
-	initializeInventory: function (rocks) {
-		var that = this;
-		that.inventory.background = new cc.Sprite("#ui_background.png");
-		that.inventory.background.setPosition(20, 20);
-		that.inventory.background.setScaleX(1.5);
-		that.inventory.background.setAnchorPoint(0, 0);
-		that.inventory.background.setZOrder(that.zOrders.inventoryBackground);
-		that.addChild(that.inventory.background);
-
-		var itemPositionX = that.inventory.background.getPositionX();
-
-		that.inventory.shovelButton = new cc.Sprite("#shovel_icon.png");
-		that.inventory.shovelButton.setPosition(itemPositionX += 20, that.inventory.background.getPositionY() + 10);
-		that.inventory.shovelButton.setZOrder(that.zOrders.itemsInInventory);
-		that.addChild(that.inventory.shovelButton);
-
-		that.inventory.eraserButton = new cc.Sprite("#eraser_icon.png");
-		that.inventory.eraserButton.setPosition(itemPositionX += 20, that.inventory.background.getPositionY() + 10);
-		that.inventory.eraserButton.setZOrder(that.zOrders.itemsInInventory);
-		that.addChild(that.inventory.eraserButton);
-
-		var InventoryItem = function (id, defaultFrame, selectedFrame, unavailableFrame) {
-			this.id = id;
-
-			this.inventorySprite = new cc.Sprite('#' + defaultFrame);
-			this.placedSprite = new cc.Sprite('#' + defaultFrame);
-
-			this.defaultFrame = cc.spriteFrameCache.getSpriteFrame(defaultFrame);
-			this.selectedFrame = cc.spriteFrameCache.getSpriteFrame(selectedFrame);
-			this.unavailableFrame = cc.spriteFrameCache.getSpriteFrame(unavailableFrame);
-
-			this.available = true;
-
-			this.inventorySprite.setPosition(itemPositionX += 20, that.inventory.background.getPositionY() + 10);
-			this.inventorySprite.setZOrder(that.zOrders.itemsInInventory);
-
-			this.placedSprite.setVisible(false);
-
-			that.addChild(this.inventorySprite);
-			that.addChild(this.placedSprite);
-		};
-
-		that.inventory.items = [];
-		rocks.forEach(function(rock) {
-			var item = new InventoryItem(rock.id,
-				"rock.png",
-				"rock_selected.png",
-				"rock_unavailable.png");
-
-			if(rock.x && rock.y) {
-				var activated = rock.reserved_area_id !== null;
-				that.removeOtherRock(rock.id);
-
-				var position = sand.globalFunctions.getPositionOnScreenFromGlobalCoordinates(rock);
-				that._placeItemOnGround(item, position);
-				if(activated) {
-					item.activated = true;
-					item.placedSprite.setSpriteFrame(sand.entitiesLayer._rockActivatedFrame);
-				}
-			}
-
-			that.inventory.items.push(item);
-		});
-
-		that.inventory.initialized = true;
-	},
-
-	_placeItemOnGround: function(item, position) {
-		item.placedSprite.setPosition(position);
-		item.placedSprite.setZOrder(this.zOrders.itemsOnGround);
-		item.placedSprite.setVisible(true);
-
-		item.inventorySprite.setSpriteFrame(item.unavailableFrame);
-
-		item.available = false;
-	},
-
-	_resetItem: function (item) {
-		item.inventorySprite.setSpriteFrame(item.defaultFrame);
-		item.placedSprite.setVisible(false);
-		item.available = true;
-	},
-
-	_deselectSelectedItemOnGround: function () {
-		if (sand.playerState.putBackItem) {
-			var frame;
-			if(sand.playerState.putBackItem.activated) {
-				frame = sand.entitiesLayer._rockActivatedFrame;
-			} else {
-				frame = sand.playerState.putBackItem.defaultFrame;
-			}
-
-			sand.playerState.putBackItem.placedSprite.setSpriteFrame(frame);
-			sand.playerState.putBackItem = false;
-		}
-	},
-
-	_deselectSelectedItemInInventory: function () {
-		if (sand.playerState.selectedItem) {
-			this._resetItem(sand.playerState.selectedItem);
-			sand.playerState.selectedItem = false;
-		}
-	},
-
-	createOtherRock: function(id, location) {
-		if (sand.otherRocks[id] === undefined) {
-			var sprite = new cc.Sprite("#rock.png");
-			sprite.setTag(sand.cocosTagCounter++);
-			sprite.setPosition(location);
-			sprite.setZOrder(this.zOrders.itemsOnGround);
-			this.addChild(sprite);
-
-			sand.otherRocks[id] = {
-				sprite: sprite
-			};
-		}
-
-		return sand.otherRocks[id];
-	},
-
-	removeOtherRock: function (id) {
-		if (sand.otherRocks[id] !== undefined) {
-			var spriteTag = sand.otherRocks[id].sprite.getTag();
-			sand.entitiesLayer.removeChildByTag(spriteTag);
-			delete sand.otherRocks[id];
 		}
 	},
 
@@ -530,8 +236,9 @@ var EntitiesLayer = cc.Layer.extend({
 		sprite.runAction(action);
 	},
 
-	movePlayerElephantToLocation: function (sprite, destination, onComplete) {
+	movePlayerElephantToLocation: function (destination, onComplete) {
 		var that = this;
+		var sprite = sand.entitiesLayer.playerSprite;
 
 		var elephantPosition = sprite.getPosition();
 

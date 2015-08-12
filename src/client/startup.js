@@ -61,7 +61,6 @@ cc.game.onStart = function() {
 		};
 		sand.currentRegion.getSprite().setPosition(position);
 
-		cc.screen.requestFullScreen();
 		cc.view.setResolutionPolicy(cc.ResolutionPolicy.NO_BORDER);
 		cc.view.resizeWithBrowserSize(true);
 		cc.view.adjustViewPort(true);
@@ -184,7 +183,7 @@ sand.globalFunctions = {
 	},
 
 	addFootprintToQueue: function(location, brushStrokeType) {
-		var reservedAreas = sand.reservedAreas;
+		var reservedAreas = sand.reserveAreasModule.getReservedAreas();
 		var notInReservedArea = true;
 		for (var id in reservedAreas) {
 			if(reservedAreas.hasOwnProperty(id)) {

@@ -52,17 +52,10 @@ var BackgroundLayer = cc.Layer.extend({
 						}
 					}
 
-					if(sand.entitiesLayer.inventory.initialized) {
-						var inventorySprites = sand.entitiesLayer.inventory.items;
-						inventorySprites.forEach(function (item) {
-							sprites.push(item.placedSprite);
-						});
-					}
-
-					var otherPlayerItems = sand.otherRocks;
-					for (var rockId in otherPlayerItems) {
-						if (otherPlayerItems.hasOwnProperty(rockId)) {
-							sprites.push(otherPlayerItems[rockId].sprite);
+					var rocks = sand.reserveAreasModule.getRocksOnGround();
+					for (var rockId in rocks) {
+						if (rocks.hasOwnProperty(rockId)) {
+							sprites.push(rocks[rockId]);
 						}
 					}
 

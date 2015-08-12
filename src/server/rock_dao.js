@@ -32,13 +32,13 @@ module.exports = {
 		}
 	},
 
-	removeReservedAreaFromTables: function (rockIds, areaId, onComplete) {
+	removeReservedAreaFromTables: function (rockIds, owner_uuid, onComplete) {
 		query("update rocks set reserved_area_id = null where id in ($1, $2, $3, $4)", rockIds, function(err) {
 			if (err) {
 				return;
 			}
 
-			query("delete from reserved_areas where owner_uuid = $1", [areaId], function(err) {
+			query("delete from reserved_areas where owner_uuid = $1", [owner_uuid], function(err) {
 				if (err) {
 					return;
 				}

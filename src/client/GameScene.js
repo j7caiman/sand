@@ -79,7 +79,7 @@ var GameScene = cc.Scene.extend({
 				}
 			});
 
-			sand.reserveAreasModule.initializeRocksAndReservedAreas(data.rocks, data.reservedAreas);
+			sand.reserveAreasModule.initializeRocksAndReservedAreas(data.reservedAreaData);
 		});
 
 		sand.socket.on('playerMoved', function (playerData) {

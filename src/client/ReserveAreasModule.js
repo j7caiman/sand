@@ -1,6 +1,6 @@
 sand.reserveAreasModule = (function () {
 	// game state variables
-	var reservedAreas = {};
+	var reservedAreas = {}; // key: uuid, value: [path]
 	var rocksOnGround = {}; // key: rockId, value: sprite
 
 	// player specific state variables
@@ -25,19 +25,19 @@ sand.reserveAreasModule = (function () {
 
 	// called after resources are loaded
 	function initializeSocketsAndSpriteFrames() {
-		sand.socket.on('rockPutDown', function (rockData) {
-			var location = sand.globalFunctions.getPositionOnScreenFromGlobalCoordinates(rockData.position);
+		sand.socket.on('rockPutDown', function (data) {
+			var location = sand.globalFunctions.getPositionOnScreenFromGlobalCoordinates(data.position);
 
-			if (rocksOnGround[rockData.id] === undefined) {
-				putRockOnGround(rockData.id, location);
+			if (rocksOnGround[data.rockId] === undefined) {
+				putRockOnGround(data.rockId, location);
 			} else { // unknown whether this happens, or is possible
-				rocksOnGround[rockData.id].setPosition(location);
+				rocksOnGround[data.rockId].setPosition(location);
 			}
 		});
 
 		sand.socket.on('rockPickedUp', function (data) {
-			if (data.areaId !== undefined) {
-				delete reservedAreas[data.areaId];
+			if (data.uuid !== undefined) {
+				delete reservedAreas[data.uuid];
 				data.deactiveatedRockIds.forEach(function (rockId) {
 					rocksOnGround[rockId].setSpriteFrame(rockDefaultFrame);
 				});
@@ -47,7 +47,7 @@ sand.reserveAreasModule = (function () {
 		});
 
 		sand.socket.on('areaReserved', function (data) {
-			reservedAreas[data.areaId] = data.path;
+			reservedAreas[data.uuid] = data.path;
 			data.rockIds.forEach(function (rockId) {
 				rocksOnGround[rockId].setSpriteFrame(rockActivatedFrame);
 			});
@@ -59,18 +59,22 @@ sand.reserveAreasModule = (function () {
 	}
 
 	// called once socket connection established
-	function initializeRocksAndReservedAreas(rocks, reservedAreasOnConnect) {
+	function initializeRocksAndReservedAreas(data) {
+		var rocks = data.rocks;
+		var activatedRockIds = data.activatedRockIds;
+
 		for (var rockId in rocks) {
 			if (rocks.hasOwnProperty(rockId)) {
 				var location = sand.globalFunctions.getPositionOnScreenFromGlobalCoordinates(rocks[rockId]);
 				var rock = putRockOnGround(rockId, location);
-				if (rocks[rockId].areaId !== undefined) {
-					rock.setSpriteFrame(rockActivatedFrame);
-				}
 			}
 		}
 
-		reservedAreas = reservedAreasOnConnect;
+		activatedRockIds.forEach(function(rockId) {
+			rocksOnGround[rockId].setSpriteFrame(rockActivatedFrame);
+		});
+
+		reservedAreas = data.reservedAreas;
 	}
 
 	// called after player logs in
@@ -182,7 +186,7 @@ sand.reserveAreasModule = (function () {
 		// notify server
 		sand.socket.emit('rockPutDown', {
 			uuid: sand.uuid,
-			id: selectedRockId,
+			rockId: selectedRockId,
 			position: {
 				x: Math.round(sand.globalCoordinates.x),
 				y: Math.round(sand.globalCoordinates.y)
@@ -243,7 +247,7 @@ sand.reserveAreasModule = (function () {
 	function pickRockUpFromGround() {
 		sand.socket.emit('rockPickedUp', {
 			uuid: sand.uuid,
-			id: selectedRockId
+			rockId: selectedRockId
 		});
 
 		rockIcons[rockIdsInPocket.length].setSpriteFrame(rockDefaultFrame);

@@ -2,7 +2,7 @@ var query = require('../server/query_db');
 
 module.exports = {
 	fetchRocksOnGround: function (onComplete) {
-		query('select id, x, y, reserved_area_id from rocks where x is not null and y is not null', function (error, result) {
+		query('select id, x, y from rocks where x is not null and y is not null', function (error, result) {
 			if (error) {
 				onComplete(error);
 				return;
@@ -12,11 +12,11 @@ module.exports = {
 	},
 
 	fetchRocksForPlayer: function (id, onComplete) {
-		query('select id, x, y, reserved_area_id from rocks where owner_id = $1', [id], onComplete);
+		query('select id, x, y from rocks where owner_id = $1', [id], onComplete);
 	},
 
-	fetchReservedAreas: function(onComplete) {
-		query('select id, path, owner_uuid from reserved_areas', onComplete);
+	fetchReservedAreas: function (onComplete) {
+		query('select reserved_area_path, uuid from users where reserved_area_path != null', onComplete);
 	},
 
 	updateRockPosition: function (id, position, onComplete) {
@@ -32,63 +32,38 @@ module.exports = {
 		}
 	},
 
-	removeReservedAreaFromTables: function (rockIds, owner_uuid, onComplete) {
-		query("update rocks set reserved_area_id = null where id in ($1, $2, $3, $4)", rockIds, function(err) {
+	deleteReservedArea: function (userId, onComplete) {
+		query("update users set reserved_area_path = null where id = $1", [userId], function (err) {
 			if (err) {
 				return;
 			}
 
-			query("delete from reserved_areas where owner_uuid = $1", [owner_uuid], function(err) {
+			onComplete();
+		});
+	},
+
+	writeReservedArea: function (userId, path, onComplete) {
+		var queryParameters = [];
+		var queryString = "update users set reserved_area_path = array[";
+		var counter = 1;
+		path.forEach(function (point, index) {
+			queryParameters.push(point.x);
+			queryParameters.push(point.y);
+			if (index !== 0) {
+				queryString += ",";
+			}
+			queryString += "array[$" + counter++ + "::integer,$" + counter++ + "::integer]";
+		});
+		queryParameters.push(userId);
+		queryString += "] where id = $" + counter++;
+
+		query(queryString, queryParameters,
+			function (err) {
 				if (err) {
 					return;
 				}
 
 				onComplete();
-			});
-		});
-	},
-
-	writeReservedAreaToTables: function (rockIds, path, uuid, onComplete) {
-		var queryParameters = [];
-		var queryString = "insert into reserved_areas (path, owner_uuid) values (array[";
-		var counter = 1;
-		path.forEach(function (point, index) {
-			queryParameters.push(point.x);
-			queryParameters.push(point.y);
-			if (index === 0) {
-				queryString += "array[$" + counter++ + "::integer,$" + counter++ + "::integer]";
-			} else {
-				queryString += ",array[$" + counter++ + "::integer,$" + counter++ + "::integer]";
-			}
-		});
-		queryParameters.push(uuid);
-		queryString += "], $" + counter++ + ") returning id";
-
-		query(queryString, queryParameters,
-			function (err, result) {
-				if (err) {
-					return;
-				}
-
-				var reservedAreaId = result.rows[0].id;
-				query("update rocks " +
-					"set reserved_area_id = updated_rocks.reserved_area_id " +
-					"from (values" +
-						"($1::integer, $5::integer), " +
-						"($2::integer, $5::integer), " +
-						"($3::integer, $5::integer), " +
-						"($4::integer, $5::integer)" +
-					") as updated_rocks(id, reserved_area_id)" +
-					"where rocks.id = updated_rocks.id",
-					[rockIds[0], rockIds[1], rockIds[2], rockIds[3], reservedAreaId],
-					function (err) {
-						if (err) {
-							return;
-						}
-
-						onComplete();
-					}
-				);
 			}
 		);
 	}

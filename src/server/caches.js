@@ -3,10 +3,15 @@ var rockDAO = require('./rock_dao');
 var rockFunctions = require('./../shared/shared_rock_functions');
 
 module.exports = {
-	_rocksOnGround: {},
-	_reservedAreas: {},
+	_rocksOnGround: {},	// key: rockId, values: {x, y}
+	_reservedAreas: {},	// key: uuid, value: [area coordinates]
+
+	// note: contains everyone who has ever signed in since the server started
+	// key: uuid, values: {userId, rocks}
+	// rocks: key: rockId, values: {x, y}
 	_users: {},
-	_uuidToDataMap: {}, // data: position
+
+	_uuidToDataMap: {},	// key: uuid, values: {position}
 
 	initialize: function (onComplete) {
 		var that = this;
@@ -22,10 +27,6 @@ module.exports = {
 					x: rock.x,
 					y: rock.y
 				};
-
-				if (rock.reserved_area_id !== null) {
-					that._rocksOnGround[rock.id].areaId = rock.reserved_area_id;
-				}
 			});
 
 			queriesToComplete--;
@@ -40,7 +41,7 @@ module.exports = {
 			}
 
 			result.rows.forEach(function (row) {
-				that._reservedAreas[row.owner_uuid] = row.path.map(function (point) {
+				that._reservedAreas[row.uuid] = row.reserved_area_path.map(function (point) {
 					return {
 						x: point[0],
 						y: point[1]
@@ -89,19 +90,34 @@ module.exports = {
 		return this._rocksOnGround;
 	},
 
+	getActivatedRockIds: function () {
+		var rockIds = [];
+
+		var that = this;
+		for (var uuid in that._reservedAreas) {
+			if (that._reservedAreas.hasOwnProperty(uuid)) {
+				for (var rockId in that._users[uuid].rocks) {
+					if (that._users[uuid].rocks.hasOwnProperty(rockId)) {
+						rockIds.push(rockId);
+					}
+				}
+			}
+		}
+
+		return rockIds;
+	},
+
 	getReservedAreas: function () {
 		return this._reservedAreas;
 	},
 
 	rockPickedUpUpdate: function (data, onComplete) {
 		var uuid = data.uuid;
-		var rockId = data.id;
+		var rockId = data.rockId;
 
 		var player = this._users[uuid];
 		if (player === undefined) {
 			debug("rockPickedUp: user not found, uuid: " + uuid);
-		} else if (player.rocks === undefined) {
-			debug("rockPickedUp: user with id: " + player.userId + ", uuid: " + player.uuid + " attempted to move a rock, but has none.");
 		} else {
 			var that = this;
 			rockDAO.updateRockPosition(rockId, function (error) {
@@ -111,8 +127,8 @@ module.exports = {
 					player.rocks[rockId].x = null;
 					player.rocks[rockId].y = null;
 
-					if (player.rocks[rockId].areaId !== undefined) {
-						that.removeReservedArea(player.rocks, onComplete);
+					if (that._reservedAreas[uuid] !== undefined) {
+						that._removeReservedArea(player, uuid, onComplete);
 					} else {
 						onComplete();
 					}
@@ -121,16 +137,30 @@ module.exports = {
 		}
 	},
 
+	_removeReservedArea: function (player, uuid, onComplete) {
+		var that = this;
+		rockDAO.deleteReservedArea(player.userId, function () {
+			delete that._reservedAreas[uuid];
+
+			var rockIds = [];
+			for (var rockId in player.rocks) {
+				if (player.rocks.hasOwnProperty(rockId)) {
+					rockIds.push(rockId);
+				}
+			}
+
+			onComplete(uuid, rockIds);
+		});
+	},
+
 	rockPutDownUpdate: function (data, onComplete) {
 		var uuid = data.uuid;
-		var rockId = data.id;
+		var rockId = data.rockId;
 		var position = data.position;
 
 		var player = this._users[uuid];
 		if (player === undefined) {
 			debug("rockPutDown: user not found, uuid: " + uuid);
-		} else if (player.rocks === undefined) {
-			debug("rockPutDown: user with id: " + player.userId + ", uuid: " + player.uuid + " attempted to move a rock, but has none.");
 		} else {
 			var that = this;
 			rockDAO.updateRockPosition(rockId, position, function (error) {
@@ -164,9 +194,6 @@ module.exports = {
 					x: rock.x,
 					y: rock.y
 				};
-				if (rock.reserved_area_id) {
-					this._users[uuid].rocks[rock.id].areaId = rock.reserved_area_id;
-				}
 			} else {
 				this._users[uuid].rocks[rock.id] = {
 					x: null,
@@ -180,9 +207,6 @@ module.exports = {
 		var player = this._users[uuid];
 		if (player === undefined) {
 			debug("addReservedArea: user not found, uuid: " + uuid);
-			return;
-		} else if (player.rocks === undefined) {
-			debug("addReservedArea: user with id: " + player.userId + ", uuid: " + player.uuid + " attempted to move a rock, but has none.");
 			return;
 		}
 
@@ -213,45 +237,10 @@ module.exports = {
 		}
 
 		var that = this;
-		rockDAO.writeReservedAreaToTables(rockIds, path, uuid, function () {
-			var reservedAreaId = uuid;
-			for (var rockId in rocks) {
-				if (rocks.hasOwnProperty(rockId)) {
-					rocks[rockId].areaId = reservedAreaId;
-					that._rocksOnGround[rockId].areaId = reservedAreaId;
-				}
-			}
-
-			that._reservedAreas[reservedAreaId] = path;
+		rockDAO.writeReservedArea(player.userId, path, function () {
+			that._reservedAreas[uuid] = path;
 
 			onComplete(path, rockIds);
-		});
-	},
-
-	removeReservedArea: function (rocks, onComplete) {
-		var rockIds = [];
-		var areaId;
-		for (var rockId in rocks) {
-			if (rocks.hasOwnProperty(rockId)) {
-				areaId = rocks[rockId].areaId;
-				rockIds.push(rockId);
-			}
-		}
-
-		var that = this;
-		rockDAO.removeReservedAreaFromTables(rockIds, areaId, function () {
-			for (var rockId in rocks) {
-				if (rocks.hasOwnProperty(rockId)) {
-					delete rocks[rockId].areaId;
-					if(that._rocksOnGround[rockId] !== undefined) {
-						delete that._rocksOnGround[rockId].areaId;
-					}
-				}
-			}
-
-			delete that._reservedAreas[areaId];
-
-			onComplete(areaId, rockIds);
 		});
 	}
 };

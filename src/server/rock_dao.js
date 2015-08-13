@@ -1,18 +1,16 @@
 var query = require('../server/query_db');
 
 module.exports = {
-	fetchRocksOnGround: function (onComplete) {
-		query('select id, x, y from rocks where x is not null and y is not null', function (error, result) {
-			if (error) {
-				onComplete(error);
-				return;
-			}
-			onComplete(null, result.rows);
-		});
-	},
-
 	fetchRocksForPlayer: function (id, onComplete) {
 		query('select id, x, y from rocks where owner_id = $1', [id], onComplete);
+	},
+
+	fetchAllRocks: function (onComplete) {
+		query('select owner_id, id, x, y from rocks', onComplete);
+	},
+
+	fetchUuidsForUsersWithRocks: function (onComplete) {
+		query('select id, uuid from users where email_validated = true', onComplete);
 	},
 
 	fetchReservedAreas: function (onComplete) {

@@ -66,7 +66,7 @@ sand.reserveAreasModule = (function () {
 		for (var rockId in rocks) {
 			if (rocks.hasOwnProperty(rockId)) {
 				var location = sand.globalFunctions.getPositionOnScreenFromGlobalCoordinates(rocks[rockId]);
-				var rock = putRockOnGround(rockId, location);
+				putRockOnGround(rockId, location);
 			}
 		}
 

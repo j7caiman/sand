@@ -6,7 +6,7 @@ module.exports = {
 	_rocksOnGround: {},	// key: rockId, values: {x, y}
 	_reservedAreas: {},	// key: uuid, value: [area coordinates]
 
-	// note: contains everyone who has ever signed in since the server started
+	// contains users who have confirmed their emails
 	// key: uuid, values: {userId, rocks}
 	// rocks: key: rockId, values: {x, y}
 	_users: {},
@@ -17,22 +17,46 @@ module.exports = {
 		var that = this;
 
 		var queriesToComplete = 2;
-		rockDAO.fetchRocksOnGround(function (error, rocks) {
+		rockDAO.fetchAllRocks(function (error, rocks) {
 			if (error) {
 				throw error;
 			}
 
-			rocks.forEach(function (rock) {
-				that._rocksOnGround[rock.id] = {
-					x: rock.x,
-					y: rock.y
-				};
-			});
+			rockDAO.fetchUuidsForUsersWithRocks(function (error, users) {
+				if (error) {
+					throw error;
+				}
 
-			queriesToComplete--;
-			if (queriesToComplete === 0) {
-				onComplete();
-			}
+				var userIdToUuidMap = {};
+				users.rows.forEach(function (user) {
+					that._users[user.uuid] = {
+						userId: user.id,
+						rocks: {}
+					};
+
+					userIdToUuidMap[user.id] = user.uuid;
+				});
+
+				rocks.rows.forEach(function (rock) {
+					if (rock.x && rock.y) {
+						that._rocksOnGround[rock.id] = {
+							x: rock.x,
+							y: rock.y
+						};
+					}
+
+					var uuid = userIdToUuidMap[rock.owner_id];
+					that._users[uuid].rocks[rock.id] = {
+						x: rock.x ? rock.x : null,
+						y: rock.y ? rock.y : null
+					};
+				});
+
+				queriesToComplete--;
+				if (queriesToComplete === 0) {
+					onComplete();
+				}
+			});
 		});
 
 		rockDAO.fetchReservedAreas(function (error, result) {
@@ -189,17 +213,10 @@ module.exports = {
 		};
 
 		rocks.forEach(function (rock) {
-			if (rock.x && rock.y) {
-				this._users[uuid].rocks[rock.id] = {
-					x: rock.x,
-					y: rock.y
-				};
-			} else {
-				this._users[uuid].rocks[rock.id] = {
-					x: null,
-					y: null
-				}
-			}
+			this._users[uuid].rocks[rock.id] = {
+				x: rock.x ? rock.x : null,
+				y: rock.y ? rock.y : null
+			};
 		}, this)
 	},
 

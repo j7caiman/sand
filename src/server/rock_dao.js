@@ -16,7 +16,7 @@ module.exports = {
 	},
 
 	fetchReservedAreas: function (onComplete) {
-		query('select reserved_area_path, uuid from users where reserved_area_path != null', onComplete);
+		query('select reserved_area_path, uuid from users where reserved_area_path is not null', onComplete);
 	},
 
 	updateRockPosition: function (id, position, onComplete) {

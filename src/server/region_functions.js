@@ -140,7 +140,7 @@ ZipCodeHandler.prototype = {
 		for (var y = 0; y < width; y++) {
 			grid.push([]);
 			for (var x = 0; x < width; x++) {
-				grid[y].push(0);
+				grid[y].push([0,0]);
 			}
 		}
 		return grid;

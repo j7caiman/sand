@@ -18,9 +18,6 @@ var EntitiesLayer = cc.Layer.extend({
 		var that = this;
 		that._super();
 
-		cc.spriteFrameCache.addSpriteFrames(resources.ui_sprite_plist);
-		cc.spriteFrameCache.addSpriteFrames(resources.elephant_sprite_plist);
-
 		that.playerSprite = that.createElephant(
 			{
 				x: window.innerWidth / 2,

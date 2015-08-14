@@ -7,6 +7,10 @@ var GameScene = cc.Scene.extend({
 		this._super();
 		this.init();
 
+		cc.spriteFrameCache.addSpriteFrames(resources.ui_sprite_plist);
+		cc.spriteFrameCache.addSpriteFrames(resources.traveller_sprite_plist);
+		cc.spriteFrameCache.addSpriteFrames(resources.elephant_sprite_plist);
+
 		sand.backgroundLayer = new BackgroundLayer();
 		sand.entitiesLayer = new EntitiesLayer();
 
@@ -32,6 +36,7 @@ var GameScene = cc.Scene.extend({
 		});
 
 		sand.reserveAreasModule.initializeSocketsAndSpriteFrames();
+		sand.traveller.initialize();
 
 		function createOrMoveOtherPlayerToLocation(playerData) {
 			var location = sand.globalFunctions.getPositionOnScreenFromGlobalCoordinates(playerData.position);

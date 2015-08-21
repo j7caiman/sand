@@ -62,6 +62,7 @@ var BackgroundLayer = cc.Layer.extend({
 					}
 
 					sprites.push(sand.entitiesLayer.playerSprite);
+					sprites.push(sand.traveller.getTravellerSprite());
 
 					return sprites;
 				})();

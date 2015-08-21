@@ -209,7 +209,8 @@ var GameScene = cc.Scene.extend({
 			sand.batchedFootprints = [];
 		}
 
-		sand.reserveAreasModule.updateCarriedSpritePosition();
+		sand.reserveAreasModule.mainLoopUpdate();
+		sand.traveller.mainLoopUpdate();
 
 		this.updateBackgroundSpriteLocations();
 	},

@@ -302,13 +302,15 @@ sand.reserveAreasModule = (function () {
 		}
 	}
 
-	function updateCarriedSpritePosition() {
-		if (isRockSelected) {
-			rockCarriedByPlayerSprite.setPosition(
-				sand.entitiesLayer.playerSprite.x,
-				sand.entitiesLayer.playerSprite.y + sand.constants.kElephantHeightOffset
-			);
-		}
+	function mainLoopUpdate() {
+		(function updateCarriedSpritePosition() {
+			if (isRockSelected) {
+				rockCarriedByPlayerSprite.setPosition(
+					sand.entitiesLayer.playerSprite.x,
+					sand.entitiesLayer.playerSprite.y + sand.constants.kElephantHeightOffset
+				);
+			}
+		})();
 	}
 
 	return {
@@ -320,6 +322,6 @@ sand.reserveAreasModule = (function () {
 		getReservedAreas: getReservedAreas,
 
 		handleTouchEvent: handleTouchEvent,
-		updateCarriedSpritePosition: updateCarriedSpritePosition
+		mainLoopUpdate: mainLoopUpdate
 	}
 })();

@@ -1,6 +1,6 @@
 var fs = require('fs');
 
-var basePath = '../resources/world_datastore/';
+var basePath = './resources/world_datastore/';
 
 var regionsFixed = 0;
 fs.readdir(basePath, function (err, zipCodeDirs) {

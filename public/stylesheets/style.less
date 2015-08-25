@@ -10,10 +10,6 @@ body {
   font-size: small;
 }
 
-.inline {
-  display: inline;
-}
-
 .textButton {
   &:extend(.fieldText);
   &:hover {
@@ -43,6 +39,22 @@ body {
   border: thin solid #515151;
 }
 
+.responseDiv {
+  padding: @fieldPadding;
+  margin-bottom: 1em;
+}
+
+.errorText {
+  &:extend(.fieldText);
+  display: none;
+  color: #DA0003;
+}
+
+.confirmText {
+  &:extend(.fieldText);
+  display: none;
+}
+
 #panelTopRight {
   &:extend(.panelStyle);
   position: absolute;
@@ -61,18 +73,12 @@ body {
   display: none;
 }
 
-.responseDiv {
-  padding: @fieldPadding;
-  margin-bottom: 1em;
+#rememberMe {
+  display: inline;
 }
 
-.errorText {
-  &:extend(.fieldText);
-  display: none;
-  color: #DA0003;
-}
-
-.confirmText {
-  &:extend(.fieldText);
+#travellerSpeechBox {
+  &:extend(.panelStyle);
+  position: absolute;
   display: none;
 }

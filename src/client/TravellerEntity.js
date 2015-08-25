@@ -1,8 +1,10 @@
 sand.traveller = (function () {
 	var travellerSprite;
 	var speechBubbleSprite;
+	var speechBox;
 
 	// state variables
+	var walkAimlesslyEnabled = true;
 	var isWalking = false;
 	var eastOrWest = 1;
 
@@ -15,14 +17,19 @@ sand.traveller = (function () {
 		x: -5,
 		y: 35
 	};
-	var speechBubbleVisibleRange = 140;
+	var speechBubbleVisibleDistance = 140;
+	var openSpeechBoxDistance = 80;
+	var speechBoxOffset = {
+		x: -20,
+		y: -40
+	};
 
 	function initialize() {
 		(function initializeTraveller() {
 			travellerSprite = new cc.Sprite("#traveller.png");
 			travellerSprite.setPosition({
-				x: sand.entitiesLayer.playerSprite.getPositionX() + 300,
-				y: sand.entitiesLayer.playerSprite.getPositionY() + 150
+				x: sand.entitiesLayer.playerSprite.getPositionX() + 100,
+				y: sand.entitiesLayer.playerSprite.getPositionY() + 50
 			});
 			travellerSprite.setZOrder(sand.entitiesLayer.zOrders.traveller);
 
@@ -42,6 +49,8 @@ sand.traveller = (function () {
 
 			sand.entitiesLayer.addChild(speechBubbleSprite);
 		})();
+
+		speechBox = $('#travellerSpeechBox');
 	}
 
 	function getRandomInt(min, max) {
@@ -49,6 +58,10 @@ sand.traveller = (function () {
 	}
 
 	function walkRandomly() {
+		if (!walkAimlesslyEnabled) {
+			return;
+		}
+
 		var distance = getRandomInt(minDistance, maxDistance);
 		var duration = distance / walkSpeed;
 
@@ -74,19 +87,59 @@ sand.traveller = (function () {
 		setTimeout(walkRandomly, getRandomInt(minWaitTimeMillis, maxWaitTimeMillis));
 	}
 
+	function updateSpeechBubble(distanceFromPlayer) {
+		speechBubbleSprite.setPosition({
+			x: travellerSprite.getPositionX() + speechBubbleOffset.x,
+			y: travellerSprite.getPositionY() + speechBubbleOffset.y
+		});
+
+		speechBubbleSprite.setVisible(
+			(distanceFromPlayer < speechBubbleVisibleDistance)
+			&& (distanceFromPlayer >= openSpeechBoxDistance)
+		);
+	}
+
+	function updateSpeechBox(distanceFromPlayer) {
+		var position = travellerSprite.getPosition();
+		position.y = window.innerHeight - position.y; // cocos2d y coordinates are inverted relative to HTML coordinates
+
+		position.x += speechBoxOffset.x;
+		position.y += speechBoxOffset.y - speechBox.height();
+
+		if (speechBox.width() + position.x > window.innerWidth) {
+			position.x = window.innerWidth - speechBox.width();
+		} else if (position.x < 0) {
+			position.x = 0;
+		}
+
+		if (speechBox.height() + position.y > window.innerHeight) {
+			position.y = window.innerHeight - speechBox.height();
+		} else if (position.y < 0) {
+			position.y = 0;
+		}
+
+		speechBox.css({
+			left: position.x,
+			top: position.y
+		});
+
+		if (distanceFromPlayer < openSpeechBoxDistance) {
+			speechBox.show();
+		} else {
+			speechBox.hide();
+		}
+	}
+
 	function mainLoopUpdate() {
-		(function updateSpeechBubble() {
-			speechBubbleSprite.setPosition({
-				x: travellerSprite.getPositionX() + speechBubbleOffset.x,
-				y: travellerSprite.getPositionY() + speechBubbleOffset.y
-			});
+		var approximateDistanceFromPlayer =
+			Math.abs(travellerSprite.getPositionX() - sand.entitiesLayer.playerSprite.getPositionX())
+			+ Math.abs(travellerSprite.getPositionY() - sand.entitiesLayer.playerSprite.getPositionY());
 
-			var taxicabDistanceBetweenPlayerAndTraveller =
-				Math.abs(travellerSprite.getPositionX() - sand.entitiesLayer.playerSprite.getPositionX())
-				+ Math.abs(travellerSprite.getPositionY() - sand.entitiesLayer.playerSprite.getPositionY());
+		walkAimlesslyEnabled = approximateDistanceFromPlayer > speechBubbleVisibleDistance;
 
-			speechBubbleSprite.setVisible(taxicabDistanceBetweenPlayerAndTraveller < speechBubbleVisibleRange);
-		})();
+		updateSpeechBubble(approximateDistanceFromPlayer);
+
+		updateSpeechBox(approximateDistanceFromPlayer);
 	}
 
 	function getTravellerSprite() {

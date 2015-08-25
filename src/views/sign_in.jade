@@ -1,9 +1,9 @@
 div#panelTopRight.panelStyle
-	#loading
+	div#loading
 		p.fieldText loading . . .
 		br
 
-	#signIn.hidden
+	div#signIn
 		p.fieldText Sands of Eternity
 		form#signInForm
 			if (email)
@@ -20,7 +20,7 @@ div#panelTopRight.panelStyle
 			a#resetPasswordButton.textButton forgot password?
 			label
 				input(type="checkbox", name="rememberMe" checked="true")
-				p.fieldText.inline remember me?
+				p#rememberMe.fieldText remember me?
 		div.responseDiv
 			a#signInError.errorText
 			a#signInText.confirmText

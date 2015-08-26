@@ -1,5 +1,26 @@
 div#travellerSpeechBox
-	p#travellerText.fieldText.
-		Welcome, traveller. <br/>
-		Do you wish to mar the sands of eternity? <br/><br/>
-		> affirmative
+	div#welcomeText.travellerSpeechOptions
+		p.fieldText.
+			Welcome, traveller, to the eternal sands.<br/><br/>
+
+			I offer you one of two gifts. Choose either the shovel or the paintbrush.
+			You may later exchange one for the other.<br/><br/>
+
+			Choose:
+		a.shovelButton.textButton shovel
+		a.paintBrushButton.textButton paintbrush
+		<br/>
+	div#shovelChosenText.travellerSpeechOptions
+		p.fieldText.
+			Click and drag to dig. Memories may lie beneath the surface.<br/>
+	div#paintBrushChosenText.travellerSpeechOptions
+		p.fieldText.
+			Click and drag to paint.<br/><br/>
+			Take these stones also. Once all four are placed, they
+			will protect your work from others.<br/>
+	div#welcomeBackText.travellerSpeechOptions
+		p.fieldText.
+			Onegai shimasu, traveller. Choose your gift:
+		a.shovelButton.textButton shovel
+		a.paintBrushButton.textButton paintbrush
+		<br/>

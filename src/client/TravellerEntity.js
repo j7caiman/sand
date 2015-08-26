@@ -7,6 +7,7 @@ sand.traveller = (function () {
 	var walkAimlesslyEnabled = true;
 	var isWalking = false;
 	var eastOrWest = 1;
+	var giftChosen = false;
 
 	// constants
 	var walkSpeed = 30;
@@ -51,13 +52,25 @@ sand.traveller = (function () {
 		})();
 
 		speechBox = $('#travellerSpeechBox');
+
+		$('.shovelButton').click(function () {
+			$('.travellerSpeechOptions').hide();
+			$('#shovelChosenText').show();
+			giftChosen = true;
+		});
+
+		$('.paintBrushButton').click(function () {
+			$('.travellerSpeechOptions').hide();
+			$('#paintBrushChosenText').show();
+			giftChosen = true;
+		});
 	}
 
 	function getRandomInt(min, max) {
 		return Math.floor(Math.random() * (max - min)) + min;
 	}
 
-	function walkRandomly() {
+	function walkEastOrWest() {
 		if (!walkAimlesslyEnabled) {
 			return;
 		}
@@ -84,7 +97,7 @@ sand.traveller = (function () {
 		}
 		isWalking = true;
 
-		setTimeout(walkRandomly, getRandomInt(minWaitTimeMillis, maxWaitTimeMillis));
+		setTimeout(walkEastOrWest, getRandomInt(minWaitTimeMillis, maxWaitTimeMillis));
 	}
 
 	function updateSpeechBubble(distanceFromPlayer) {
@@ -100,6 +113,19 @@ sand.traveller = (function () {
 	}
 
 	function updateSpeechBox(distanceFromPlayer) {
+		if (distanceFromPlayer > openSpeechBoxDistance) {
+			speechBox.hide();
+		} else if (!speechBox.is(':visible')) {
+			$('.travellerSpeechOptions').hide();
+			if (giftChosen) {
+				$('#welcomeBackText').show();
+			} else {
+				$('#welcomeText').show();
+			}
+
+			speechBox.show();
+		}
+
 		var position = travellerSprite.getPosition();
 		position.y = window.innerHeight - position.y; // cocos2d y coordinates are inverted relative to HTML coordinates
 
@@ -122,12 +148,6 @@ sand.traveller = (function () {
 			left: position.x,
 			top: position.y
 		});
-
-		if (distanceFromPlayer < openSpeechBoxDistance) {
-			speechBox.show();
-		} else {
-			speechBox.hide();
-		}
 	}
 
 	function mainLoopUpdate() {

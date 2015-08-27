@@ -56,12 +56,14 @@ sand.traveller = (function () {
 		$('.shovelButton').click(function () {
 			$('.travellerSpeechOptions').hide();
 			$('#shovelChosenText').show();
+			sand.playerState.mouseDragAction = "digging";
 			giftChosen = true;
 		});
 
 		$('.paintBrushButton').click(function () {
 			$('.travellerSpeechOptions').hide();
 			$('#paintBrushChosenText').show();
+			sand.playerState.mouseDragAction = "painting";
 			giftChosen = true;
 		});
 	}

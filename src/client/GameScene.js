@@ -17,7 +17,11 @@ var GameScene = cc.Scene.extend({
 		this.addChild(sand.backgroundLayer);
 		this.addChild(sand.entitiesLayer);
 
-		this.scheduleUpdate();
+		$('#loading').hide();
+		$('#signIn').show();
+		if(typeof userRemembered === 'function') {
+			userRemembered();
+		}
 
 		/**
 		 * Gives other players' sprites a unique integer.
@@ -27,7 +31,6 @@ var GameScene = cc.Scene.extend({
 		 * Tags must be integers and cannot be strings.
 		 */
 		sand.cocosTagCounter = 0;
-		sand.otherPlayers = {};
 
 		sand.socket = io({
 			query: 'uuid=' + sand.uuid
@@ -35,42 +38,9 @@ var GameScene = cc.Scene.extend({
 			+ '&y=' + Math.round(sand.globalCoordinates.y)
 		});
 
-		sand.reserveAreasModule.initializeSocketsAndSpriteFrames();
+		sand.elephants.initializeOnSceneStart();
+		sand.reserveAreasModule.initializeOnSceneStart();
 		sand.traveller.initialize();
-
-		function createOrMoveOtherPlayerToLocation(playerData) {
-			var location = sand.globalFunctions.getPositionOnScreenFromGlobalCoordinates(playerData.position);
-			if(sand.otherPlayers[playerData.uuid] === undefined) {
-				sand.otherPlayers[playerData.uuid] = {
-					sprite: sand.entitiesLayer.createElephant(
-						location,
-						sand.entitiesLayer.zOrders.otherElephants,
-						sand.cocosTagCounter++
-					),
-					timeSinceLastCommand: Date.now()
-				};
-			} else {
-				var otherPlayer = sand.otherPlayers[playerData.uuid];
-				var now = Date.now();
-				/**
-				 * If an elephant has been standing still and gets a new position to move to,
-				 * begin to move it to the new location at the default speed.
-				 * However, if an elephant is currently moving and receives a new position,
-				 * cancel the last move command and move it for a duration equal to the
-				 * time difference between when it received its last position and its most
-				 * recent one. This way, if the last position was received late due to lag, the
-				 * elephant won't fall behind too far, since it will move faster to
-				 * compensate.
-				 */
-				if(!otherPlayer.sprite.getActionByTag("moveElephant")) {
-					sand.entitiesLayer.moveOtherElephantToLocation(otherPlayer.sprite, location);
-				} else {
-					var duration = (now - otherPlayer.timeSinceLastCommand) / 1000;
-					sand.entitiesLayer.moveOtherElephantToLocation(otherPlayer.sprite, location, duration);
-				}
-				otherPlayer.timeSinceLastCommand = now;
-			}
-		}
 
 		/**
 		 * the onConnect event can happen more than once:
@@ -78,33 +48,18 @@ var GameScene = cc.Scene.extend({
 		 * and all the clients have to reconnect.
 		 */
 		sand.socket.on('onConnect', function (data) {
-			data.players.forEach(function (playerData) {
-				if(playerData.uuid !== sand.uuid) {
-					createOrMoveOtherPlayerToLocation(playerData);
-				}
-			});
-
-			sand.reserveAreasModule.initializeRocksAndReservedAreas(data.reservedAreaData);
-		});
-
-		sand.socket.on('playerMoved', function (playerData) {
-			createOrMoveOtherPlayerToLocation(playerData);
+			sand.elephants.initializeOnSocketConnect(data.players);
+			sand.reserveAreasModule.initializeOnSocketConnect(data.reservedAreaData);
 		});
 
 		sand.socket.on('footprint', function (footprintData) {
 			sand.batchedFootprints.push(footprintData);
 		});
 
-		sand.socket.on('playerDisconnected', function (uuid) {
-			if(sand.otherPlayers[uuid] !== undefined) {
-				var spriteTag = sand.otherPlayers[uuid].sprite.getTag();
-				sand.entitiesLayer.removeChildByTag(spriteTag);
-				delete sand.otherPlayers[uuid];
-			}
-		});
-
 		this.positionEmitterThrottler = new this.Throttler(100);
 		this.addRegionsThrottler = new this.Throttler(500);
+
+		this.scheduleUpdate();
 	},
 
 	update: function() {
@@ -112,8 +67,8 @@ var GameScene = cc.Scene.extend({
 
 		var backgroundPosition = sand.currentRegion.getSprite();
 		var localPosition = {
-			x: sand.entitiesLayer.playerSprite.x - backgroundPosition.x,
-			y: sand.entitiesLayer.playerSprite.y - backgroundPosition.y
+			x: sand.elephants.getPlayerSprite().x - backgroundPosition.x,
+			y: sand.elephants.getPlayerSprite().y - backgroundPosition.y
 		};
 		var globalCoordinates = sand.globalFunctions.toGlobalCoordinates(localPosition);
 		if (sand.globalCoordinates.x != globalCoordinates.x
@@ -121,7 +76,7 @@ var GameScene = cc.Scene.extend({
 
 			sand.globalCoordinates = globalCoordinates;
 
-			var brush = sand.playerState.currentAction;
+			var brush = sand.elephants.getPlayerCurrentBrush();
 			var frequency = sand.modifyRegion.brushes[brush][0].frequency;
 			var printLocation = {
 				x: sand.globalCoordinates.x,
@@ -130,14 +85,14 @@ var GameScene = cc.Scene.extend({
 			if (this._lastPrint === undefined
 				|| (sand.globalFunctions.calculateDistance(this._lastPrint, printLocation) >= frequency)) {
 
-				if (!sand.playerState.flying) {
+				if (!sand.flying) {
 					sand.globalFunctions.addFootprintToQueue(printLocation, brush);
 				}
 
 				this._lastPrint = printLocation;
 			}
 
-			if(!sand.playerState.flying) {
+			if(!sand.flying) {
 				this.positionEmitterThrottler.throttle(function updateCookiesAndEmitPosition() {
 					function equalsWithEpsilon(num1, num2, epsilon) {
 						return Math.abs(num1 - num2) < epsilon;
@@ -230,11 +185,11 @@ var GameScene = cc.Scene.extend({
 
 	triggerScrolling: function() {
 		// if already scrolling, don't attempt to scroll more
-		if(sand.entitiesLayer.playerSprite.getActionByTag("scroll")) {
+		if(sand.elephants.getPlayerSprite().getActionByTag("scroll")) {
 			return;
 		}
 
-		var elephantPosition = sand.entitiesLayer.playerSprite.getPosition();
+		var elephantPosition = sand.elephants.getPlayerSprite().getPosition();
 
 		var boundary = {
 			left: sand.constants.kBeginScrollThreshold,
@@ -263,7 +218,7 @@ var GameScene = cc.Scene.extend({
 	},
 
 	updateBackgroundSpriteLocations: function() {
-		var playerScreenPosition = sand.entitiesLayer.playerSprite.getPosition();
+		var playerScreenPosition = sand.elephants.getPlayerSprite().getPosition();
 		var bottomLeftCornerOfViewport = {
 			x:  sand.globalCoordinates.x - playerScreenPosition.x,
 			y:  sand.globalCoordinates.y - playerScreenPosition.y

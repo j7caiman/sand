@@ -47,13 +47,6 @@ var BackgroundLayer = cc.Layer.extend({
 						}
 					}
 
-					var otherPlayers = sand.otherPlayers;
-					for (var uuid in otherPlayers) {
-						if (otherPlayers.hasOwnProperty(uuid)) {
-							sprites.push(otherPlayers[uuid].sprite);
-						}
-					}
-
 					var rocks = sand.reserveAreasModule.getRocksOnGround();
 					for (var rockId in rocks) {
 						if (rocks.hasOwnProperty(rockId)) {
@@ -61,7 +54,9 @@ var BackgroundLayer = cc.Layer.extend({
 						}
 					}
 
-					sprites.push(sand.entitiesLayer.playerSprite);
+					sprites.push(sand.elephants.getPlayerSprite());
+					sprites = sprites.concat(sand.elephants.getOtherPlayerSprites());
+
 					sprites.push(sand.traveller.getTravellerSprite());
 
 					return sprites;

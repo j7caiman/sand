@@ -1,11 +1,6 @@
 var sand = {
 	allRegions: {},
-	batchedFootprints: [],
-	elephantPath: [],
-	playerState: {
-		mouseClickAction: "walking",
-		mouseDragAction: "digging"
-	}
+	batchedFootprints: []
 };
 
 $(document).ready(function () {
@@ -172,12 +167,12 @@ sand.globalFunctions = {
 		if (disable !== undefined) {
 			sand.constants.kElephantSpeed = 50;
 			sand.constants.kScrollSpeed = 80;
-			sand.playerState.flying = false;
+			sand.flying = false;
 			return "landed."
 		}
 		sand.constants.kElephantSpeed *= 2;
 		sand.constants.kScrollSpeed *= 2;
-		sand.playerState.flying = true;
+		sand.flying = true;
 		return "current speed: " + sand.constants.kElephantSpeed + " kilophants/hour."
 	},
 

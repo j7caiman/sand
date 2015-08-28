@@ -29,8 +29,8 @@ sand.traveller = (function () {
 		(function initializeTraveller() {
 			travellerSprite = new cc.Sprite("#traveller.png");
 			travellerSprite.setPosition({
-				x: sand.entitiesLayer.playerSprite.getPositionX() + 100,
-				y: sand.entitiesLayer.playerSprite.getPositionY() + 50
+				x: sand.elephants.getPlayerSprite().getPositionX() + 100,
+				y: sand.elephants.getPlayerSprite().getPositionY() + 50
 			});
 			travellerSprite.setZOrder(sand.entitiesLayer.zOrders.traveller);
 
@@ -56,14 +56,14 @@ sand.traveller = (function () {
 		$('.shovelButton').click(function () {
 			$('.travellerSpeechOptions').hide();
 			$('#shovelChosenText').show();
-			sand.playerState.mouseDragAction = "digging";
+			sand.elephants.setOnDragAction(sand.modifyRegion.brushes.digging[0].name);
 			giftChosen = true;
 		});
 
 		$('.paintBrushButton').click(function () {
 			$('.travellerSpeechOptions').hide();
 			$('#paintBrushChosenText').show();
-			sand.playerState.mouseDragAction = "painting";
+			sand.elephants.setOnDragAction(sand.modifyRegion.brushes.painting[0].name);
 			giftChosen = true;
 		});
 	}
@@ -154,8 +154,8 @@ sand.traveller = (function () {
 
 	function mainLoopUpdate() {
 		var approximateDistanceFromPlayer =
-			Math.abs(travellerSprite.getPositionX() - sand.entitiesLayer.playerSprite.getPositionX())
-			+ Math.abs(travellerSprite.getPositionY() - sand.entitiesLayer.playerSprite.getPositionY());
+			Math.abs(travellerSprite.getPositionX() - sand.elephants.getPlayerSprite().getPositionX())
+			+ Math.abs(travellerSprite.getPositionY() - sand.elephants.getPlayerSprite().getPositionY());
 
 		walkAimlesslyEnabled = approximateDistanceFromPlayer > speechBubbleVisibleDistance;
 
@@ -172,5 +172,5 @@ sand.traveller = (function () {
 		initialize: initialize,
 		mainLoopUpdate: mainLoopUpdate,
 		getTravellerSprite: getTravellerSprite
-	}
+	};
 })();

@@ -7,6 +7,7 @@ sand.modifyRegion = sand.modifyRegion || {};
 
 sand.modifyRegion.brushes = {
 	painting: [{
+		name: "painting",
 		frequency: 7,
 		radius: 6,
 		apply: function(regionData, positionOnCanvas) {
@@ -20,6 +21,7 @@ sand.modifyRegion.brushes = {
 
 	digging: [
 		{
+			name: "digging",
 			frequency: 7,
 			radius: 4.5,
 			apply: function(regionData, positionOnCanvas) {
@@ -51,6 +53,7 @@ sand.modifyRegion.brushes = {
 	],
 
 	walking: [{
+		name: "walking",
 		frequency: 15,
 		radius: 1.5,
 		apply: function(regionData, positionOnCanvas) {
@@ -65,6 +68,7 @@ sand.modifyRegion.brushes = {
 	}],
 
 	erasing: [{
+		name: "erasing",
 		frequency: 7,
 		radius: 10,
 		apply: function(regionData, positionOnCanvas) {

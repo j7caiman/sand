@@ -23,8 +23,7 @@ sand.reserveAreasModule = (function () {
 	var rockActivatedFrame;
 	var rockUnavailableFrame;
 
-	// called after resources are loaded
-	function initializeSocketsAndSpriteFrames() {
+	function initializeOnSceneStart() {
 		sand.socket.on('rockPutDown', function (data) {
 			var location = sand.globalFunctions.getPositionOnScreenFromGlobalCoordinates(data.position);
 
@@ -58,8 +57,7 @@ sand.reserveAreasModule = (function () {
 		rockUnavailableFrame = cc.spriteFrameCache.getSpriteFrame("rock_unavailable.png");
 	}
 
-	// called once socket connection established
-	function initializeRocksAndReservedAreas(data) {
+	function initializeOnSocketConnect(data) {
 		var rocks = data.rocks;
 		var activatedRockIds = data.activatedRockIds;
 
@@ -77,8 +75,7 @@ sand.reserveAreasModule = (function () {
 		reservedAreas = data.reservedAreas;
 	}
 
-	// called after player logs in
-	function initializePlayerRockInventory(rocks) {
+	function initializeOnLogIn(rocks) {
 		// initialize rock on player's back, for when rocks are selected
 		rockCarriedByPlayerSprite = new cc.Sprite("#rock.png");
 		rockCarriedByPlayerSprite.setZOrder(sand.entitiesLayer.zOrders.itemsBeingCarried);
@@ -194,7 +191,7 @@ sand.reserveAreasModule = (function () {
 		});
 
 		// place rock
-		putRockOnGround(selectedRockId, sand.entitiesLayer.playerSprite);
+		putRockOnGround(selectedRockId, sand.elephants.getPlayerSprite());
 		isRockSelected = false;
 		rockCarriedByPlayerSprite.setVisible(false);
 
@@ -273,9 +270,13 @@ sand.reserveAreasModule = (function () {
 		}
 	}
 
-	function handleTouchEvent(position, onNoActivity) {
+	function handleTouchEvent(position) {
+		function defaultElephantActivity () {
+			sand.elephants.handleOnTouchEndedEvent(position);
+		}
+
 		if (!reserveAreasEnabled) {
-			onNoActivity();
+			defaultElephantActivity();
 			return;
 		}
 
@@ -287,17 +288,17 @@ sand.reserveAreasModule = (function () {
 			}
 		} else { // user clicked ground
 			if (isRockSelected) {
-				sand.entitiesLayer.movePlayerElephantToLocation(
+				sand.elephants.movePlayerElephantToLocation(
 					position,
 					placeRockOnGround
 				);
 			} else if (wereRocksOnGroundClicked(position)) {
-				sand.entitiesLayer.movePlayerElephantToLocation(
+				sand.elephants.movePlayerElephantToLocation(
 					position,
 					pickRockUpFromGround
 				);
 			} else {
-				onNoActivity();
+				defaultElephantActivity();
 			}
 		}
 	}
@@ -306,17 +307,17 @@ sand.reserveAreasModule = (function () {
 		(function updateCarriedSpritePosition() {
 			if (isRockSelected) {
 				rockCarriedByPlayerSprite.setPosition(
-					sand.entitiesLayer.playerSprite.x,
-					sand.entitiesLayer.playerSprite.y + sand.constants.kElephantHeightOffset
+					sand.elephants.getPlayerSprite().x,
+					sand.elephants.getPlayerSprite().y + sand.constants.kElephantHeightOffset
 				);
 			}
 		})();
 	}
 
 	return {
-		initializeSocketsAndSpriteFrames: initializeSocketsAndSpriteFrames,
-		initializeRocksAndReservedAreas: initializeRocksAndReservedAreas,
-		initializePlayerRockInventory: initializePlayerRockInventory,
+		initializeOnSceneStart: initializeOnSceneStart,
+		initializeOnSocketConnect: initializeOnSocketConnect,
+		initializeOnLogIn: initializeOnLogIn,
 
 		getRocksOnGround: getRocksOnGround,
 		getReservedAreas: getReservedAreas,

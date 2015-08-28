@@ -76,8 +76,8 @@ var GameScene = cc.Scene.extend({
 
 			sand.globalCoordinates = globalCoordinates;
 
-			var brush = sand.elephants.getPlayerCurrentBrush();
-			var frequency = sand.modifyRegion.brushes[brush][0].frequency;
+			var brush = sand.elephants.getPlayerBrushWhileMoving();
+			var frequency = sand.modifyRegion.brushes[brush].frequency;
 			var printLocation = {
 				x: sand.globalCoordinates.x,
 				y: sand.globalCoordinates.y + sand.constants.kFootprintVerticalOffset

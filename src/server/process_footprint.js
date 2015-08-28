@@ -15,39 +15,29 @@ var footprintBuffer = {};
 
 function processFootprint(footprintData) {
 	var brush = footprintFunctions.brushes[footprintData.brush];
-	brush.forEach(function(brushComponent) {
-		var computedLocation = {
-			x: footprintData.location.x,
-			y: footprintData.location.y
-		};
-		if(brushComponent.offset !== undefined) {
-			computedLocation.x = brushComponent.offset.x + footprintData.location.x;
-			computedLocation.y = brushComponent.offset.y + footprintData.location.y;
+
+	var area = globalFunctions.createBoundingBox(
+		footprintData.location,
+		brush.radius
+	);
+
+	var regionNames = globalFunctions.findRegionsInRect(area);
+	regionNames.forEach(function (regionName) {
+		if (footprintBuffer[regionName] === undefined) {
+			footprintBuffer[regionName] = {
+				buffer: [],
+				locked: false,
+				lastFlushTimestamp: 0
+			};
 		}
-
-		var area = globalFunctions.createBoundingBox(
-			computedLocation,
-			brushComponent.radius
-		);
-
-		var regionNames = globalFunctions.findRegionsInRect(area);
-		regionNames.forEach(function (regionName) {
-			if (footprintBuffer[regionName] === undefined) {
-				footprintBuffer[regionName] = {
-					buffer: [],
-					locked: false,
-					lastFlushTimestamp: 0
-				};
-			}
-			footprintBuffer[regionName].buffer.push({
-				location: computedLocation,
-				brush: brushComponent
-			});
-
-			if (!footprintBuffer[regionName].locked) {
-				_flushFootprintBuffer(regionName);
-			}
+		footprintBuffer[regionName].buffer.push({
+			location: footprintData.location,
+			brush: brush
 		});
+
+		if (!footprintBuffer[regionName].locked) {
+			_flushFootprintBuffer(regionName);
+		}
 	});
 }
 
@@ -67,8 +57,8 @@ function _flushFootprintBuffer(regionName) {
 	fs.readFile(path, function (err, compressedData) {
 		if (err) {
 			// this can happen if a client is running, but the regions it's writing to have been deleted
-			if(err.code == 'ENOENT') {
-				regionFunctions.generateMissingRegions(regionName, function() {
+			if (err.code == 'ENOENT') {
+				regionFunctions.generateMissingRegions(regionName, function () {
 					fs.readFile(path, function (err, compressedData) {
 						if (err) {
 							debug("error for region: z" + zipCode + "/r" + regionName);
@@ -88,7 +78,7 @@ function _flushFootprintBuffer(regionName) {
 
 		function _writeFootprintsToRegion(compressedData) {
 			zlib.unzip(compressedData, function (err, regionData) {
-				if(err) {
+				if (err) {
 					debug("error for region: z" + zipCode + "/r" + regionName);
 					throw err;
 				}
@@ -106,23 +96,23 @@ function _flushFootprintBuffer(regionName) {
 				footprintsToFlush.forEach(function (print) {
 					var notInReservedArea = true;
 					for (var id in reservedAreas) {
-						if(reservedAreas.hasOwnProperty(id)) {
+						if (reservedAreas.hasOwnProperty(id)) {
 							var path = reservedAreas[id];
-							if(pointInsidePolygon(print.location, path)) {
+							if (pointInsidePolygon(print.location, path)) {
 								notInReservedArea = false;
 								break;
 							}
 						}
 					}
 
-					if(notInReservedArea) {
+					if (notInReservedArea) {
 						print.brush.apply(regionData, globalFunctions.toLocalCoordinates(print.location, region));
 					} else {
 						printsNotFlushed += "(" + print.location.x + ", " + print.location.y + "), ";
 					}
 				});
 
-				if(printsNotFlushed.length !== 0) {
+				if (printsNotFlushed.length !== 0) {
 					debug("footprints: " + printsNotFlushed + " are inside a reserved area. Not writing them to disk.");
 				}
 
@@ -150,7 +140,6 @@ function _flushFootprintBuffer(regionName) {
 				});
 			});
 		}
-
 
 
 	});

@@ -9,16 +9,10 @@ sand.elephants = (function () {
 	var playerPath;
 	var currentFramesData;
 
-	var currentAction;
-	var onClickAction;
-	var onDragAction;
+	var brushTypeWhileMoving;
 
-	function setOnDragAction(action) {
-		onDragAction = action;
-	}
-
-	function getPlayerCurrentBrush() {
-		return currentAction;
+	function getPlayerBrushWhileMoving() {
+		return brushTypeWhileMoving;
 	}
 
 	function getPlayerSprite() {
@@ -122,9 +116,6 @@ sand.elephants = (function () {
 		);
 		playerSprite.setName("player");
 
-		onClickAction = sand.modifyRegion.brushes.walking[0].name;
-		onDragAction = sand.modifyRegion.brushes.digging[0].name;
-
 		sand.socket.on('playerMoved', function (playerData) {
 			createOrMoveOtherPlayerToLocation(playerData);
 		});
@@ -211,7 +202,7 @@ sand.elephants = (function () {
 			y: position.y - sand.constants.kFootprintVerticalOffset
 		};
 		var distance = sand.globalFunctions.calculateDistance(lastVertex, newVertex);
-		if (distance >= sand.modifyRegion.brushes.digging[0].frequency) {
+		if (distance >= sand.modifyRegion.brushes.painting.frequency) {
 			playerPath.push(newVertex);
 		}
 	}
@@ -233,7 +224,7 @@ sand.elephants = (function () {
 
 		var actionSequence = [];
 		actionSequence.push(cc.callFunc(function () {
-			currentAction = onClickAction;
+			brushTypeWhileMoving = sand.modifyRegion.brushes.walking.name;
 		}));
 		playerPath.forEach(function (element, index) {
 			endPosition = element;
@@ -266,7 +257,7 @@ sand.elephants = (function () {
 
 			if (index === 0) {
 				actionSequence.push(cc.callFunc(function () {
-					currentAction = onDragAction;
+					brushTypeWhileMoving = sand.modifyRegion.brushes.painting.name;
 				}));
 			}
 
@@ -274,7 +265,7 @@ sand.elephants = (function () {
 				actionSequence.push(cc.callFunc(function () {
 					stopAllAnimations(sprite);
 					sprite.setSpriteFrame(framesData.standFrame);
-					currentAction = onClickAction;
+					brushTypeWhileMoving = sand.modifyRegion.brushes.walking.name;
 				}));
 			}
 
@@ -318,7 +309,7 @@ sand.elephants = (function () {
 			sprite.runAction(walkAnimation);
 		}
 
-		currentAction = onClickAction;
+		brushTypeWhileMoving = sand.modifyRegion.brushes.walking.name;
 		sprite.flippedX = currentFramesData.spriteFlipped;
 
 		sprite.stopActionByTag("moveElephant");
@@ -433,8 +424,7 @@ sand.elephants = (function () {
 	return {
 		initializeOnSceneStart: initializeOnSceneStart,
 		initializeOnSocketConnect: initializeOnSocketConnect,
-		setOnDragAction: setOnDragAction,
-		getPlayerCurrentBrush: getPlayerCurrentBrush,
+		getPlayerBrushWhileMoving: getPlayerBrushWhileMoving,
 		getPlayerSprite: getPlayerSprite,
 		getOtherPlayerSprites: getOtherPlayerSprites,
 		handleOnTouchBeganEvent: handleOnTouchBeganEvent,

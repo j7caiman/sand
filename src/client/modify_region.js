@@ -1,34 +1,28 @@
 sand.modifyRegion = {
-	makeFootprint: function (globalPosition, brushString) {
-		var brush = sand.modifyRegion.brushes[brushString];
-		brush.forEach(function(brushComponent) {
-			var position = globalPosition;
-			if(brushComponent.offset !== undefined) {
-				position.x = brushComponent.offset.x + globalPosition.x;
-				position.y = brushComponent.offset.y + globalPosition.y;
-			}
+	makeFootprint: function (globalPosition, brushName) {
+		var brush = sand.modifyRegion.brushes[brushName];
+		var position = globalPosition;
 
-			var changedArea = sand.globalFunctions.createBoundingBox(
-				position,
-				brushComponent.radius
-			);
-			var regionNames = sand.globalFunctions.findRegionsInRect(changedArea);
-			regionNames.forEach(function(regionName) {
-				var region = sand.allRegions[regionName];
-				// region not guaranteed to be loaded, since the rectangle may reference an area beyond the player
-				if(region !== undefined) {
-					brushComponent.apply(
-						region.getData(),
-						sand.globalFunctions.toLocalCoordinates(position, region)
-					);
-				}
-			});
+		var changedArea = sand.globalFunctions.createBoundingBox(
+			position,
+			brush.radius
+		);
+		var regionNames = sand.globalFunctions.findRegionsInRect(changedArea);
+		regionNames.forEach(function (regionName) {
+			var region = sand.allRegions[regionName];
+			// region not guaranteed to be loaded, since the rectangle may reference an area beyond the player
+			if (region !== undefined) {
+				brush.apply(
+					region.getData(),
+					sand.globalFunctions.toLocalCoordinates(position, region)
+				);
+			}
 		});
 	},
 
 	regenerateTerrain: function () {
 		var that = this;
-		if(!that.generateLargeDune) {
+		if (!that.generateLargeDune) {
 			return;
 		}
 

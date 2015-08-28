@@ -6,7 +6,7 @@ sand.constants = sand.constants || require("./global_constants");
 sand.modifyRegion = sand.modifyRegion || {};
 
 sand.modifyRegion.brushes = {
-	painting: [{
+	painting: {
 		name: "painting",
 		frequency: 7,
 		radius: 6,
@@ -17,42 +17,9 @@ sand.modifyRegion.brushes = {
 				6
 			)
 		}
-	}],
+	},
 
-	digging: [
-		{
-			name: "digging",
-			frequency: 7,
-			radius: 4.5,
-			apply: function(regionData, positionOnCanvas) {
-				sand.modifyRegion.imprintSphere(
-					regionData,
-					positionOnCanvas,
-					4.5,
-					1,
-					false
-				)
-			}
-		},
-		{
-			radius: 5,
-			offset: {
-				x: -8.5,
-				y: -2
-			},
-			apply: function(regionData, positionOnCanvas) {
-				sand.modifyRegion.imprintSphere(
-					regionData,
-					positionOnCanvas,
-					5,
-					2,
-					true
-				)
-			}
-		}
-	],
-
-	walking: [{
+	walking: {
 		name: "walking",
 		frequency: 15,
 		radius: 1.5,
@@ -65,16 +32,35 @@ sand.modifyRegion.brushes = {
 				false
 			)
 		}
-	}],
+	},
 
-	erasing: [{
-		name: "erasing",
-		frequency: 7,
-		radius: 10,
+	shovelIn: {
+		name: "shovelIn",
+		radius: 12,
 		apply: function(regionData, positionOnCanvas) {
-			sand.modifyRegion.erase(regionData, positionOnCanvas, 10);
+			sand.modifyRegion.imprintSphere(
+				regionData,
+				positionOnCanvas,
+				12,
+				0,
+				false
+			)
 		}
-	}]
+	},
+
+	shovelOut: {
+		name: "shovelOut",
+		radius: 12,
+		apply: function(regionData, positionOnCanvas) {
+			sand.modifyRegion.imprintSphere(
+				regionData,
+				positionOnCanvas,
+				12,
+				0,
+				true
+			)
+		}
+	}
 };
 
 sand.modifyRegion.darkenSand = function (regionData, positionOnCanvas, radius) {
@@ -120,45 +106,6 @@ sand.modifyRegion.darkenSand = function (regionData, positionOnCanvas, radius) {
 };
 sand.modifyRegion.darkenSand.previousFootprintBuffer = {};
 sand.modifyRegion.darkenSand.counter = 0;
-
-/**
- * flattens surrounding area, gradually bringing things to 0 height.
- */
-sand.modifyRegion.erase = function (regionData, positionOnCanvas, radius) {
-	const sandGrainWidth = sand.constants.kCanvasWidth / sand.constants.kRegionWidth; // blocks are square
-	var pointOfImpact = {
-		x: Math.floor(positionOnCanvas.x / sandGrainWidth),
-		y: Math.floor(positionOnCanvas.y / sandGrainWidth)
-	};
-
-	var bounds = {
-		left: Math.max(
-			0, Math.floor(pointOfImpact.x - radius)
-		),
-		right: Math.min(
-			sand.constants.kRegionWidth, Math.ceil(pointOfImpact.x + radius)
-		),
-		bottom: Math.max(
-			0, Math.floor(pointOfImpact.y - radius)
-		),
-		top: Math.min(
-			sand.constants.kRegionWidth, Math.ceil(pointOfImpact.y + radius)
-		)
-	};
-
-	for (var y = bounds.bottom; y < bounds.top; y++) {
-		for (var x = bounds.left; x < bounds.right; x++) {
-			var distanceFromCenter = sand.globalFunctions.calculateDistance(pointOfImpact, { x: x, y: y });
-			if(distanceFromCenter < radius) {
-				if (regionData[y][x][0] < 0) {
-					regionData[y][x][0]++;
-				} else if(regionData[y][x][0] > 0) {
-					regionData[y][x][0]--;
-				}
-			}
-		}
-	}
-};
 
 /**
  * crater is shaped as follows:

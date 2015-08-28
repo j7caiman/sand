@@ -7,7 +7,7 @@ sand.traveller = (function () {
 	var walkAimlesslyEnabled = true;
 	var isWalking = false;
 	var eastOrWest = 1;
-	var giftChosen = false;
+	var chosenGift;
 
 	// constants
 	var walkSpeed = 30;
@@ -23,6 +23,11 @@ sand.traveller = (function () {
 	var speechBoxOffset = {
 		x: -20,
 		y: -40
+	};
+	var gifts = {
+		nothing: "nothing",
+		shovel: "shovel",
+		paintbrush: "paintbrush"
 	};
 
 	function initialize() {
@@ -46,7 +51,7 @@ sand.traveller = (function () {
 				y: travellerSprite.getPositionY() + speechBubbleOffset.y
 			});
 			speechBubbleSprite.setZOrder(sand.entitiesLayer.zOrders.traveller);
-			//speechBubbleSprite.setVisible(false);
+			speechBubbleSprite.setVisible(false);
 
 			sand.entitiesLayer.addChild(speechBubbleSprite);
 		})();
@@ -56,16 +61,17 @@ sand.traveller = (function () {
 		$('.shovelButton').click(function () {
 			$('.travellerSpeechOptions').hide();
 			$('#shovelChosenText').show();
-			sand.elephants.setOnDragAction(sand.modifyRegion.brushes.digging[0].name);
-			giftChosen = true;
+			chosenGift = gifts.shovel;
+
 		});
 
-		$('.paintBrushButton').click(function () {
+		$('.paintbrushButton').click(function () {
 			$('.travellerSpeechOptions').hide();
-			$('#paintBrushChosenText').show();
-			sand.elephants.setOnDragAction(sand.modifyRegion.brushes.painting[0].name);
-			giftChosen = true;
+			$('#paintbrushChosenText').show();
+			chosenGift = gifts.paintbrush;
 		});
+
+		chosenGift = gifts.nothing;
 	}
 
 	function getRandomInt(min, max) {
@@ -119,10 +125,10 @@ sand.traveller = (function () {
 			speechBox.hide();
 		} else if (!speechBox.is(':visible')) {
 			$('.travellerSpeechOptions').hide();
-			if (giftChosen) {
-				$('#welcomeBackText').show();
-			} else {
+			if (chosenGift === gifts.nothing) {
 				$('#welcomeText').show();
+			} else {
+				$('#welcomeBackText').show();
 			}
 
 			speechBox.show();
@@ -168,9 +174,14 @@ sand.traveller = (function () {
 		return travellerSprite;
 	}
 
+	function getChosenGift() {
+		return chosenGift;
+	}
+
 	return {
 		initialize: initialize,
 		mainLoopUpdate: mainLoopUpdate,
-		getTravellerSprite: getTravellerSprite
+		getTravellerSprite: getTravellerSprite,
+		getChosenGift: getChosenGift
 	};
 })();

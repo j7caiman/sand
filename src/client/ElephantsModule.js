@@ -3,10 +3,11 @@ sand.elephants = (function () {
 	var otherPlayers = {};
 
 	// constants
-	var elephantAnimationData;
+	var elephantFrames;
 
 	// state variables
 	var playerPath;
+	var currentFramesData;
 
 	var currentAction;
 	var onClickAction;
@@ -35,7 +36,7 @@ sand.elephants = (function () {
 	}
 
 	function initializeOnSceneStart() {
-		elephantAnimationData = (function initializeElephantFrames() {
+		elephantFrames = (function initializeElephantFrames() {
 			var walkNorth = (function () {
 				var frames = [];
 				for (var i = 11; i <= 12; i++) {
@@ -243,20 +244,22 @@ sand.elephants = (function () {
 				endPosition.y - startPosition.y,
 				endPosition.x - startPosition.x
 			);
-			var elephantAnimationData = chooseElephantAnimationData(angle);
+			var framesData = chooseElephantAnimationData(angle);
 
-			if (index === 0 && sprite.getActionByTag(elephantAnimationData.animationTag)) {
-				previousElephantAnimationTag = elephantAnimationData.animationTag;
+			if (index === 0 && sprite.getActionByTag(framesData.animationTag)) {
+				previousElephantAnimationTag = framesData.animationTag;
 			}
 
-			if (previousElephantAnimationTag !== elephantAnimationData.animationTag) {
+			if (previousElephantAnimationTag !== framesData.animationTag) {
 				actionSequence.push(cc.callFunc(function () {
 					stopAllAnimations(sprite);
-					sprite.flippedX = elephantAnimationData.spriteFlipped;
+					sprite.flippedX = framesData.spriteFlipped;
 
-					var walkAnimation = cc.animate(elephantAnimationData.walkAnimation).repeatForever();
-					walkAnimation.setTag(elephantAnimationData.animationTag);
+					var walkAnimation = cc.animate(framesData.walkAnimation).repeatForever();
+					walkAnimation.setTag(framesData.animationTag);
 					sprite.runAction(walkAnimation);
+
+					currentFramesData = framesData;
 				}));
 			}
 			actionSequence.push(cc.moveBy(duration, endPosition.x - startPosition.x, endPosition.y - startPosition.y));
@@ -270,12 +273,12 @@ sand.elephants = (function () {
 			if (index === playerPath.length - 1) {
 				actionSequence.push(cc.callFunc(function () {
 					stopAllAnimations(sprite);
-					sprite.setSpriteFrame(elephantAnimationData.standFrame);
+					sprite.setSpriteFrame(framesData.standFrame);
 					currentAction = onClickAction;
 				}));
 			}
 
-			previousElephantAnimationTag = elephantAnimationData.animationTag;
+			previousElephantAnimationTag = framesData.animationTag;
 			startPosition = endPosition;
 		});
 
@@ -297,26 +300,26 @@ sand.elephants = (function () {
 			destination.y - elephantPosition.y,
 			destination.x - elephantPosition.x
 		);
-		var elephantAnimationData = chooseElephantAnimationData(angle);
+		currentFramesData = chooseElephantAnimationData(angle);
 
 		/**
 		 * If the elephant is already walking in the same direction as this new
 		 * command arrives, don't restart the animation.
 		 */
-		if (!sprite.getActionByTag(elephantAnimationData.animationTag)) {
+		if (!sprite.getActionByTag(currentFramesData.animationTag)) {
 			/**
 			 * If the elephant isn't currently walking or is walking a different
 			 * direction, stop the animation and start a new one.
 			 */
 			stopAllAnimations(sprite);
 
-			var walkAnimation = cc.animate(elephantAnimationData.walkAnimation).repeatForever();
-			walkAnimation.setTag(elephantAnimationData.animationTag);
+			var walkAnimation = cc.animate(currentFramesData.walkAnimation).repeatForever();
+			walkAnimation.setTag(currentFramesData.animationTag);
 			sprite.runAction(walkAnimation);
 		}
 
 		currentAction = onClickAction;
-		sprite.flippedX = elephantAnimationData.spriteFlipped;
+		sprite.flippedX = currentFramesData.spriteFlipped;
 
 		sprite.stopActionByTag("moveElephant");
 		var moveToAction = cc.moveTo(duration, destination);
@@ -328,9 +331,7 @@ sand.elephants = (function () {
 			 *  moves a little bit if a scroll action occurred while the elephant was walking.
 			 *  Root cause unknown, presumably a bug with cocos2d.
 			 */
-			sprite.stopActionByTag("moveElephant");
-			stopAllAnimations(sprite);
-			sprite.setSpriteFrame(elephantAnimationData.standFrame);
+			stopPlayerElephant();
 
 			if (onComplete !== undefined) {
 				onComplete();
@@ -340,6 +341,14 @@ sand.elephants = (function () {
 		var moveToThenStopAction = cc.sequence(moveToAction, standAction);
 		moveToThenStopAction.setTag("moveElephant");
 		sprite.runAction(moveToThenStopAction);
+	}
+
+	function stopPlayerElephant() {
+		var sprite = playerSprite;
+
+		sprite.stopActionByTag("moveElephant");
+		stopAllAnimations(sprite);
+		sprite.setSpriteFrame(currentFramesData.standFrame);
 	}
 
 	function moveOtherElephantToLocation(sprite, destination, duration) {
@@ -403,13 +412,13 @@ sand.elephants = (function () {
 
 	function chooseElephantAnimationData(angle) {
 		if (Math.abs(angle) > 3 * Math.PI / 4) {
-			return elephantAnimationData.west;
+			return elephantFrames.west;
 		} else if (angle < -Math.PI / 4) {
-			return elephantAnimationData.south;
+			return elephantFrames.south;
 		} else if (angle < Math.PI / 4) {
-			return elephantAnimationData.east;
+			return elephantFrames.east;
 		} else {
-			return elephantAnimationData.north;
+			return elephantFrames.north;
 		}
 	}
 
@@ -431,6 +440,7 @@ sand.elephants = (function () {
 		handleOnTouchBeganEvent: handleOnTouchBeganEvent,
 		handleOnTouchMovedEvent: handleOnTouchMovedEvent,
 		handleOnTouchEndedEvent: handleOnTouchEndedEvent,
-		movePlayerElephantToLocation: movePlayerElephantToLocation
+		movePlayerElephantToLocation: movePlayerElephantToLocation,
+		stopPlayerElephant: stopPlayerElephant
 	};
 })();

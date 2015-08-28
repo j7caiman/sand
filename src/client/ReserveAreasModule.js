@@ -281,6 +281,7 @@ sand.reserveAreasModule = (function () {
 		}
 
 		if (wereRockIconsClicked(position)) {
+			sand.elephants.stopPlayerElephant();
 			if (isRockSelected) {
 				deselectRock();
 			} else {

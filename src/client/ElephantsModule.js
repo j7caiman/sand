@@ -1,12 +1,25 @@
 sand.elephants = (function () {
 	var playerSprite;
 	var otherPlayers = {};
+	var shovelSprite;
 
 	// constants
 	var elephantFrames;
+	var shovelStrokeDistance = {
+		north: 30,
+		south: 0,
+		east: 20,
+		west: 20
+	};
+	var shovelUpStrokeDelayMillis = 500;
+	var shovelUpStrokePositionOffset = 22;
+	var minimumShovelDragDistance = 4;
 
 	// state variables
 	var playerPath;
+	var shovelInStrokeOccurring = false;
+	var shovelOutStrokeOccurring = false;
+	var digDownGlobalPosition;
 	var currentFramesData;
 
 	var brushTypeWhileMoving;
@@ -19,13 +32,17 @@ sand.elephants = (function () {
 		return playerSprite;
 	}
 
-	function getOtherPlayerSprites() {
+	function getScrollableSprites() {
 		var sprites = [];
 		for (var uuid in otherPlayers) {
 			if (otherPlayers.hasOwnProperty(uuid)) {
 				sprites.push(otherPlayers[uuid].sprite);
 			}
 		}
+
+		sprites.push(playerSprite);
+		sprites.push(shovelSprite);
+
 		return sprites;
 	}
 
@@ -107,6 +124,8 @@ sand.elephants = (function () {
 			};
 		})();
 
+		currentFramesData = elephantFrames.west;
+
 		playerSprite = createElephant(
 			{
 				x: window.innerWidth / 2,
@@ -115,6 +134,12 @@ sand.elephants = (function () {
 			sand.entitiesLayer.zOrders.playerElephant
 		);
 		playerSprite.setName("player");
+
+		shovelSprite = new cc.Sprite("#shovel_icon.png");
+		shovelSprite.setScale(1.5);
+		shovelSprite.setZOrder(sand.entitiesLayer.zOrders.shovelingAnimation);
+		shovelSprite.setVisible(false);
+		sand.entitiesLayer.addChild(shovelSprite);
 
 		sand.socket.on('playerMoved', function (playerData) {
 			createOrMoveOtherPlayerToLocation(playerData);
@@ -202,17 +227,95 @@ sand.elephants = (function () {
 			y: position.y - sand.constants.kFootprintVerticalOffset
 		};
 		var distance = sand.globalFunctions.calculateDistance(lastVertex, newVertex);
-		if (distance >= sand.modifyRegion.brushes.painting.frequency) {
-			playerPath.push(newVertex);
+
+		if (sand.traveller.wasPaintbrushChosen()) {
+			if (distance >= sand.modifyRegion.brushes.painting.frequency) {
+				playerPath.push(newVertex);
+			}
+		} else if (sand.traveller.wasShovelChosen()) {
+			if (!shovelInStrokeOccurring && !shovelOutStrokeOccurring && distance > minimumShovelDragDistance) {
+				pushShovelIntoGround(distance);
+			}
 		}
 	}
 
 	function handleOnTouchEndedEvent(position) {
-		if (playerPath.length > 1) {
-			movePlayerElephantAlongPath();
+		if (sand.traveller.wasPaintbrushChosen()) {
+			if (playerPath.length > 1) {
+				movePlayerElephantAlongPath();
+			} else {
+				movePlayerElephantToLocation(position);
+			}
+		} else if (sand.traveller.wasShovelChosen()) {
+			if (shovelInStrokeOccurring) {
+				pullShovelOutOfGround(position);
+			} else {
+				movePlayerElephantToLocation(position);
+			}
 		} else {
 			movePlayerElephantToLocation(position);
 		}
+	}
+
+	function pushShovelIntoGround() {
+		stopPlayerElephant();
+
+		shovelInStrokeOccurring = true;
+
+		var digDownPosition = {
+			x: playerSprite.x,
+			y: playerSprite.y
+		};
+
+		if (currentFramesData === elephantFrames.north) {
+			digDownPosition.y += shovelStrokeDistance.north;
+			shovelSprite.setFlippedX(false);
+		} else if (currentFramesData === elephantFrames.south) {
+			digDownPosition.y -= shovelStrokeDistance.south;
+			shovelSprite.setFlippedX(false);
+		} else if (currentFramesData === elephantFrames.east) {
+			digDownPosition.x += shovelStrokeDistance.east;
+			shovelSprite.setFlippedX(true);
+		} else if (currentFramesData === elephantFrames.west) {
+			digDownPosition.x -= shovelStrokeDistance.west;
+			shovelSprite.setFlippedX(false);
+		}
+
+		shovelSprite.setPosition(digDownPosition);
+		shovelSprite.setVisible(true);
+
+		digDownGlobalPosition = sand.globalFunctions.convertOnScreenPositionToGlobalCoordinates(digDownPosition);
+		sand.globalFunctions.addFootprintToQueue(digDownGlobalPosition, sand.modifyRegion.brushes.shovelIn.name);
+	}
+
+	function pullShovelOutOfGround(position) {
+		shovelInStrokeOccurring = false;
+		shovelOutStrokeOccurring = true;
+
+		var digDownPosition = sand.globalFunctions.getPositionOnScreenFromGlobalCoordinates(digDownGlobalPosition);
+
+		var angle = Math.atan2(
+			position.y - digDownPosition.y,
+			position.x - digDownPosition.x
+		);
+
+		var digUpPosition = {
+			x: digDownPosition.x + shovelUpStrokePositionOffset * Math.cos(angle),
+			y: digDownPosition.y + shovelUpStrokePositionOffset * Math.sin(angle)
+		};
+
+		shovelSprite.setFlippedY(true);
+		shovelSprite.setPosition(digUpPosition);
+		shovelSprite.setVisible(true);
+
+		var digUpGlobalPosition = sand.globalFunctions.convertOnScreenPositionToGlobalCoordinates(digUpPosition);
+		sand.globalFunctions.addFootprintToQueue(digUpGlobalPosition, sand.modifyRegion.brushes.shovelOut.name);
+
+		setTimeout(function () {
+			shovelSprite.setFlippedY(false);
+			shovelSprite.setVisible(false);
+			shovelOutStrokeOccurring = false;
+		}, shovelUpStrokeDelayMillis);
 	}
 
 	function movePlayerElephantAlongPath() {
@@ -426,7 +529,7 @@ sand.elephants = (function () {
 		initializeOnSocketConnect: initializeOnSocketConnect,
 		getPlayerBrushWhileMoving: getPlayerBrushWhileMoving,
 		getPlayerSprite: getPlayerSprite,
-		getOtherPlayerSprites: getOtherPlayerSprites,
+		getScrollableSprites: getScrollableSprites,
 		handleOnTouchBeganEvent: handleOnTouchBeganEvent,
 		handleOnTouchMovedEvent: handleOnTouchMovedEvent,
 		handleOnTouchEndedEvent: handleOnTouchEndedEvent,

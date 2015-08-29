@@ -36,13 +36,13 @@ sand.modifyRegion.brushes = {
 
 	shovelIn: {
 		name: "shovelIn",
-		radius: 12,
+		radius: 5,
 		apply: function(regionData, positionOnCanvas) {
 			sand.modifyRegion.imprintSphere(
 				regionData,
 				positionOnCanvas,
-				12,
-				0,
+				5,
+				1.5,
 				false
 			)
 		}
@@ -50,13 +50,13 @@ sand.modifyRegion.brushes = {
 
 	shovelOut: {
 		name: "shovelOut",
-		radius: 12,
+		radius: 5,
 		apply: function(regionData, positionOnCanvas) {
 			sand.modifyRegion.imprintSphere(
 				regionData,
 				positionOnCanvas,
-				12,
-				0,
+				5,
+				1.5,
 				true
 			)
 		}

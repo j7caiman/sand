@@ -54,8 +54,7 @@ var BackgroundLayer = cc.Layer.extend({
 						}
 					}
 
-					sprites.push(sand.elephants.getPlayerSprite());
-					sprites = sprites.concat(sand.elephants.getOtherPlayerSprites());
+					sprites = sprites.concat(sand.elephants.getScrollableSprites());
 
 					sprites.push(sand.traveller.getTravellerSprite());
 

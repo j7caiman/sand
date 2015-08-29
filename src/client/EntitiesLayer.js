@@ -9,8 +9,9 @@ var EntitiesLayer = cc.Layer.extend({
 	},
 
 	zOrders: {
-		itemsInInventory: 3,
-		inventoryBackground: 2,
+		itemsInInventory: 4,
+		inventoryBackground: 3,
+		shovelingAnimation: 2,
 		itemsBeingCarried: 1,
 		playerElephant: 0,
 		traveller: -1,

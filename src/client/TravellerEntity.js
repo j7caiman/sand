@@ -174,14 +174,19 @@ sand.traveller = (function () {
 		return travellerSprite;
 	}
 
-	function getChosenGift() {
-		return chosenGift;
+	function wasPaintbrushChosen() {
+		return chosenGift === gifts.paintbrush;
+	}
+
+	function wasShovelChosen() {
+		return chosenGift === gifts.shovel;
 	}
 
 	return {
 		initialize: initialize,
 		mainLoopUpdate: mainLoopUpdate,
 		getTravellerSprite: getTravellerSprite,
-		getChosenGift: getChosenGift
+		wasPaintbrushChosen: wasPaintbrushChosen,
+		wasShovelChosen: wasShovelChosen
 	};
 })();

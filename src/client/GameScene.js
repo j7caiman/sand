@@ -80,7 +80,7 @@ var GameScene = cc.Scene.extend({
 			var frequency = sand.modifyRegion.brushes[brush].frequency;
 			var printLocation = {
 				x: sand.globalCoordinates.x,
-				y: sand.globalCoordinates.y + sand.constants.kFootprintVerticalOffset
+				y: sand.globalCoordinates.y
 			};
 			if (this._lastPrint === undefined
 				|| (sand.globalFunctions.calculateDistance(this._lastPrint, printLocation) >= frequency)) {

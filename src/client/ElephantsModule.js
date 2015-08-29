@@ -5,22 +5,16 @@ sand.elephants = (function () {
 
 	// constants
 	var elephantFrames;
-	var shovelStrokeDistance = {
-		north: 30,
-		south: 0,
-		east: 20,
-		west: 20
-	};
 	var shovelUpStrokeDelayMillis = 500;
 	var shovelUpStrokePositionOffset = 22;
-	var minimumShovelDragDistance = 4;
+	var minimumShovelDragDistance = 20;
 
 	// state variables
 	var playerPath;
 	var shovelInStrokeOccurring = false;
 	var shovelOutStrokeOccurring = false;
 	var digDownGlobalPosition;
-	var currentFramesData;
+	var currentFramesData; // shows the current direction the elephant sprite is facing
 
 	var brushTypeWhileMoving;
 
@@ -170,7 +164,7 @@ sand.elephants = (function () {
 		}
 		sprite.setPosition(position);
 		sprite.setScale(1.5);
-		sprite.setAnchorPoint(0.5, 0);
+		sprite.setAnchorPoint(0.5, 0.2);
 		sprite.setZOrder(zOrder);
 
 		sand.backgroundLayer.addScrollActionToNewSprite(sprite);
@@ -216,7 +210,7 @@ sand.elephants = (function () {
 		playerPath = [];
 		playerPath.push({
 			x: position.x,
-			y: position.y - sand.constants.kFootprintVerticalOffset
+			y: position.y
 		});
 	}
 
@@ -224,7 +218,7 @@ sand.elephants = (function () {
 		var lastVertex = playerPath[playerPath.length - 1];
 		var newVertex = {
 			x: position.x,
-			y: position.y - sand.constants.kFootprintVerticalOffset
+			y: position.y
 		};
 		var distance = sand.globalFunctions.calculateDistance(lastVertex, newVertex);
 
@@ -234,7 +228,7 @@ sand.elephants = (function () {
 			}
 		} else if (sand.traveller.wasShovelChosen()) {
 			if (!shovelInStrokeOccurring && !shovelOutStrokeOccurring && distance > minimumShovelDragDistance) {
-				pushShovelIntoGround(distance);
+				pushShovelIntoGround(position);
 			}
 		}
 	}
@@ -248,7 +242,7 @@ sand.elephants = (function () {
 			}
 		} else if (sand.traveller.wasShovelChosen()) {
 			if (shovelInStrokeOccurring) {
-				pullShovelOutOfGround(position);
+				pullShovelOutOfGround();
 			} else {
 				movePlayerElephantToLocation(position);
 			}
@@ -257,28 +251,37 @@ sand.elephants = (function () {
 		}
 	}
 
-	function pushShovelIntoGround() {
+	function pushShovelIntoGround(mousePosition) {
 		stopPlayerElephant();
 
 		shovelInStrokeOccurring = true;
 
+		var angle = Math.atan2(
+			mousePosition.y - playerSprite.y,
+			mousePosition.x - playerSprite.x
+		);
+
 		var digDownPosition = {
-			x: playerSprite.x,
-			y: playerSprite.y
+			x: playerSprite.x + shovelUpStrokePositionOffset * Math.cos(angle),
+			y: playerSprite.y + shovelUpStrokePositionOffset * Math.sin(angle)
 		};
 
-		if (currentFramesData === elephantFrames.north) {
-			digDownPosition.y += shovelStrokeDistance.north;
+		currentFramesData = chooseElephantAnimationData(angle);
+		playerSprite.setSpriteFrame(currentFramesData.standFrame);
+		playerSprite.setFlippedX(currentFramesData.spriteFlipped);
+
+		if (angle < -Math.PI / 2) {
 			shovelSprite.setFlippedX(false);
-		} else if (currentFramesData === elephantFrames.south) {
-			digDownPosition.y -= shovelStrokeDistance.south;
-			shovelSprite.setFlippedX(false);
-		} else if (currentFramesData === elephantFrames.east) {
-			digDownPosition.x += shovelStrokeDistance.east;
+			shovelSprite.setFlippedY(false);
+		} else if (angle < 0) {
 			shovelSprite.setFlippedX(true);
-		} else if (currentFramesData === elephantFrames.west) {
-			digDownPosition.x -= shovelStrokeDistance.west;
+			shovelSprite.setFlippedY(false);
+		} else if (angle < Math.PI / 2) {
+			shovelSprite.setFlippedX(true);
+			shovelSprite.setFlippedY(true);
+		} else {
 			shovelSprite.setFlippedX(false);
+			shovelSprite.setFlippedY(true);
 		}
 
 		shovelSprite.setPosition(digDownPosition);
@@ -288,23 +291,21 @@ sand.elephants = (function () {
 		sand.globalFunctions.addFootprintToQueue(digDownGlobalPosition, sand.modifyRegion.brushes.shovelIn.name);
 	}
 
-	function pullShovelOutOfGround(position) {
+	function pullShovelOutOfGround() {
 		shovelInStrokeOccurring = false;
 		shovelOutStrokeOccurring = true;
 
 		var digDownPosition = sand.globalFunctions.getPositionOnScreenFromGlobalCoordinates(digDownGlobalPosition);
 
-		var angle = Math.atan2(
-			position.y - digDownPosition.y,
-			position.x - digDownPosition.x
-		);
-
 		var digUpPosition = {
-			x: digDownPosition.x + shovelUpStrokePositionOffset * Math.cos(angle),
-			y: digDownPosition.y + shovelUpStrokePositionOffset * Math.sin(angle)
+			x: (playerSprite.x - digDownPosition.x) + playerSprite.x,
+			y: (playerSprite.y - digDownPosition.y) + playerSprite.y
 		};
 
-		shovelSprite.setFlippedY(true);
+
+		shovelSprite.setFlippedX(!shovelSprite.isFlippedX());
+		shovelSprite.setFlippedY(!shovelSprite.isFlippedY());
+
 		shovelSprite.setPosition(digUpPosition);
 		shovelSprite.setVisible(true);
 
@@ -312,7 +313,6 @@ sand.elephants = (function () {
 		sand.globalFunctions.addFootprintToQueue(digUpGlobalPosition, sand.modifyRegion.brushes.shovelOut.name);
 
 		setTimeout(function () {
-			shovelSprite.setFlippedY(false);
 			shovelSprite.setVisible(false);
 			shovelOutStrokeOccurring = false;
 		}, shovelUpStrokeDelayMillis);

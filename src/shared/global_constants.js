@@ -8,8 +8,7 @@ sand.constants = {
 	kElephantSpeed: 50,
 	kScrollSpeed: 80,
 	kBeginScrollThreshold: 150, // distance from edge to start scrolling toward player
-	kFootprintVerticalOffset: 12, // vertical distance from center of elephant sprite to place footprints
-	kElephantHeightOffset: 30 // vertical distance from bottom of elephant to display inventory items
+	kElephantHeightOffset: 22 // vertical distance from bottom of elephant to display inventory items
 };
 
 var module = module || {};

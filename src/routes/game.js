@@ -2,6 +2,7 @@ var express = require('express');
 var debug = require('debug')('sand');
 var router = express.Router();
 var cookieParser = require('cookie-parser')();
+var fs = require('fs');
 
 var query = require('../server/query_db');
 var rockDAO = require('../server/rock_dao');
@@ -12,16 +13,41 @@ module.exports = function (environment) {
 		cookieParser,
 		function (req, res) {
 			function renderGame(email, rocks) {
+				var responseObjects = {};
 				if (email !== undefined && rocks !== undefined) {
-					res.render('game', {
-						environment: environment,
-						email: email,
-						rocks: rocks
+					responseObjects.email = email;
+					responseObjects.rocks = rocks;
+				}
+
+				if (environment === "development") {
+					responseObjects.scriptSources = [];
+					var numDirsToRead = 2;
+					fs.readdir("./src/client", function (err, files) {
+						if (err) {
+							throw err;
+						}
+
+						responseObjects.scriptSources = responseObjects.scriptSources.concat(files);
+						numDirsToRead--;
+						if (numDirsToRead === 0) {
+							res.render('game', responseObjects);
+						}
+					});
+
+					fs.readdir("./src/shared", function (err, files) {
+						if (err) {
+							throw err;
+						}
+
+						responseObjects.scriptSources = responseObjects.scriptSources.concat(files);
+						numDirsToRead--;
+						if (numDirsToRead === 0) {
+							res.render('game', responseObjects);
+						}
 					});
 				} else {
-					res.render('game', {
-						environment: environment
-					});
+					responseObjects.scriptSources = ['/javascripts/min.js'];
+					res.render('game', responseObjects);
 				}
 			}
 

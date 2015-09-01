@@ -1,3 +1,4 @@
+var sand = sand || {};
 sand.traveller = (function () {
 	var travellerSprite;
 	var speechBubbleSprite;

@@ -1,3 +1,4 @@
+var sand = sand || {};
 sand.elephants = (function () {
 	var playerSprite;
 	var otherPlayers = {};

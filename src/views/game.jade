@@ -17,26 +17,8 @@ html
 		// in the same directory as the 'src' attribute of this script tag
 		script(cocos src='/javascripts/libraries/cocos2d/cocos2d-js-v3.7.js')
 
-		if (environment == 'development')
-			script(src='/startup.js')
-			script(src='/cocos2d_image_resources.js')
-			script(src='/GameScene.js')
-			script(src='/EntitiesLayer.js')
-			script(src='/ElephantsModule.js')
-			script(src='/TravellerEntity.js')
-			script(src='/ReserveAreasModule.js')
-			script(src='/BackgroundLayer.js')
-			script(src='/modify_region.js')
-			script(src='/canvas_update.js')
-			script(src='/RegionNode.js')
-			script(src='/global_constants.js')
-			script(src='/global_functions.js')
-			script(src='/dune_functions.js')
-			script(src='/footprint_functions.js')
-			script(src='/login_form.js')
-			script(src='/shared_rock_functions.js')
-		else
-			script(src='/javascripts/min.js')
+		each scriptSource in scriptSources
+			script(src='#{scriptSource}')
 	body
 		include sign_in
 		include traveller_speech_box

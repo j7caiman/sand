@@ -120,11 +120,11 @@ sand.globalFunctions = {
 						canvas.style.display = 'none';
 						sand.allRegions[regionName].setCanvas(canvas);
 
-						var sprite = new cc.Sprite(new cc.Texture2D());
+						var texture = new cc.Texture2D();
+						texture.initWithElement(sand.allRegions[regionName].getCanvas());
+						var sprite = new cc.Sprite(texture);
 						sprite.setName(regionName);
 						sprite.setAnchorPoint(0, 0);
-						sprite.getTexture().initWithElement(sand.allRegions[regionName].getCanvas());
-						sprite.getTexture().handleLoadedTexture();
 						sprite.setVisible(false);
 						sand.allRegions[regionName].setSprite(sprite);
 

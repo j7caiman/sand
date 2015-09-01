@@ -4,7 +4,7 @@ var zlib = require('zlib');
 var stream = require('stream');
 
 var sand = {
-	modifyRegion: require("../shared/dune_functions"),
+	duneFunctions: require("../shared/dune_functions"),
 	globalFunctions: require("../shared/global_functions"),
 	constants: require("../shared/global_constants")
 };
@@ -73,15 +73,15 @@ ZipCodeHandler.prototype = {
 		var that = this;
 		var zipCode = that._zipCode;
 
-		var regionNamesToCreate = sand.modifyRegion.listRegionNamesInZipCode(zipCode);
+		var regionNamesToCreate = sand.duneFunctions.listRegionNamesInZipCode(zipCode);
 		var regionsToCreate = regionNamesToCreate.map(function (regionName) {
 			var region = new RegionNode(regionName);
 			region.setData(that._createGrid(256));
 			return region;
 		});
 
-		sand.modifyRegion.generateLargeDune(regionsToCreate);
-		sand.modifyRegion.generateBumps(regionsToCreate);
+		sand.duneFunctions.generateLargeDune(regionsToCreate);
+		sand.duneFunctions.generateBumps(regionsToCreate);
 
 		var numRegionsToCreate = sand.constants.kZipCodeWidth * sand.constants.kZipCodeWidth;
 		var numRegionsCreated = 0;

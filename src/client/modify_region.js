@@ -23,13 +23,12 @@ sand.modifyRegion.makeFootprint = function (globalPosition, brushName) {
 };
 
 sand.modifyRegion.regenerateTerrain = function () {
-	var that = this;
-	if (!that.generateLargeDune) {
+	if (sand.duneFunctions === undefined) {
 		return;
 	}
 
 	var zipCode = sand.globalFunctions.getRegionZipCode(sand.currentRegion.getName());
-	var regionNames = that.listRegionNamesInZipCode(zipCode);
+	var regionNames = sand.duneFunctions.listRegionNamesInZipCode(zipCode);
 
 	sand.globalFunctions.addMoreRegions(onComplete, regionNames);
 
@@ -48,12 +47,12 @@ sand.modifyRegion.regenerateTerrain = function () {
 			return sand.allRegions[regionName];
 		});
 
-		that.generateLargeDune(regions);
-		that.generateBumps(regions);
+		sand.duneFunctions.generateLargeDune(regions);
+		sand.duneFunctions.generateBumps(regions);
 
 		regions.forEach(function (region) {
 			sand.canvasUpdate.drawRegionToCanvas(region);
-		}, this);
+		});
 	}
 };
 

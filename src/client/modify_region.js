@@ -58,7 +58,7 @@ sand.modifyRegion.regenerateTerrain = function () {
 };
 
 sand.modifyRegion.createPointsAlongPath = function (path) {
-	const spacing = 10;
+	var spacing = 10;
 
 	var points = [];
 	for (var i = 0; i < path.length; i++) {

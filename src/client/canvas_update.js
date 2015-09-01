@@ -52,19 +52,19 @@ sand.canvasUpdate = (function () {
 	};
 
 	var eternalSunsetDraw = function (sandGrainPosition, region) {
-		const pink = {
+		var pink = {
 			red: 255,
 			green: 168,
 			blue: 211
 		};
 
-		const cyan = {
+		var cyan = {
 			red: 169,
 			green: 244,
 			blue: 255
 		};
 
-		const yellow = {
+		var yellow = {
 			red: 251,
 			green: 190,
 			blue: 127
@@ -131,28 +131,28 @@ sand.canvasUpdate = (function () {
 		var difference = depthOfLeftBlock - depthOfCurrentBlock;
 
 		if (difference >= 2) {
-			const dark = 100;
+			var dark = 100;
 			return {
 				red: dark,
 				green: dark,
 				blue: dark
 			}
 		} else if (difference >= 1) {
-			const medium = 60;
+			var medium = 60;
 			return {
 				red: medium,
 				green: medium,
 				blue: medium
 			}
 		} else if (difference >= 0) {
-			const light = 0;
+			var light = 0;
 			return {
 				red: light,
 				green: light,
 				blue: light
 			}
 		} else {
-			const bright = -15;
+			var bright = -15;
 			return {
 				red: bright,
 				green: bright,
@@ -162,7 +162,7 @@ sand.canvasUpdate = (function () {
 	};
 
 	var paintColorDraw = function (blockIndex, region) {
-		const darkenBy = 20;
+		var darkenBy = 20;
 		return region.getData()[blockIndex.y][blockIndex.x][1] * darkenBy;
 	};
 
@@ -219,7 +219,7 @@ sand.canvasUpdate = (function () {
 		 */
 		drawRect.invertedY = sand.constants.kCanvasWidth - (drawRect.y + drawRect.height);
 
-		const canvasWidth = sand.constants.kCanvasWidth;
+		var canvasWidth = sand.constants.kCanvasWidth;
 		var blockWidth = canvasWidth / sand.constants.kRegionWidth; // blocks are square
 
 		var context = region.getCanvas().getContext('2d');

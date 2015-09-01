@@ -5,8 +5,8 @@ sand.constants = sand.constants || require("./../shared/global_constants");
 
 sand.modifyRegion = sand.modifyRegion || {};
 
-const kMaxRockEdgeWidth = 1000;
-const kMaxRockArea = kMaxRockEdgeWidth * kMaxRockEdgeWidth;
+var kMaxRockEdgeWidth = 1000;
+var kMaxRockArea = kMaxRockEdgeWidth * kMaxRockEdgeWidth;
 
 sand.modifyRegion.getReservedPerimeterIfValid = function (points) {
 	var path = sand.modifyRegion.detectConvexQuadrangle(points);

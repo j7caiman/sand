@@ -174,7 +174,7 @@ var GameScene = cc.Scene.extend({
 	Throttler: function (delayMillis) {
 		this.throttle = function(callback, thisArg) {
 			this.counter = ++this.counter || 0;
-			const frameRate = 24; // configured in project.json
+			var frameRate = 24; // configured in project.json
 			if (this.counter < (frameRate * delayMillis / 1000)) {
 				return;
 			}
@@ -266,7 +266,7 @@ var GameScene = cc.Scene.extend({
 					y: Math.floor(index / numColumns)
 				};
 
-				const epsilon = 1; // slightly overlap regions so that safari and firefox tears between regions are invisible
+				var epsilon = 1; // slightly overlap regions so that safari and firefox tears between regions are invisible
 				var x = currentRegionLocation.x - (sand.constants.kCanvasWidth - epsilon) * (currentRegionOffset.x - regionOffset.x);
 				var y = currentRegionLocation.y - (sand.constants.kCanvasWidth - epsilon) * (currentRegionOffset.y - regionOffset.y);
 				sprite.setPosition(x, y);

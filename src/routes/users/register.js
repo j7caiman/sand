@@ -62,7 +62,7 @@ module.exports = router.post('/',
 				[email, passwordHash, confirmationToken],
 				function (error) {
 					if (error) {
-						const kUniqueViolationCode = "23505";
+						var kUniqueViolationCode = "23505";
 						if (error.code === kUniqueViolationCode) {
 							res.send({
 								error: 'this email address has already been registered.' +

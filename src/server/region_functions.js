@@ -83,7 +83,7 @@ ZipCodeHandler.prototype = {
 		sand.modifyRegion.generateLargeDune(regionsToCreate);
 		sand.modifyRegion.generateBumps(regionsToCreate);
 
-		const numRegionsToCreate = sand.constants.kZipCodeWidth * sand.constants.kZipCodeWidth;
+		var numRegionsToCreate = sand.constants.kZipCodeWidth * sand.constants.kZipCodeWidth;
 		var numRegionsCreated = 0;
 		var tempDirectory = './resources/world_datastore/z' + zipCode + "temp";
 		fs.mkdir(tempDirectory, function (err) {

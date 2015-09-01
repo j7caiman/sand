@@ -64,7 +64,7 @@ sand.modifyRegion.brushes = {
 };
 
 sand.modifyRegion.darkenSand = function (regionData, positionOnCanvas, radius) {
-	const sandGrainWidth = sand.constants.kCanvasWidth / sand.constants.kRegionWidth; // blocks are square
+	var sandGrainWidth = sand.constants.kCanvasWidth / sand.constants.kRegionWidth; // blocks are square
 	var pointOfImpact = {
 		x: Math.floor(positionOnCanvas.x / sandGrainWidth),
 		y: Math.floor(positionOnCanvas.y / sandGrainWidth)
@@ -123,7 +123,7 @@ sand.modifyRegion.darkenSand.counter = 0;
  * emboss: if true, raises the ground instead of lowering it
  */
 sand.modifyRegion.imprintSphere = function (regionData, positionOnCanvas, radius, pointOfImpactZ, emboss) {
-	const sandGrainWidth = sand.constants.kCanvasWidth / sand.constants.kRegionWidth; // blocks are square
+	var sandGrainWidth = sand.constants.kCanvasWidth / sand.constants.kRegionWidth; // blocks are square
 	var pointOfImpact = {
 		x: Math.floor(positionOnCanvas.x / sandGrainWidth),
 		y: Math.floor(positionOnCanvas.y / sandGrainWidth),

@@ -5,7 +5,7 @@ sand.constants = sand.constants || require("./global_constants");
 
 sand.modifyRegion = sand.modifyRegion || {};
 sand.modifyRegion.listRegionNamesInZipCode = function (zipCode) {
-	const zipCodeWidth = sand.constants.kZipCodeWidth;
+	var zipCodeWidth = sand.constants.kZipCodeWidth;
 
 	var regionNamesToCreate = [];
 	for (var x = 0; x < zipCodeWidth; x++) {
@@ -20,7 +20,7 @@ sand.modifyRegion.listRegionNamesInZipCode = function (zipCode) {
 };
 
 sand.modifyRegion.generateLargeDune = function (regions) {
-	const zipCodeWidth = sand.constants.kZipCodeWidth;
+	var zipCodeWidth = sand.constants.kZipCodeWidth;
 
 	var bottomRightRegion = regions[zipCodeWidth - 1];
 	var topLeftRegion = regions[(zipCodeWidth * zipCodeWidth) - zipCodeWidth];
@@ -160,7 +160,7 @@ sand.modifyRegion._createBezierFunction = function (begin, cp1, cp2, end) {
 };
 
 sand.modifyRegion._inscribeDuneToRegion = function (dunePath, region) {
-	const samplePeriod = 0.005;
+	var samplePeriod = 0.005;
 	for (var t = 0; t <= 1; t += samplePeriod) {
 		var positionOfCone = sand.globalFunctions.toLocalCoordinates(dunePath(t), region);
 		var height = this._determineHeightOfCone(t);
@@ -188,8 +188,8 @@ sand.modifyRegion._inscribeDuneToRegion = function (dunePath, region) {
  * So, heightDelta is more of a suggestion on how fast the dune should approach its maximum height
  */
 sand.modifyRegion._determineHeightOfCone = function (t) {
-	const maxHeight = 1000;
-	const heightDelta = 200;
+	var maxHeight = 1000;
+	var heightDelta = 200;
 
 	if (t < 0.5) {
 		return Math.min(maxHeight, heightDelta * t);
@@ -199,8 +199,8 @@ sand.modifyRegion._determineHeightOfCone = function (t) {
 };
 
 sand.modifyRegion._createCone = function (regionData, positionOnCanvas, highestPoint, isAdditive) {
-	const angleOfRepose = Math.PI / 4;
-	const sandGrainWidth = sand.constants.kCanvasWidth / sand.constants.kRegionWidth; // blocks are square
+	var angleOfRepose = Math.PI / 4;
+	var sandGrainWidth = sand.constants.kCanvasWidth / sand.constants.kRegionWidth; // blocks are square
 	var positionOnRegion = {
 		x: Math.floor(positionOnCanvas.x / sandGrainWidth),
 		y: Math.floor(positionOnCanvas.y / sandGrainWidth),

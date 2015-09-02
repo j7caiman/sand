@@ -66,7 +66,7 @@ module.exports = router.post('/',
 						if (error.code === kUniqueViolationCode) {
 							res.send({
 								error: 'this email address has already been registered.' +
-								' click \'reset password\' to request a password reset.'
+								' click \'forgot password\' to request a password reset.'
 							});
 						} else {
 							res.status('500').send();

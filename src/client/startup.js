@@ -177,7 +177,7 @@ sand.globalFunctions._fly = function (disable) {
 	return "current speed: " + sand.constants.kElephantSpeed + " kilophants/hour."
 };
 
-sand.globalFunctions.addFootprintToQueue = function (location, brushStrokeType) {
+sand.globalFunctions.addFootprintToQueue = function (location, brushStrokeType, additionalData) {
 	var reservedAreas = sand.reserveAreasModule.getReservedAreas();
 	var notInReservedArea = true;
 	for (var id in reservedAreas) {
@@ -200,6 +200,10 @@ sand.globalFunctions.addFootprintToQueue = function (location, brushStrokeType) 
 			location: roundedLocation,
 			brush: brushStrokeType
 		};
+
+		if(additionalData !== undefined) {
+			print.additionalData = additionalData;
+		}
 
 		sand.batchedFootprints.push(print);
 		sand.socket.emit('footprint', print);

@@ -3,7 +3,11 @@
  * Called once per frame. frame rate is configured in project.json
  */
 var GameScene = cc.Scene.extend({
-	onEnter:function () {
+	// state variables
+	_lastEmittedPosition: undefined,
+	_lastPrint: undefined,
+
+	onEnter: function () {
 		this._super();
 		this.init();
 
@@ -19,7 +23,7 @@ var GameScene = cc.Scene.extend({
 
 		$('#loading').hide();
 		$('#signIn').show();
-		if(typeof userRemembered === 'function') {
+		if (typeof userRemembered === 'function') {
 			userRemembered();
 		}
 
@@ -62,7 +66,7 @@ var GameScene = cc.Scene.extend({
 		this.scheduleUpdate();
 	},
 
-	update: function() {
+	update: function () {
 		this._super();
 
 		var backgroundPosition = sand.currentRegion.getSprite();
@@ -72,12 +76,12 @@ var GameScene = cc.Scene.extend({
 		};
 		var globalCoordinates = sand.globalFunctions.toGlobalCoordinates(localPosition);
 		if (sand.globalCoordinates.x != globalCoordinates.x
-		 || sand.globalCoordinates.y != globalCoordinates.y) {
+			|| sand.globalCoordinates.y != globalCoordinates.y) {
 
 			sand.globalCoordinates = globalCoordinates;
 
 			var brush = sand.elephants.getPlayerBrushWhileMoving();
-			var frequency = sand.modifyRegion.brushes[brush].frequency;
+			var frequency = sand.brushes[brush].frequency;
 			var printLocation = {
 				x: sand.globalCoordinates.x,
 				y: sand.globalCoordinates.y
@@ -86,13 +90,17 @@ var GameScene = cc.Scene.extend({
 				|| (sand.globalFunctions.calculateDistance(this._lastPrint, printLocation) >= frequency)) {
 
 				if (!sand.flying) {
-					sand.globalFunctions.addFootprintToQueue(printLocation, brush);
+					if(brush === sand.brushes.painting.name) {
+						sand.globalFunctions.addFootprintToQueue(printLocation, brush, sand.paintbrushModule.getCurrentPaintbrushData());
+					} else {
+						sand.globalFunctions.addFootprintToQueue(printLocation, brush);
+					}
 				}
 
 				this._lastPrint = printLocation;
 			}
 
-			if(!sand.flying) {
+			if (!sand.flying) {
 				this.positionEmitterThrottler.throttle(function updateCookiesAndEmitPosition() {
 					function equalsWithEpsilon(num1, num2, epsilon) {
 						return Math.abs(num1 - num2) < epsilon;
@@ -104,11 +112,11 @@ var GameScene = cc.Scene.extend({
 						y: Math.round(sand.globalCoordinates.y)
 					};
 
-					if (this.lastEmittedPosition === undefined
-						|| !equalsWithEpsilon(this.lastEmittedPosition.x, roundedGlobalPosition.x, 1)
-						|| !equalsWithEpsilon(this.lastEmittedPosition.y, roundedGlobalPosition.y, 1)) {
+					if (this._lastEmittedPosition === undefined
+						|| !equalsWithEpsilon(this._lastEmittedPosition.x, roundedGlobalPosition.x, 1)
+						|| !equalsWithEpsilon(this._lastEmittedPosition.y, roundedGlobalPosition.y, 1)) {
 
-						this.lastEmittedPosition = roundedGlobalPosition;
+						this._lastEmittedPosition = roundedGlobalPosition;
 
 						sand.socket.emit('updatePosition', {
 							uuid: sand.uuid,
@@ -129,7 +137,8 @@ var GameScene = cc.Scene.extend({
 					|| position.x < 0
 					|| position.y < 0;
 			}
-			if(isOutOfBounds(localPosition)) {
+
+			if (isOutOfBounds(localPosition)) {
 				var differenceInLocation = {
 					x: sand.globalFunctions.mod(localPosition.x, sand.constants.kCanvasWidth) - localPosition.x,
 					y: sand.globalFunctions.mod(localPosition.y, sand.constants.kCanvasWidth) - localPosition.y
@@ -150,9 +159,9 @@ var GameScene = cc.Scene.extend({
 			this.triggerScrolling();
 		}
 
-		if(sand.batchedFootprints.length != 0) {
-			sand.batchedFootprints.forEach(function(print) {
-				sand.modifyRegion.makeFootprint(print.location, print.brush);
+		if (sand.batchedFootprints.length != 0) {
+			sand.batchedFootprints.forEach(function (print) {
+				sand.modifyRegion.makeFootprint(print);
 
 				var area = sand.globalFunctions.createBoundingBox(
 					print.location,
@@ -172,7 +181,7 @@ var GameScene = cc.Scene.extend({
 
 	//calls "callback" roughly every 'delayMillis'
 	Throttler: function (delayMillis) {
-		this.throttle = function(callback, thisArg) {
+		this.throttle = function (callback, thisArg) {
 			this.counter = ++this.counter || 0;
 			var frameRate = 24; // configured in project.json
 			if (this.counter < (frameRate * delayMillis / 1000)) {
@@ -183,9 +192,9 @@ var GameScene = cc.Scene.extend({
 		}
 	},
 
-	triggerScrolling: function() {
+	triggerScrolling: function () {
 		// if already scrolling, don't attempt to scroll more
-		if(sand.elephants.getPlayerSprite().getActionByTag("scroll")) {
+		if (sand.elephants.getPlayerSprite().getActionByTag("scroll")) {
 			return;
 		}
 
@@ -205,7 +214,7 @@ var GameScene = cc.Scene.extend({
 				|| position.y > boundary.top;
 		})(elephantPosition, boundary);
 
-		if(beginScrolling) {
+		if (beginScrolling) {
 			var scrollVector = {
 				x: window.innerWidth / 2 - elephantPosition.x,
 				y: window.innerHeight / 2 - elephantPosition.y
@@ -217,11 +226,11 @@ var GameScene = cc.Scene.extend({
 		}
 	},
 
-	updateBackgroundSpriteLocations: function() {
+	updateBackgroundSpriteLocations: function () {
 		var playerScreenPosition = sand.elephants.getPlayerSprite().getPosition();
 		var bottomLeftCornerOfViewport = {
-			x:  sand.globalCoordinates.x - playerScreenPosition.x,
-			y:  sand.globalCoordinates.y - playerScreenPosition.y
+			x: sand.globalCoordinates.x - playerScreenPosition.x,
+			y: sand.globalCoordinates.y - playerScreenPosition.y
 		};
 
 		var viewport = {
@@ -235,18 +244,18 @@ var GameScene = cc.Scene.extend({
 		var indexOfCurrentRegion = undefined;
 		var previousRegionYCoordinate;
 		var numColumns;
-		visibleRegionNames.forEach(function(regionName, index) {
-			if(sand.currentRegion.getName() === regionName) {
+		visibleRegionNames.forEach(function (regionName, index) {
+			if (sand.currentRegion.getName() === regionName) {
 				indexOfCurrentRegion = index;
 			}
 			var yCoordinate = regionName.split("_")[1];
-			if(numColumns === undefined && index !== 0 && yCoordinate !== previousRegionYCoordinate) {
+			if (numColumns === undefined && index !== 0 && yCoordinate !== previousRegionYCoordinate) {
 				numColumns = index;
 			}
 
 			previousRegionYCoordinate = yCoordinate;
 		});
-		if(numColumns === undefined) {
+		if (numColumns === undefined) {
 			numColumns = 1;
 		}
 
@@ -256,9 +265,9 @@ var GameScene = cc.Scene.extend({
 		};
 		var currentRegionLocation = sand.currentRegion.getSprite().getPosition();
 
-		visibleRegionNames.forEach(function(regionName, index) {
+		visibleRegionNames.forEach(function (regionName, index) {
 			var region = sand.allRegions[regionName];
-			if(region !== undefined) {
+			if (region !== undefined) {
 				var sprite = region.getSprite();
 
 				var regionOffset = {

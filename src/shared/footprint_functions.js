@@ -3,172 +3,192 @@ var require = require || function () {};
 sand.globalFunctions = sand.globalFunctions || require("./global_functions");
 sand.constants = sand.constants || require("./global_constants");
 
-sand.modifyRegion = sand.modifyRegion || {};
+sand.brushes = (function () {
+	var painting = (function () {
+		var name = "painting";
+		var frequency = 4;
+		var radius = 6;
 
-sand.modifyRegion.brushes = {
-	painting: {
-		name: "painting",
-		frequency: 7,
-		radius: 6,
-		apply: function(regionData, positionOnCanvas) {
-			sand.modifyRegion.darkenSand(
-				regionData,
-				positionOnCanvas,
-				6
-			)
+		// a buffer containing all previous strokes from the current elephant path
+		// used to make sure the painting doesn't overlap itself
+		var previousStrokeBuffer = {};
+
+		function apply(regionData, positionOnCanvas, additionalData) {
+			if (additionalData.resetBuffer) {
+				previousStrokeBuffer = {};
+			}
+
+			radius = additionalData.radius;
+			var darkenBy = additionalData.opacity;
+
+			darkenSand(regionData, positionOnCanvas, darkenBy);
 		}
-	},
 
-	walking: {
-		name: "walking",
-		frequency: 15,
-		radius: 1.5,
-		apply: function(regionData, positionOnCanvas) {
-			sand.modifyRegion.imprintSphere(
+		function darkenSand(regionData, positionOnCanvas, darkenBy) {
+			var sandGrainWidth = sand.constants.kCanvasWidth / sand.constants.kRegionWidth; // blocks are square
+			var pointOfImpact = {
+				x: Math.floor(positionOnCanvas.x / sandGrainWidth),
+				y: Math.floor(positionOnCanvas.y / sandGrainWidth)
+			};
+
+			var bounds = computeBounds(pointOfImpact, radius);
+
+			for (var y = bounds.bottom; y < bounds.top; y++) {
+				for (var x = bounds.left; x < bounds.right; x++) {
+					var distanceFromCenter = sand.globalFunctions.calculateDistance(pointOfImpact, {x: x, y: y});
+					if (distanceFromCenter < radius) {
+						if (!previousStrokeBuffer[x + "_" + y]) {
+							regionData[y][x][1] += darkenBy;
+						}
+
+						previousStrokeBuffer[x + "_" + y] = true;
+					}
+				}
+			}
+		}
+
+		return {
+			name: name,
+			frequency: frequency,
+			radius: radius,
+			apply: apply
+		}
+	})();
+
+	var walking = (function () {
+		var radius = 1.5;
+
+		function apply(regionData, positionOnCanvas) {
+			imprintSphere(
 				regionData,
 				positionOnCanvas,
-				1.5,
+				radius,
 				0,
 				false
 			)
 		}
-	},
 
-	shovelIn: {
-		name: "shovelIn",
-		radius: 5,
-		apply: function(regionData, positionOnCanvas) {
-			sand.modifyRegion.imprintSphere(
+		return {
+			name: "walking",
+			frequency: 15,
+			radius: radius,
+			apply: apply
+		}
+	})();
+
+	var shovelIn = (function () {
+		var radius = 5;
+
+		function apply(regionData, positionOnCanvas) {
+			imprintSphere(
 				regionData,
 				positionOnCanvas,
-				5,
+				radius,
 				1.5,
 				false
 			)
 		}
-	},
 
-	shovelOut: {
-		name: "shovelOut",
-		radius: 5,
-		apply: function(regionData, positionOnCanvas) {
-			sand.modifyRegion.imprintSphere(
+		return {
+			name: "shovelIn",
+			radius: radius,
+			apply: apply
+		}
+	})();
+
+	var shovelOut = (function () {
+		var radius = 5;
+
+		function apply(regionData, positionOnCanvas) {
+			imprintSphere(
 				regionData,
 				positionOnCanvas,
-				5,
+				radius,
 				1.5,
 				true
 			)
 		}
-	}
-};
 
-sand.modifyRegion.darkenSand = function (regionData, positionOnCanvas, radius) {
-	var sandGrainWidth = sand.constants.kCanvasWidth / sand.constants.kRegionWidth; // blocks are square
-	var pointOfImpact = {
-		x: Math.floor(positionOnCanvas.x / sandGrainWidth),
-		y: Math.floor(positionOnCanvas.y / sandGrainWidth)
-	};
-
-	var bounds = {
-		left: Math.max(
-			0, Math.floor(pointOfImpact.x - radius)
-		),
-		right: Math.min(
-			sand.constants.kRegionWidth, Math.ceil(pointOfImpact.x + radius)
-		),
-		bottom: Math.max(
-			0, Math.floor(pointOfImpact.y - radius)
-		),
-		top: Math.min(
-			sand.constants.kRegionWidth, Math.ceil(pointOfImpact.y + radius)
-		)
-	};
-
-	if (sand.modifyRegion.darkenSand.counter++ > 500) {
-		sand.modifyRegion.darkenSand.counter = 0;
-		sand.modifyRegion.darkenSand.previousFootprintBuffer = {};
-	}
-
-	for (var y = bounds.bottom; y < bounds.top; y++) {
-		for (var x = bounds.left; x < bounds.right; x++) {
-			var distanceFromCenter = sand.globalFunctions.calculateDistance(pointOfImpact, {x: x, y: y});
-			if (distanceFromCenter < radius) {
-
-				if (!sand.modifyRegion.darkenSand.previousFootprintBuffer[x + "_" + y]) {
-					regionData[y][x][1]++;
-				}
-
-				sand.modifyRegion.darkenSand.previousFootprintBuffer[x + "_" + y] = true;
-			}
+		return {
+			name: "shovelOut",
+			radius: radius,
+			apply: apply
 		}
-	}
-};
-sand.modifyRegion.darkenSand.previousFootprintBuffer = {};
-sand.modifyRegion.darkenSand.counter = 0;
+	})();
 
-/**
- * crater is shaped as follows:
- *
- *
- * - -     -                                 -      - ----------
- *          -                              -
- *             ---__              __ --
- *                    ' --------
- *
- * radius: radius of entire element
- * pointOfImpact: the height at which the sphere which forms the crater is located
- *  - note that in the diagram above, pointOfImpact would be located slightly above the word "follows"
- *
- * emboss: if true, raises the ground instead of lowering it
- */
-sand.modifyRegion.imprintSphere = function (regionData, positionOnCanvas, radius, pointOfImpactZ, emboss) {
-	var sandGrainWidth = sand.constants.kCanvasWidth / sand.constants.kRegionWidth; // blocks are square
-	var pointOfImpact = {
-		x: Math.floor(positionOnCanvas.x / sandGrainWidth),
-		y: Math.floor(positionOnCanvas.y / sandGrainWidth),
-		z: pointOfImpactZ
-	};
+	/**
+	 * crater is shaped as follows:
+	 *
+	 *
+	 * - -     -                                 -      - ----------
+	 *          -                              -
+	 *             ---__              __ --
+	 *                    ' --------
+	 *
+	 * radius: radius of entire element
+	 * pointOfImpact: the height at which the sphere which forms the crater is located
+	 *  - note that in the diagram above, pointOfImpact would be located slightly above the word "follows"
+	 *
+	 * emboss: if true, raises the ground instead of lowering it
+	 */
+	function imprintSphere(regionData, positionOnCanvas, radius, pointOfImpactZ, emboss) {
+		var sandGrainWidth = sand.constants.kCanvasWidth / sand.constants.kRegionWidth; // blocks are square
+		var pointOfImpact = {
+			x: Math.floor(positionOnCanvas.x / sandGrainWidth),
+			y: Math.floor(positionOnCanvas.y / sandGrainWidth),
+			z: pointOfImpactZ
+		};
 
-	var bounds = {
-		left: Math.max(
-			0, Math.floor(pointOfImpact.x - radius)
-		),
-		right: Math.min(
-			sand.constants.kRegionWidth, Math.ceil(pointOfImpact.x + radius)
-		),
-		bottom: Math.max(
-			0, Math.floor(pointOfImpact.y - radius)
-		),
-		top: Math.min(
-			sand.constants.kRegionWidth, Math.ceil(pointOfImpact.y + radius)
-		)
-	};
+		var bounds = computeBounds(pointOfImpact, radius);
+		for (var y = bounds.bottom; y < bounds.top; y++) {
+			for (var x = bounds.left; x < bounds.right; x++) {
+				var localCoordinates = {
+					x: x,
+					y: y,
+					z: regionData[y][x][0]
+				};
 
-	for (var y = bounds.bottom; y < bounds.top; y++) {
-		for (var x = bounds.left; x < bounds.right; x++) {
-			var localCoordinates = {
-				x: x,
-				y: y,
-				z: regionData[y][x][0]
-			};
+				var delta = {
+					x: localCoordinates.x - pointOfImpact.x,
+					y: localCoordinates.y - pointOfImpact.y
+				};
 
-			var delta = {
-				x: localCoordinates.x - pointOfImpact.x,
-				y: localCoordinates.y - pointOfImpact.y
-			};
-
-			var newZ = Math.sqrt(radius * radius - ( delta.x * delta.x + delta.y * delta.y )) - pointOfImpact.z;
-			if (newZ > 0) {
-				if(emboss === true) {
-					regionData[y][x][0] += Math.floor(newZ);
-				} else {
-					regionData[y][x][0] -= Math.floor(newZ);
+				var newZ = Math.sqrt(radius * radius - ( delta.x * delta.x + delta.y * delta.y )) - pointOfImpact.z;
+				if (newZ > 0) {
+					if (emboss === true) {
+						regionData[y][x][0] += Math.floor(newZ);
+					} else {
+						regionData[y][x][0] -= Math.floor(newZ);
+					}
 				}
 			}
 		}
 	}
-};
+
+	function computeBounds(pointOfImpact, radius) {
+		return {
+			left: Math.max(
+				0, Math.floor(pointOfImpact.x - radius)
+			),
+			right: Math.min(
+				sand.constants.kRegionWidth, Math.ceil(pointOfImpact.x + radius)
+			),
+			bottom: Math.max(
+				0, Math.floor(pointOfImpact.y - radius)
+			),
+			top: Math.min(
+				sand.constants.kRegionWidth, Math.ceil(pointOfImpact.y + radius)
+			)
+		};
+	}
+
+	return {
+		painting: painting,
+		walking: walking,
+		shovelIn: shovelIn,
+		shovelOut: shovelOut
+	}
+})();
 
 var module = module || {};
-module.exports = sand.modifyRegion;
+module.exports = sand.brushes;

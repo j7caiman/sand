@@ -4,7 +4,7 @@ var zlib = require('zlib');
 var stream = require('stream');
 
 var globalFunctions = require('../shared/global_functions');
-var footprintFunctions = require('../shared/footprint_functions');
+var brushes = require('../shared/footprint_functions');
 var RegionNode = require('../shared/RegionNode');
 var regionFunctions = require('./region_functions');
 
@@ -14,11 +14,9 @@ var pointInsidePolygon = require('./../shared/shared_rock_functions').pointInsid
 var footprintBuffer = {};
 
 function processFootprint(footprintData) {
-	var brush = footprintFunctions.brushes[footprintData.brush];
-
 	var area = globalFunctions.createBoundingBox(
 		footprintData.location,
-		brush.radius
+		brushes[footprintData.brush].radius
 	);
 
 	var regionNames = globalFunctions.findRegionsInRect(area);
@@ -30,10 +28,8 @@ function processFootprint(footprintData) {
 				lastFlushTimestamp: 0
 			};
 		}
-		footprintBuffer[regionName].buffer.push({
-			location: footprintData.location,
-			brush: brush
-		});
+
+		footprintBuffer[regionName].buffer.push(footprintData);
 
 		if (!footprintBuffer[regionName].locked) {
 			_flushFootprintBuffer(regionName);
@@ -86,7 +82,6 @@ function _flushFootprintBuffer(regionName) {
 				try {
 					regionData = JSON.parse(regionData);
 				} catch (error) {
-					var zipCode = globalFunctions.getRegionZipCode(regionName);
 					debug("error for region: z" + zipCode + "/r" + regionName);
 					debug("regionData: " + regionData);
 					throw error;
@@ -106,7 +101,11 @@ function _flushFootprintBuffer(regionName) {
 					}
 
 					if (notInReservedArea) {
-						print.brush.apply(regionData, globalFunctions.toLocalCoordinates(print.location, region));
+						brushes[print.brush].apply(
+							regionData,
+							globalFunctions.toLocalCoordinates(print.location, region),
+							print.additionalData
+						);
 					} else {
 						printsNotFlushed += "(" + print.location.x + ", " + print.location.y + "), ";
 					}

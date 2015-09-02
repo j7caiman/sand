@@ -1,9 +1,9 @@
 var sand = sand || {};
 sand.modifyRegion = sand.modifyRegion || {};
 
-sand.modifyRegion.makeFootprint = function (globalPosition, brushName) {
-	var brush = sand.modifyRegion.brushes[brushName];
-	var position = globalPosition;
+sand.modifyRegion.makeFootprint = function (print) {
+	var brush = sand.brushes[print.brush];
+	var position = print.location;
 
 	var changedArea = sand.globalFunctions.createBoundingBox(
 		position,
@@ -16,7 +16,8 @@ sand.modifyRegion.makeFootprint = function (globalPosition, brushName) {
 		if (region !== undefined) {
 			brush.apply(
 				region.getData(),
-				sand.globalFunctions.toLocalCoordinates(position, region)
+				sand.globalFunctions.toLocalCoordinates(position, region),
+				print.additionalData
 			);
 		}
 	});

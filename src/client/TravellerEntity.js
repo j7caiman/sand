@@ -9,6 +9,7 @@ sand.traveller = (function () {
 	var isWalking = false;
 	var eastOrWest = 1;
 	var chosenGift;
+	var playerLoggedIn = false;
 
 	// constants
 	var walkSpeed = 30;
@@ -31,7 +32,7 @@ sand.traveller = (function () {
 		paintbrush: "paintbrush"
 	};
 
-	function initialize() {
+	function initializeOnSceneStart() {
 		(function initializeTraveller() {
 			travellerSprite = new cc.Sprite("#traveller.png");
 			travellerSprite.setPosition({
@@ -73,6 +74,10 @@ sand.traveller = (function () {
 		});
 
 		chosenGift = gifts.nothing;
+	}
+
+	function initializeOnLogin() {
+		playerLoggedIn = true;
 	}
 
 	function getRandomInt(min, max) {
@@ -126,7 +131,9 @@ sand.traveller = (function () {
 			speechBox.hide();
 		} else if (!speechBox.is(':visible')) {
 			$('.travellerSpeechOptions').hide();
-			if (chosenGift === gifts.nothing) {
+			if (!playerLoggedIn) {
+				$('#welcomeTextNotLoggedIn').show();
+			} else if (chosenGift === gifts.nothing) {
 				$('#welcomeText').show();
 			} else {
 				$('#welcomeBackText').show();
@@ -184,7 +191,8 @@ sand.traveller = (function () {
 	}
 
 	return {
-		initialize: initialize,
+		initializeOnSceneStart: initializeOnSceneStart,
+		initializeOnLogin: initializeOnLogin,
 		mainLoopUpdate: mainLoopUpdate,
 		getTravellerSprite: getTravellerSprite,
 		wasPaintbrushChosen: wasPaintbrushChosen,

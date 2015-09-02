@@ -20,8 +20,7 @@ var EntitiesLayer = cc.Layer.extend({
 	},
 
 	init: function () {
-		var that = this;
-		that._super();
+		this._super();
 
 		/**
 		 * This listener catches both touchscreen and mouse input.
@@ -47,7 +46,14 @@ var EntitiesLayer = cc.Layer.extend({
 
 			onTouchesEnded: function (touches) {
 				var position = touches[0].getLocation();
-				sand.reserveAreasModule.handleTouchEvent(position);
+
+				sand.inventory.handleItemClicked(
+					position,
+					sand.reserveAreasModule.onRockButtonClicked,
+					sand.paintbrushModule.onOpacityButtonClicked,
+					sand.paintbrushModule.onStrokeRadiusButtonClicked,
+					sand.reserveAreasModule.handleTouchEvent
+				);
 			}
 		}, this);
 	}

@@ -17,10 +17,10 @@ sand.elephants = (function () {
 	var digDownGlobalPosition;
 	var currentFramesData; // shows the current direction the elephant sprite is facing
 
-	var brushTypeWhileMoving;
+	var brushWhileMoving;
 
 	function getPlayerBrushWhileMoving() {
-		return brushTypeWhileMoving;
+		return brushWhileMoving;
 	}
 
 	function getPlayerSprite() {
@@ -224,7 +224,7 @@ sand.elephants = (function () {
 		var distance = sand.globalFunctions.calculateDistance(lastVertex, newVertex);
 
 		if (sand.traveller.wasPaintbrushChosen()) {
-			if (distance >= sand.modifyRegion.brushes.painting.frequency) {
+			if (distance >= sand.brushes.painting.frequency) {
 				playerPath.push(newVertex);
 			}
 		} else if (sand.traveller.wasShovelChosen()) {
@@ -289,7 +289,7 @@ sand.elephants = (function () {
 		shovelSprite.setVisible(true);
 
 		digDownGlobalPosition = sand.globalFunctions.convertOnScreenPositionToGlobalCoordinates(digDownPosition);
-		sand.globalFunctions.addFootprintToQueue(digDownGlobalPosition, sand.modifyRegion.brushes.shovelIn.name);
+		sand.globalFunctions.addFootprintToQueue(digDownGlobalPosition, sand.brushes.shovelIn.name);
 	}
 
 	function pullShovelOutOfGround() {
@@ -311,7 +311,7 @@ sand.elephants = (function () {
 		shovelSprite.setVisible(true);
 
 		var digUpGlobalPosition = sand.globalFunctions.convertOnScreenPositionToGlobalCoordinates(digUpPosition);
-		sand.globalFunctions.addFootprintToQueue(digUpGlobalPosition, sand.modifyRegion.brushes.shovelOut.name);
+		sand.globalFunctions.addFootprintToQueue(digUpGlobalPosition, sand.brushes.shovelOut.name);
 
 		setTimeout(function () {
 			shovelSprite.setVisible(false);
@@ -328,7 +328,7 @@ sand.elephants = (function () {
 
 		var actionSequence = [];
 		actionSequence.push(cc.callFunc(function () {
-			brushTypeWhileMoving = sand.modifyRegion.brushes.walking.name;
+			brushWhileMoving = sand.brushes.walking.name;
 		}));
 		playerPath.forEach(function (element, index) {
 			endPosition = element;
@@ -361,7 +361,17 @@ sand.elephants = (function () {
 
 			if (index === 0) {
 				actionSequence.push(cc.callFunc(function () {
-					brushTypeWhileMoving = sand.modifyRegion.brushes.painting.name;
+					brushWhileMoving = sand.brushes.painting.name;
+
+					var additionalData = sand.paintbrushModule.getCurrentPaintbrushData();
+					additionalData.resetBuffer = true;
+
+					var printPosition = sand.globalFunctions.convertOnScreenPositionToGlobalCoordinates(playerSprite);
+					sand.globalFunctions.addFootprintToQueue(
+						printPosition,
+						brushWhileMoving,
+						additionalData
+					);
 				}));
 			}
 
@@ -369,7 +379,7 @@ sand.elephants = (function () {
 				actionSequence.push(cc.callFunc(function () {
 					stopAllAnimations(sprite);
 					sprite.setSpriteFrame(framesData.standFrame);
-					brushTypeWhileMoving = sand.modifyRegion.brushes.walking.name;
+					brushWhileMoving = sand.brushes.walking.name;
 				}));
 			}
 
@@ -413,7 +423,7 @@ sand.elephants = (function () {
 			sprite.runAction(walkAnimation);
 		}
 
-		brushTypeWhileMoving = sand.modifyRegion.brushes.walking.name;
+		brushWhileMoving = sand.brushes.walking.name;
 		sprite.flippedX = currentFramesData.spriteFlipped;
 
 		sprite.stopActionByTag("moveElephant");
@@ -523,7 +533,6 @@ sand.elephants = (function () {
 		sprite.stopActionByTag("animate_east");
 		sprite.stopActionByTag("animate_north");
 	}
-
 
 	return {
 		initializeOnSceneStart: initializeOnSceneStart,

@@ -5,8 +5,6 @@ sand.reserveAreasModule = (function () {
 	var rocksOnGround = {}; // key: rockId, value: sprite
 
 	// player specific state variables
-	var reserveAreasEnabled = false;
-
 	var rockIdsOwnedByPlayer = [];
 	var rockIdsInPocket = [];
 	var selectedRockId;
@@ -15,7 +13,6 @@ sand.reserveAreasModule = (function () {
 	var footprintTimeouts = [];
 
 	// sprites
-	var rockIconBackground;
 	var rockIcons = [];
 	var rockCarriedByPlayerSprite;
 
@@ -69,34 +66,28 @@ sand.reserveAreasModule = (function () {
 			}
 		}
 
-		activatedRockIds.forEach(function(rockId) {
+		activatedRockIds.forEach(function (rockId) {
 			rocksOnGround[rockId].setSpriteFrame(rockActivatedFrame);
 		});
 
 		reservedAreas = data.reservedAreas;
 	}
 
-	function initializeOnLogIn(rocks) {
+	function initializeOnLogin(rocks) {
 		// initialize rock on player's back, for when rocks are selected
 		rockCarriedByPlayerSprite = new cc.Sprite("#rock.png");
 		rockCarriedByPlayerSprite.setZOrder(sand.entitiesLayer.zOrders.itemsBeingCarried);
 		rockCarriedByPlayerSprite.setVisible(false);
 		sand.entitiesLayer.addChild(rockCarriedByPlayerSprite);
 
-		// initialize clickable background
-		rockIconBackground = new cc.Sprite("#ui_background.png");
-		rockIconBackground.setPosition(20, 20);
-		rockIconBackground.setAnchorPoint(0, 0);
-		rockIconBackground.setZOrder(sand.entitiesLayer.zOrders.inventoryBackground);
-		sand.entitiesLayer.addChild(rockIconBackground);
-
 		// initialize the four rocks in the player's inventory
+		var buttonPosition = sand.inventory.getRockButtonPosition();
 		rocks.forEach(function (rock, index) {
 			rockIdsOwnedByPlayer.push(rock.id);
 			var sprite = new cc.Sprite("#rock.png");
 			sprite.setPosition(
-				rockIconBackground.getPositionX() + 20 * (index + 1),
-				rockIconBackground.getPositionY() + 10);
+				buttonPosition.x + 20 * (index + 1),
+				buttonPosition.y + 10);
 			sprite.setZOrder(sand.entitiesLayer.zOrders.itemsInInventory);
 			sand.entitiesLayer.addChild(sprite);
 
@@ -110,8 +101,6 @@ sand.reserveAreasModule = (function () {
 		for (var i = rockIdsInPocket.length; i < rocks.length; i++) {
 			rockIcons[i].setSpriteFrame(rockUnavailableFrame);
 		}
-
-		reserveAreasEnabled = true;
 	}
 
 	function putRockOnGround(id, location) {
@@ -144,10 +133,6 @@ sand.reserveAreasModule = (function () {
 
 	function getReservedAreas() {
 		return reservedAreas;
-	}
-
-	function wereRockIconsClicked(position) {
-		return cc.rectContainsPoint(rockIconBackground.getBoundingBox(), position);
 	}
 
 	// modifies selectedRockId
@@ -222,10 +207,10 @@ sand.reserveAreasModule = (function () {
 		for (var i = 0; i < borderPath.length / 2; i++) {
 			footprintTimeouts.push(setTimeout((function (i) {
 				return function () {
-					sand.globalFunctions.addFootprintToQueue(borderPath[i], "walking");
+					sand.globalFunctions.addFootprintToQueue(borderPath[i], sand.brushes.walking.name);
 					var j = borderPath.length - 1 - i;
 					if (j !== i) {
-						sand.globalFunctions.addFootprintToQueue(borderPath[parseInt(borderPath.length - 1 - i)], "walking");
+						sand.globalFunctions.addFootprintToQueue(borderPath[parseInt(borderPath.length - 1 - i)], sand.brushes.walking.name);
 					}
 				}
 			})(i), ((i + 1) / borderPath.length) * 2 * totalDuration));
@@ -271,37 +256,28 @@ sand.reserveAreasModule = (function () {
 		}
 	}
 
+	function onRockButtonClicked() {
+		sand.elephants.stopPlayerElephant();
+		if (isRockSelected) {
+			deselectRock();
+		} else {
+			selectRock();
+		}
+	}
+
 	function handleTouchEvent(position) {
-		function defaultElephantActivity () {
+		if (isRockSelected) {
+			sand.elephants.movePlayerElephantToLocation(
+				position,
+				placeRockOnGround
+			);
+		} else if (wereRocksOnGroundClicked(position)) {
+			sand.elephants.movePlayerElephantToLocation(
+				position,
+				pickRockUpFromGround
+			);
+		} else {
 			sand.elephants.handleOnTouchEndedEvent(position);
-		}
-
-		if (!reserveAreasEnabled) {
-			defaultElephantActivity();
-			return;
-		}
-
-		if (wereRockIconsClicked(position)) {
-			sand.elephants.stopPlayerElephant();
-			if (isRockSelected) {
-				deselectRock();
-			} else {
-				selectRock();
-			}
-		} else { // user clicked ground
-			if (isRockSelected) {
-				sand.elephants.movePlayerElephantToLocation(
-					position,
-					placeRockOnGround
-				);
-			} else if (wereRocksOnGroundClicked(position)) {
-				sand.elephants.movePlayerElephantToLocation(
-					position,
-					pickRockUpFromGround
-				);
-			} else {
-				defaultElephantActivity();
-			}
 		}
 	}
 
@@ -319,12 +295,13 @@ sand.reserveAreasModule = (function () {
 	return {
 		initializeOnSceneStart: initializeOnSceneStart,
 		initializeOnSocketConnect: initializeOnSocketConnect,
-		initializeOnLogIn: initializeOnLogIn,
+		initializeOnLogin: initializeOnLogin,
 
 		getRocksOnGround: getRocksOnGround,
 		getReservedAreas: getReservedAreas,
 
 		handleTouchEvent: handleTouchEvent,
+		onRockButtonClicked: onRockButtonClicked,
 		mainLoopUpdate: mainLoopUpdate
 	}
 })();

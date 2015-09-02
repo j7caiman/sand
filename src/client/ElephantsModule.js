@@ -120,6 +120,7 @@ sand.elephants = (function () {
 		})();
 
 		currentFramesData = elephantFrames.west;
+		brushWhileMoving = sand.brushes.walking.name;
 
 		playerSprite = createElephant(
 			{

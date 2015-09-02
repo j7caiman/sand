@@ -5,9 +5,7 @@ sand.constants = sand.constants || require("./global_constants");
 
 sand.brushes = (function () {
 	var painting = (function () {
-		var name = "painting";
-		var frequency = 4;
-		var radius = 6;
+		var radius = 2;
 
 		// a buffer containing all previous strokes from the current elephant path
 		// used to make sure the painting doesn't overlap itself
@@ -48,8 +46,8 @@ sand.brushes = (function () {
 		}
 
 		return {
-			name: name,
-			frequency: frequency,
+			name: "painting",
+			frequency: 4,
 			radius: radius,
 			apply: apply
 		}

@@ -18,9 +18,9 @@ div#panelTopRight.panelStyle
 			input.inputBox(type="password", name="password", placeholder="password")
 			a#signInButton.textButton login
 			a#resetPasswordButton.textButton forgot password?
-			label
-				input(type="checkbox", name="rememberMe" checked="true")
-				p#rememberMe.fieldText remember me?
+		label
+			input#rememberMe(type="checkbox", name="rememberMe" checked="true")
+			p#rememberMeText.fieldText remember me?
 		div.responseDiv
 			a#signInError.errorText
 			a#signInText.confirmText

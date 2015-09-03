@@ -4,7 +4,6 @@ var router = express.Router();
 var cookieParser = require('cookie-parser')();
 var fs = require('fs');
 
-var query = require('../server/query_db');
 var rockDAO = require('../server/rock_dao');
 var caches = require('../server/caches');
 
@@ -51,14 +50,10 @@ module.exports = function (environment) {
 				}
 			}
 
-			var playerData = req.cookies.playerData;
-			if (playerData === undefined) {
-				renderGame();
-				return;
-			}
-
 			try {
-				var uuid = JSON.parse(playerData).uuid;
+				var playerData = JSON.parse(req.cookies.playerData);
+				var uuid = playerData.uuid;
+				var rememberMe = playerData.rememberMe;
 				if (uuid === undefined) {
 					debug('user had player data: ' + playerData + 'but no uuid and/or position');
 					renderGame();
@@ -69,29 +64,21 @@ module.exports = function (environment) {
 				return;
 			}
 
-			query('select id, email from users where uuid = $1', [uuid], function (error, result) {
-				if (error) {
+			if(!rememberMe) {
+				renderGame();
+				return;
+			}
+
+			rockDAO.rememberUserAndFetchRocks(uuid, onQueriesComplete);
+
+			function onQueriesComplete(userId, email, rocks) {
+				if (email === undefined || rocks === undefined) {
 					renderGame();
-					return;
+				} else {
+					caches.addLoggedInUser(uuid, userId, rocks);
+					renderGame(email, JSON.stringify(rocks));
 				}
-
-				if (result.rows.length == 0) {
-					renderGame();
-					return;
-				}
-
-				var id = result.rows[0].id;
-				var email = result.rows[0].email;
-				rockDAO.fetchRocksForPlayer(id, function (error, result) {
-					if (error) {
-						renderGame();
-						return;
-					}
-
-					caches.addLoggedInUser(uuid, id, result.rows);
-					renderGame(email, JSON.stringify(result.rows));
-				});
-			});
+			}
 		}
 	);
 };

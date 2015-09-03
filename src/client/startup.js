@@ -33,7 +33,8 @@ cc.game.onStart = function () {
 				lastPosition: {
 					x: 5750,
 					y: 610
-				}
+				},
+				rememberMe: $('#rememberMe').is(':checked')
 			};
 			$.cookie('playerData', playerData, {expires: 7});
 

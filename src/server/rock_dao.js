@@ -1,10 +1,6 @@
 var query = require('../server/query_db');
 
 module.exports = {
-	fetchRocksForPlayer: function (id, onComplete) {
-		query('select id, x, y from rocks where owner_id = $1', [id], onComplete);
-	},
-
 	fetchAllRocks: function (onComplete) {
 		query('select owner_id, id, x, y from rocks', onComplete);
 	},
@@ -64,5 +60,51 @@ module.exports = {
 				onComplete();
 			}
 		);
+	},
+
+	updateUuidAndFetchRocks: function (userId, uuid, onQueriesComplete) {
+		query('update users set uuid = $2 where id = $1', [userId, uuid], function (err) {
+			if (err) {
+				onQueriesComplete(err);
+				return;
+			}
+
+			fetchRocksForPlayer(userId, function(err, result) {
+				if (err) {
+					onQueriesComplete(err);
+				} else {
+					onQueriesComplete(undefined, result.rows);
+				}
+			});
+		});
+	},
+
+	rememberUserAndFetchRocks: function (uuid, onQueriesComplete) {
+		query('select id, email from users where uuid = $1', [uuid], function (error, result) {
+			if (error) {
+				onQueriesComplete();
+				return;
+			}
+
+			if (result.rows.length == 0) {
+				onQueriesComplete();
+				return;
+			}
+
+			var userId = result.rows[0].id;
+			var email = result.rows[0].email;
+			fetchRocksForPlayer(userId, function (error, result) {
+				if (error) {
+					onQueriesComplete();
+					return;
+				}
+
+				onQueriesComplete(userId, email, result.rows);
+			});
+		});
 	}
 };
+
+function fetchRocksForPlayer(id, onComplete) {
+	query('select id, x, y from rocks where owner_id = $1', [id], onComplete);
+}

@@ -47,12 +47,7 @@ var BackgroundLayer = cc.Layer.extend({
 						}
 					}
 
-					var rocks = sand.reserveAreasModule.getRocksOnGround();
-					for (var rockId in rocks) {
-						if (rocks.hasOwnProperty(rockId)) {
-							sprites.push(rocks[rockId]);
-						}
-					}
+					sprites = sprites.concat(sand.reserveAreasModule.getScrollableSprites());
 
 					sprites = sprites.concat(sand.elephants.getScrollableSprites());
 

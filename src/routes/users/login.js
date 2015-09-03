@@ -70,15 +70,15 @@ router.post('/',
 		}
 
 		function onPasswordConfirmed(userId) {
-			rockDAO.updateUuidAndFetchRocks(userId, uuid, onQueriesComplete);
+			rockDAO.updateUuidAndFetchUserData(userId, uuid, onQueriesComplete);
 
-			function onQueriesComplete(error, rocks) {
+			function onQueriesComplete(error, reservedArea, rocks) {
 				if (error) {
 					res.status('500').send();
 					return;
 				}
 
-				caches.addLoggedInUser(uuid, userId, rocks);
+				caches.addLoggedInUser(userId, uuid, reservedArea, rocks);
 				res.send({
 					text: "log in successful",
 					rocks: rocks

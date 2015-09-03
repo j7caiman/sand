@@ -69,13 +69,13 @@ module.exports = function (environment) {
 				return;
 			}
 
-			rockDAO.rememberUserAndFetchRocks(uuid, onQueriesComplete);
+			rockDAO.getRememberedUserWithData(uuid, onQueriesComplete);
 
-			function onQueriesComplete(userId, email, rocks) {
+			function onQueriesComplete(userId, email, reservedArea, rocks) {
 				if (email === undefined || rocks === undefined) {
 					renderGame();
 				} else {
-					caches.addLoggedInUser(uuid, userId, rocks);
+					caches.addLoggedInUser(userId, uuid, reservedArea, rocks);
 					renderGame(email, JSON.stringify(rocks));
 				}
 			}

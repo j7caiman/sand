@@ -1,38 +1,40 @@
 var query = require('../server/query_db');
 
 module.exports = {
-	fetchAllRocks: function (onComplete) {
-		query('select owner_id, id, x, y from rocks', onComplete);
+	fetchActivatedUsers: function (onComplete) {
+		query('select ' +
+			'users.id as user_id, ' +
+			'users.uuid, ' +
+			'users.reserved_area_path, ' +
+			'rocks.id as rock_id, ' +
+			'rocks.x, ' +
+			'rocks.y ' +
+			'from users, rocks ' +
+			'where users.id = rocks.owner_id', onComplete);
 	},
 
-	fetchUuidsForUsersWithRocks: function (onComplete) {
-		query('select id, uuid from users where email_validated = true', onComplete);
+	setRockPosition: function (id, position, onComplete) {
+		query('update rocks set (x, y) = ($1, $2) where id = $3 returning owner_id', [position.x, position.y, id], function (error, result) {
+			if (error) {
+				onComplete(error);
+			} else {
+				var userId = result.rows[0].owner_id;
+				onComplete(undefined, userId);
+			}
+		});
 	},
 
-	fetchReservedAreas: function (onComplete) {
-		query('select reserved_area_path, uuid from users where reserved_area_path is not null', onComplete);
-	},
-
-	updateRockPosition: function (id, position, onComplete) {
-		if (typeof position == 'function') {
-			onComplete = position;
-			position = undefined;
-		}
-
-		if (position === undefined) {
-			query('update rocks set (x, y) = (null, null) where id = $1', [id], onComplete);
-		} else {
-			query('update rocks set (x, y) = ($1, $2) where id = $3', [position.x, position.y, id], onComplete);
-		}
-	},
-
-	deleteReservedArea: function (userId, onComplete) {
-		query("update users set reserved_area_path = null where id = $1", [userId], function (err) {
-			if (err) {
+	removeRockPositionAndReservedArea: function (id, onComplete) {
+		query('update rocks set (x, y) = (null, null) where id = $1 returning owner_id', [id], function (error, result) {
+			if (error) {
+				onComplete(error);
 				return;
 			}
 
-			onComplete();
+			var userId = result.rows[0].owner_id;
+			query("update users set reserved_area_path = null where id = $1", [userId], function (error) {
+				onComplete(error, userId);
+			});
 		});
 	},
 
@@ -54,6 +56,7 @@ module.exports = {
 		query(queryString, queryParameters,
 			function (err) {
 				if (err) {
+					onComplete(err);
 					return;
 				}
 
@@ -62,25 +65,35 @@ module.exports = {
 		);
 	},
 
-	updateUuidAndFetchRocks: function (userId, uuid, onQueriesComplete) {
-		query('update users set uuid = $2 where id = $1', [userId, uuid], function (err) {
+	updateUuidAndFetchUserData: function (userId, uuid, onQueriesComplete) {
+		query('update users set uuid = $2 where id = $1 returning reserved_area_path', [userId, uuid], function (err, result) {
 			if (err) {
 				onQueriesComplete(err);
 				return;
 			}
 
-			fetchRocksForPlayer(userId, function(err, result) {
+			var reservedArea = parseReservedAreaIfPresent(result.rows[0].reserved_area_path);
+
+			query('select id, x, y from rocks where owner_id = $1', [userId], function (err, result) {
 				if (err) {
 					onQueriesComplete(err);
 				} else {
-					onQueriesComplete(undefined, result.rows);
+					onQueriesComplete(undefined, reservedArea, result.rows);
 				}
 			});
 		});
 	},
 
-	rememberUserAndFetchRocks: function (uuid, onQueriesComplete) {
-		query('select id, email from users where uuid = $1', [uuid], function (error, result) {
+	getRememberedUserWithData: function (uuid, onQueriesComplete) {
+		query('select ' +
+			'users.id as user_id, ' +
+			'users.email, ' +
+			'users.reserved_area_path, ' +
+			'rocks.id as rock_id, ' +
+			'rocks.x, ' +
+			'rocks.y ' +
+			'from users, rocks ' +
+			'where uuid = $1 and users.id = rocks.owner_id', [uuid], function (error, result) {
 			if (error) {
 				onQueriesComplete();
 				return;
@@ -91,20 +104,33 @@ module.exports = {
 				return;
 			}
 
-			var userId = result.rows[0].id;
+			var userId = result.rows[0].user_id;
 			var email = result.rows[0].email;
-			fetchRocksForPlayer(userId, function (error, result) {
-				if (error) {
-					onQueriesComplete();
-					return;
+			var reservedArea = parseReservedAreaIfPresent(result.rows[0].reserved_area_path);
+			var rocks = result.rows.map(function (row) {
+				return {
+					id: row.rock_id,
+					x: row.x,
+					y: row.y
 				}
-
-				onQueriesComplete(userId, email, result.rows);
 			});
+
+			onQueriesComplete(userId, email, reservedArea, rocks);
 		});
-	}
+	},
+
+	parseReservedAreaIfPresent: parseReservedAreaIfPresent
 };
 
-function fetchRocksForPlayer(id, onComplete) {
-	query('select id, x, y from rocks where owner_id = $1', [id], onComplete);
+function parseReservedAreaIfPresent(path) {
+	if (path !== null) {
+		return path.map(function (point) {
+			return {
+				x: point[0],
+				y: point[1]
+			}
+		});
+	} else {
+		return undefined;
+	}
 }

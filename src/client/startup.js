@@ -70,12 +70,6 @@ cc.game.onStart = function () {
 		cc.LoaderScene.preload(resourceArray, function () {
 			cc.director.runScene(new GameScene());
 		}, this);
-
-		try {
-			ga('send', 'event', 'regions', 'addMore', newRegionNames, newRegionNames.length);
-		} catch (err) {
-			//  Occasionally this function will throw an error when the client has blocked google analytics
-		}
 	}
 };
 
@@ -140,6 +134,9 @@ sand.globalFunctions.addMoreRegions = function (onComplete, regionNames) {
 					if (numRegionsToDownload === 0) {
 						onAllRegionsDownloaded();
 					}
+				},
+				error: function(jqXHR, textStatus, errorThrown) {
+					console.log("region lookup failed at: " + this.url + " with status: " + textStatus + " error: " + errorThrown);
 				}
 			});
 		});
@@ -157,6 +154,12 @@ sand.globalFunctions.addMoreRegions = function (onComplete, regionNames) {
 				sand.canvasUpdate.drawRegionToCanvas(allRegions[regionName]);
 
 			});
+
+			try {
+				ga('send', 'event', 'regions', 'addMore', newRegionNames, newRegionNames.length);
+			} catch (err) {
+				//  Occasionally this function will throw an error when the client has blocked google analytics
+			}
 
 			if (onComplete !== undefined) {
 				onComplete();
@@ -179,19 +182,7 @@ sand.globalFunctions._fly = function (disable) {
 };
 
 sand.globalFunctions.addFootprintToQueue = function (location, brushStrokeType, additionalData) {
-	var reservedAreas = sand.reserveAreasModule.getReservedAreas();
-	var notInReservedArea = true;
-	for (var id in reservedAreas) {
-		if (reservedAreas.hasOwnProperty(id)) {
-			var path = reservedAreas[id];
-			if (sand.modifyRegion.pointInsidePolygon(location, path)) {
-				notInReservedArea = false;
-				break;
-			}
-		}
-	}
-
-	if (notInReservedArea) {
+	if (!sand.reserveAreasModule.isInsideReservedArea(location)) {
 		var roundedLocation = {
 			x: Math.round(location.x),
 			y: Math.round(location.y)
@@ -202,7 +193,7 @@ sand.globalFunctions.addFootprintToQueue = function (location, brushStrokeType, 
 			brush: brushStrokeType
 		};
 
-		if(additionalData !== undefined) {
+		if (additionalData !== undefined) {
 			print.additionalData = additionalData;
 		}
 

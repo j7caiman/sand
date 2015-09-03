@@ -49,13 +49,13 @@ exports.initMultiplayer = function (server) {
 			});
 
 			socket.on('rockPickedUp', function (data) {
-				caches.rockPickedUpUpdate(data, function (uuid, rockIds) {
+				caches.rockPickedUpUpdate(data.uuid, data.rockId, function (reservedAreaId, rockIds) {
 					var dataToEmit = {
 						rockId: data.rockId
 					};
 
-					if (uuid !== undefined && rockIds !== undefined) {
-						dataToEmit.uuid = data.uuid;
+					if (reservedAreaId !== undefined && rockIds !== undefined) {
+						dataToEmit.reservedAreaId = reservedAreaId;
 						dataToEmit.deactiveatedRockIds = rockIds;
 					}
 					socket.broadcast.emit('rockPickedUp', dataToEmit);
@@ -63,15 +63,18 @@ exports.initMultiplayer = function (server) {
 			});
 
 			socket.on('rockPutDown', function (data) {
-				caches.rockPutDownUpdate(data, function () {
-					socket.broadcast.emit('rockPutDown', data);
+				caches.rockPutDownUpdate(data.uuid, data.rockId, data.position, function () {
+					socket.broadcast.emit('rockPutDown', {
+						rockId: data.rockId,
+						position: data.position
+					});
 				});
 			});
 
 			socket.on('reserveArea', function (data) {
-				caches.addReservedArea(data.uuid, function (path, rockIds) {
-					socket.broadcast.emit('areaReserved', {
-						uuid: data.uuid,
+				caches.addReservedArea(data.uuid, function (reservedAreaId, path, rockIds) {
+					io.emit('areaReserved', {
+						reservedAreaId: reservedAreaId,
 						path: path,
 						rockIds: rockIds
 					});

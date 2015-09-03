@@ -1,8 +1,122 @@
 var sand = sand || {};
 sand.reserveAreasModule = (function () {
 	// game state variables
-	var reservedAreas = {}; // key: uuid, value: [path]
-	var rocksOnGround = {}; // key: rockId, value: sprite
+	var reservedAreas = (function () {
+		var map = {};
+
+		function get(id) {
+			return map[id];
+		}
+
+		function add(id, path) {
+			map[id] = path;
+		}
+
+		function addAll(areas) {
+			for (var id in areas) {
+				if (areas.hasOwnProperty(id)) {
+					map[id] = areas[id];
+				}
+			}
+		}
+
+		function remove(id) {
+			delete map[id];
+		}
+
+		function containsPoint(point) {
+			for (var id in map) {
+				if (map.hasOwnProperty(id)) {
+					var path = map[id];
+					if (sand.modifyRegion.pointInsidePolygon(point, path)) {
+						return true;
+					}
+				}
+			}
+
+			return false;
+		}
+
+		return {
+			get: get,
+			add: add,
+			addAll: addAll,
+			remove: remove,
+			containsPoint: containsPoint
+		}
+	})();
+
+	var rocksOnGround = (function () {
+		var map = {};
+
+		function place(id, location) {
+			if (map[id] === undefined) {
+				var sprite = new cc.Sprite("#rock.png");
+				sprite.setTag(sand.cocosTagCounter++);
+				sprite.setPosition(location);
+				sprite.setZOrder(sand.entitiesLayer.zOrders.itemsOnGround);
+
+				sand.backgroundLayer.addScrollActionToNewSprite(sprite);
+				sand.entitiesLayer.addChild(sprite);
+
+				map[id] = sprite;
+			} else {
+				map[id].setPosition(location);
+			}
+		}
+
+		function remove(id) {
+			if (map[id] !== undefined) {
+				var spriteTag = map[id].getTag();
+				sand.entitiesLayer.removeChildByTag(spriteTag);
+				delete map[id];
+			}
+		}
+
+		function activate(id) {
+			map[id].setSpriteFrame(rockActivatedFrame);
+		}
+
+		function deactivate(id) {
+			if (map[id] !== undefined) {
+				map[id].setSpriteFrame(rockDefaultFrame);
+			}
+		}
+
+		function getAllSprites() {
+			var sprites = [];
+			for (var id in map) {
+				if (map.hasOwnProperty(id)) {
+					sprites.push(map[id]);
+				}
+			}
+
+			return sprites;
+		}
+
+		function wasClicked(id, position) {
+			var sprite = map[id];
+			if (sprite === undefined) {
+				return false;
+			}
+
+			return cc.rectContainsPoint(sprite.getBoundingBox(), position);
+		}
+
+		function getPosition(id) {
+			return map[id].getPosition();
+		}
+
+		return {
+			place: place,
+			remove: remove,
+			activate: activate,
+			deactivate: deactivate,
+			getAllSprites: getAllSprites,
+			getPosition: getPosition,
+			wasClicked: wasClicked
+		}
+	})();
 
 	// player specific state variables
 	var rockIdsOwnedByPlayer = [];
@@ -24,29 +138,24 @@ sand.reserveAreasModule = (function () {
 	function initializeOnSceneStart() {
 		sand.socket.on('rockPutDown', function (data) {
 			var location = sand.globalFunctions.getPositionOnScreenFromGlobalCoordinates(data.position);
-
-			if (rocksOnGround[data.rockId] === undefined) {
-				putRockOnGround(data.rockId, location);
-			} else { // unknown whether this happens, or is possible
-				rocksOnGround[data.rockId].setPosition(location);
-			}
+			rocksOnGround.place(data.rockId, location);
 		});
 
 		sand.socket.on('rockPickedUp', function (data) {
-			if (data.uuid !== undefined) {
-				delete reservedAreas[data.uuid];
+			if (data.reservedAreaId !== undefined) {
+				reservedAreas.remove(data.reservedAreaId);
 				data.deactiveatedRockIds.forEach(function (rockId) {
-					rocksOnGround[rockId].setSpriteFrame(rockDefaultFrame);
+					rocksOnGround.deactivate(rockId);
 				});
 			}
 
-			removeRockOnGround(data.rockId);
+			rocksOnGround.remove(data.rockId);
 		});
 
 		sand.socket.on('areaReserved', function (data) {
-			reservedAreas[data.uuid] = data.path;
+			reservedAreas.add(data.reservedAreaId, data.path);
 			data.rockIds.forEach(function (rockId) {
-				rocksOnGround[rockId].setSpriteFrame(rockActivatedFrame);
+				rocksOnGround.activate(rockId);
 			});
 		});
 
@@ -62,15 +171,15 @@ sand.reserveAreasModule = (function () {
 		for (var rockId in rocks) {
 			if (rocks.hasOwnProperty(rockId)) {
 				var location = sand.globalFunctions.getPositionOnScreenFromGlobalCoordinates(rocks[rockId]);
-				putRockOnGround(rockId, location);
+				rocksOnGround.place(rockId, location);
 			}
 		}
 
 		activatedRockIds.forEach(function (rockId) {
-			rocksOnGround[rockId].setSpriteFrame(rockActivatedFrame);
+			rocksOnGround.activate(rockId);
 		});
 
-		reservedAreas = data.reservedAreas;
+		reservedAreas.addAll(data.reservedAreas);
 	}
 
 	function initializeOnLogin(rocks) {
@@ -103,46 +212,12 @@ sand.reserveAreasModule = (function () {
 		}
 	}
 
-	function putRockOnGround(id, location) {
-		if (rocksOnGround[id] === undefined) {
-			var sprite = new cc.Sprite("#rock.png");
-			sprite.setTag(sand.cocosTagCounter++);
-			sprite.setPosition(location);
-			sprite.setZOrder(sand.entitiesLayer.zOrders.itemsOnGround);
-
-			sand.backgroundLayer.addScrollActionToNewSprite(sprite);
-			sand.entitiesLayer.addChild(sprite);
-
-			rocksOnGround[id] = sprite;
-		}
-
-		return rocksOnGround[id];
-	}
-
-	function removeRockOnGround(id) {
-		if (rocksOnGround[id] !== undefined) {
-			var spriteTag = rocksOnGround[id].getTag();
-			sand.entitiesLayer.removeChildByTag(spriteTag);
-			delete rocksOnGround[id];
-		}
-	}
-
-	function getRocksOnGround() {
-		return rocksOnGround;
-	}
-
-	function getReservedAreas() {
-		return reservedAreas;
-	}
-
 	// modifies selectedRockId
 	function wereRocksOnGroundClicked(position) {
 		return rockIdsOwnedByPlayer.some(function (rockId) {
-			if (rocksOnGround[rockId] !== undefined) {
-				if (cc.rectContainsPoint(rocksOnGround[rockId].getBoundingBox(), position)) {
-					selectedRockId = rockId;
-					return true;
-				}
+			if(rocksOnGround.wasClicked(rockId, position)) {
+				selectedRockId = rockId;
+				return true;
 			}
 		});
 	}
@@ -177,7 +252,7 @@ sand.reserveAreasModule = (function () {
 		});
 
 		// place rock
-		putRockOnGround(selectedRockId, sand.elephants.getPlayerSprite());
+		rocksOnGround.place(selectedRockId, sand.elephants.getPlayerSprite());
 		isRockSelected = false;
 		rockCarriedByPlayerSprite.setVisible(false);
 
@@ -192,7 +267,7 @@ sand.reserveAreasModule = (function () {
 
 		var points = [];
 		rockIdsOwnedByPlayer.forEach(function (rockId) {
-			points.push(sand.globalFunctions.convertOnScreenPositionToGlobalCoordinates(rocksOnGround[rockId]));
+			points.push(sand.globalFunctions.convertOnScreenPositionToGlobalCoordinates(rocksOnGround.getPosition(rockId)));
 		});
 
 		var perimeter = sand.modifyRegion.getReservedPerimeterIfValid(points);
@@ -216,11 +291,6 @@ sand.reserveAreasModule = (function () {
 			})(i), ((i + 1) / borderPath.length) * 2 * totalDuration));
 		}
 		footprintTimeouts.push(setTimeout(function () {
-			reservedAreas[sand.uuid] = perimeter;
-			rockIdsOwnedByPlayer.forEach(function (rockId) {
-				rocksOnGround[rockId].setSpriteFrame(rockActivatedFrame);
-			});
-
 			sand.socket.emit('reserveArea', {
 				uuid: sand.uuid
 			});
@@ -236,24 +306,17 @@ sand.reserveAreasModule = (function () {
 		rockIcons[rockIdsInPocket.length].setSpriteFrame(rockDefaultFrame);
 		rockIdsInPocket.push(selectedRockId);
 
-		removeRockOnGround(selectedRockId);
+		rocksOnGround.remove(selectedRockId);
 
 		footprintTimeouts.forEach(function (timeoutId) {
 			clearTimeout(timeoutId);
 		});
 
-		removeReservedArea();
-	}
+		reservedAreas.remove(sand.uuid);
 
-	function removeReservedArea() {
-		if (reservedAreas[sand.uuid] !== undefined) {
-			delete reservedAreas[sand.uuid];
-			rockIdsOwnedByPlayer.forEach(function (rockId) {
-				if (rocksOnGround[rockId] !== undefined) {
-					rocksOnGround[rockId].setSpriteFrame(rockDefaultFrame);
-				}
-			});
-		}
+		rockIdsOwnedByPlayer.forEach(function (rockId) {
+			rocksOnGround.deactivate(rockId);
+		});
 	}
 
 	function onRockButtonClicked() {
@@ -296,12 +359,10 @@ sand.reserveAreasModule = (function () {
 		initializeOnSceneStart: initializeOnSceneStart,
 		initializeOnSocketConnect: initializeOnSocketConnect,
 		initializeOnLogin: initializeOnLogin,
-
-		getRocksOnGround: getRocksOnGround,
-		getReservedAreas: getReservedAreas,
-
 		handleTouchEvent: handleTouchEvent,
 		onRockButtonClicked: onRockButtonClicked,
-		mainLoopUpdate: mainLoopUpdate
+		mainLoopUpdate: mainLoopUpdate,
+		getScrollableSprites: rocksOnGround.getAllSprites,
+		isInsideReservedArea: reservedAreas.containsPoint
 	}
 })();

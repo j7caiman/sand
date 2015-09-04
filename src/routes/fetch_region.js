@@ -1,8 +1,7 @@
 var router = require('express').Router();
-var debug = require('debug')('sand');
+var stream = require('stream');
 
-var fs = require('fs');
-
+var query = require('../server/query_db');
 var regionFunctions = require('../server/region_functions');
 var globalFunctions = require('../shared/global_functions');
 
@@ -20,21 +19,22 @@ router.get('/', function (req, res) {
 
 	regionFunctions.generateMissingRegions(regionName, onRegionCreationComplete);
 
-	function onRegionCreationComplete(error) {
-		if (error) {
-			var message = "region lookup failed: " + error;
-			debug(message);
-			res.status("500").send(message);
-			return;
-		}
+	function onRegionCreationComplete() {
+		query('select region_data from regions where region_name = $1', [regionName], function (error, result) {
+			if (error) {
+				res.status("500").send(error);
+				return;
+			}
 
-		var zipCode = globalFunctions.getRegionZipCode(regionName);
-		var path = './resources/world_datastore/z' + zipCode + '/r' + regionName + '.json.gz';
-		var fileStream = fs.createReadStream(path);
+			res.setHeader("Content-Encoding", "gzip");
+			res.setHeader("Content-Type", "application/json");
 
-		res.setHeader("Content-Encoding", "gzip");
-		res.setHeader("Content-Type", "application/json");
-		fileStream.pipe(res);
+			var readStream = new stream.Readable();
+			readStream.push(result.rows[0].region_data);
+			readStream.push(null);
+
+			readStream.pipe(res);
+		});
 	}
 });
 

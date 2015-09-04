@@ -126,7 +126,7 @@ var GameScene = cc.Scene.extend({
 						$.cookie('playerData', {
 							uuid: sand.uuid,
 							lastPosition: roundedGlobalPosition,
-							rememberMe: $('#rememberMe').is(':checked')
+							rememberMe: $.cookie('playerData').rememberMe
 						}, {expires: 7});
 					}
 				}, this);

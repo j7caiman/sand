@@ -17,10 +17,6 @@ $(document).ready(function () {
 					$('#signInError').show().text(data.error);
 					$('#signInText').hide();
 				} else if (data.text) {
-					var playerData = $.cookie('playerData');
-					playerData.rememberMe = $('#rememberMe').is(':checked');
-					$.cookie('playerData', playerData, {expires: 7});
-
 					initializeLoggedInUser(data.text, data.rocks, 1000);
 				}
 			}
@@ -65,6 +61,10 @@ function initializeLoggedInUser(text, rocks, delay) {
 	$('#signInText').show().text(text);
 
 	setTimeout(function () {
+		var playerData = $.cookie('playerData');
+		playerData.rememberMe = $('#rememberMe').is(':checked');
+		$.cookie('playerData', playerData, {expires: 7});
+
 		var panel = $('#panelTopRight');
 		panel.animate({
 			height: "20px",

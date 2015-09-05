@@ -1,4 +1,3 @@
-var sand = sand || {};
 sand.reserveAreasModule = (function () {
 	// game state variables
 	var reservedAreas = (function () {

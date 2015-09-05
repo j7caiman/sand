@@ -1,4 +1,3 @@
-var sand = sand || {};
 sand.modifyRegion = sand.modifyRegion || {};
 
 sand.modifyRegion.makeFootprint = function (print) {

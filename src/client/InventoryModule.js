@@ -1,4 +1,3 @@
-var sand = sand || {};
 sand.inventory = (function () {
 	var inventoryNode;
 

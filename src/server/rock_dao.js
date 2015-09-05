@@ -84,7 +84,7 @@ module.exports = {
 		});
 	},
 
-	getRememberedUserWithData: function (uuid, onQueriesComplete) {
+	getRememberedUserWithData: function (uuid, newUuid, onQueriesComplete) {
 		query('select ' +
 			'users.id as user_id, ' +
 			'users.email, ' +
@@ -115,7 +115,14 @@ module.exports = {
 				}
 			});
 
-			onQueriesComplete(userId, email, reservedArea, rocks);
+			query('update users set uuid = $2 where id = $1', [userId, newUuid], function (error) {
+				if (error) {
+					onQueriesComplete();
+					return;
+				}
+
+				onQueriesComplete(userId, email, reservedArea, rocks);
+			});
 		});
 	},
 

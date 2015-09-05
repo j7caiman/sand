@@ -1,5 +1,3 @@
-var sand = sand || {};
-
 $(document).ready(function () {
 	var canvas = document.createElement('canvas');
 	canvas.id = 'cocos2d_gameCanvas'; // game canvas is referenced in project.json
@@ -13,35 +11,13 @@ $(document).ready(function () {
 cc.game.onStart = function () {
 	sand.allRegions = {};
 	sand.batchedFootprints = [];
+	$.cookie.json = true;
 
-	var playerData = (function () {
-		$.cookie.json = true;
-		var playerDataCookie = $.cookie('playerData');
-		if (playerDataCookie !== undefined) {
-			return playerDataCookie;
-		} else {
-			function generateUUID() {
-				return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-					var r = Math.random() * 16 | 0;
-					var v = (c == 'x') ? r : (r & 0x3 | 0x8);
-					return v.toString(16);
-				});
-			}
+	var playerData = $.cookie('playerData') || {lastPosition: {x: 5750, y: 610}};
+	playerData.uuid = sand.uuid;
 
-			var playerData = {
-				uuid: generateUUID(),
-				lastPosition: {
-					x: 5750,
-					y: 610
-				}
-			};
-			$.cookie('playerData', playerData, {expires: 7});
-
-			return playerData;
-		}
-	})();
+	$.cookie('playerData', playerData, {expires: 7});
 	sand.globalCoordinates = playerData.lastPosition;
-	sand.uuid = playerData.uuid;
 
 	sand.globalFunctions.addMoreRegions(onRegionInitializationComplete);
 
@@ -134,7 +110,7 @@ sand.globalFunctions.addMoreRegions = function (onComplete, regionNames) {
 						onAllRegionsDownloaded();
 					}
 				},
-				error: function(jqXHR, textStatus, errorThrown) {
+				error: function (jqXHR, textStatus, errorThrown) {
 					console.log("region lookup failed at: " + this.url + " with status: " + textStatus + " error: " + errorThrown);
 				}
 			});

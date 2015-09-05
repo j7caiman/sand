@@ -17,6 +17,9 @@ html
 		// in the same directory as the 'src' attribute of this script tag
 		script(cocos src='/javascripts/libraries/cocos2d/cocos2d-js-v3.7.js')
 
+		script.
+			var sand = {};
+			sand.uuid = '#{uuid}';
 		each scriptSource in scriptSources
 			script(src='#{scriptSource}')
 	body

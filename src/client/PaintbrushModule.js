@@ -1,4 +1,3 @@
-var sand = sand || {};
 sand.paintbrushModule = (function () {
 	var currentOpacityLevel = 4;
 	var currentStrokeRadius = 2;

@@ -1,4 +1,3 @@
-var sand = sand || {};
 sand.canvasUpdate = (function () {
 	/**
 	 * note: rectToDraw is in global coordinates

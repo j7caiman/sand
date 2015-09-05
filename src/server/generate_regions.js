@@ -10,64 +10,79 @@ var sand = {
 };
 var RegionNode = require("../shared/RegionNode");
 
-module.exports = {
-	generateMissingRegions: function (regionName, onComplete) {
-		query('select exists (select 1 from regions where region_name = $1)', [regionName], function (error, result) {
-			if (error) {
-				throw error;
-			}
+module.exports = function generateMissingRegions(regionName, onComplete) {
+	query('select exists (select 1 from regions where region_name = $1)', [regionName], function (error, result) {
+		if (error) {
+			throw error;
+		}
 
-			var exists = result.rows[0].exists;
-			if (exists) {
-				onComplete();
-			} else {
-				var zipCode = sand.globalFunctions.getRegionZipCode(regionName);
-				if (isZipCodeInitializing(zipCode)) {
-					callFunctionWhenZipCodeInitialized(zipCode, onComplete)
+		var exists = result.rows[0].exists;
+		if (exists) {
+			onComplete();
+		} else {
+			var zipCode = sand.globalFunctions.getRegionZipCode(regionName);
+			var initializer;
+			if (zipCodeInitializers.exists(zipCode)) {
+				initializer = zipCodeInitializers.get(zipCode);
+				if (initializer.isFinished()) {
+					onComplete();
 				} else {
-					initializeNewZipCode(zipCode, onComplete);
+					initializer.addCallback(onComplete);
 				}
+			} else {
+				initializer = zipCodeInitializers.add(zipCode);
+				initializer.addCallback(onComplete);
+				initializer.createRegions();
 			}
-		});
-	}
+		}
+	});
 };
 
-var _zipCodes = {};
+var zipCodeInitializers = (function () {
+	var map = {};
 
-function isZipCodeInitializing(zipCode) {
-	return _zipCodes[zipCode] !== undefined;
-}
+	function get(zipCode) {
+		return map[zipCode];
+	}
 
-function callFunctionWhenZipCodeInitialized(zipCode, onComplete) {
-	_zipCodes[zipCode].addFunctionToCallOnComplete(onComplete);
-}
+	function exists(zipCode) {
+		return map[zipCode] !== undefined;
+	}
 
-function initializeNewZipCode(zipCode, onComplete) {
-	_zipCodes[zipCode] = new ZipCodeHandler(zipCode, onComplete);
-	_zipCodes[zipCode].createRegions();
-}
+	function add(zipCode) {
+		map[zipCode] = new ZipCodeHandler(zipCode);
+		return map[zipCode];
+	}
 
-function remove(zipCode) {
-	delete _zipCodes[zipCode];
-}
+	return {
+		get: get,
+		exists: exists,
+		add: add
+	}
+})();
 
-var ZipCodeHandler = function (zipCode, onComplete) {
+var ZipCodeHandler = function (zipCode) {
 	this._zipCode = zipCode;
-	this._onCompletes = [onComplete];
+	this._onCompletes = [];
+	this._initialized = false;
 };
 
 ZipCodeHandler.prototype = {
 	constructor: ZipCodeHandler,
 
-	addFunctionToCallOnComplete: function (onComplete) {
+	isFinished: function () {
+		return this._initialized;
+	},
+
+	addCallback: function (onComplete) {
 		this._onCompletes.push(onComplete);
 	},
 
 	_finish: function () {
+		this._initialized = true;
 		this._onCompletes.forEach(function (onComplete) {
 			onComplete();
 		});
-		remove(this._zipCode);
 	},
 
 	createRegions: function () {

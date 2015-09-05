@@ -11,7 +11,7 @@ sand.brushes = (function () {
 		// used to make sure the painting doesn't overlap itself
 		var previousStrokeBuffer = {};
 
-		function apply(regionData, positionOnCanvas, additionalData) {
+		function applyBrush(regionData, positionOnCanvas, additionalData) {
 			if (additionalData.resetBuffer) {
 				previousStrokeBuffer = {};
 			}
@@ -49,14 +49,14 @@ sand.brushes = (function () {
 			name: "painting",
 			frequency: 4,
 			radius: radius,
-			apply: apply
+			applyBrush: applyBrush
 		}
 	})();
 
 	var walking = (function () {
 		var radius = 1.5;
 
-		function apply(regionData, positionOnCanvas) {
+		function applyBrush(regionData, positionOnCanvas) {
 			imprintSphere(
 				regionData,
 				positionOnCanvas,
@@ -70,14 +70,14 @@ sand.brushes = (function () {
 			name: "walking",
 			frequency: 15,
 			radius: radius,
-			apply: apply
+			applyBrush: applyBrush
 		}
 	})();
 
 	var shovelIn = (function () {
 		var radius = 5;
 
-		function apply(regionData, positionOnCanvas) {
+		function applyBrush(regionData, positionOnCanvas) {
 			imprintSphere(
 				regionData,
 				positionOnCanvas,
@@ -90,14 +90,14 @@ sand.brushes = (function () {
 		return {
 			name: "shovelIn",
 			radius: radius,
-			apply: apply
+			applyBrush: applyBrush
 		}
 	})();
 
 	var shovelOut = (function () {
 		var radius = 5;
 
-		function apply(regionData, positionOnCanvas) {
+		function applyBrush(regionData, positionOnCanvas) {
 			imprintSphere(
 				regionData,
 				positionOnCanvas,
@@ -110,7 +110,7 @@ sand.brushes = (function () {
 		return {
 			name: "shovelOut",
 			radius: radius,
-			apply: apply
+			applyBrush: applyBrush
 		}
 	})();
 

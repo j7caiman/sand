@@ -14,7 +14,7 @@ sand.modifyRegion.makeFootprint = function (print) {
 		var region = sand.allRegions[regionName];
 		// region not guaranteed to be loaded, since the rectangle may reference an area beyond the player
 		if (region !== undefined) {
-			brush.apply(
+			brush.applyBrush(
 				region.getData(),
 				sand.globalFunctions.toLocalCoordinates(position, region),
 				print.additionalData

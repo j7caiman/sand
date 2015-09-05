@@ -1,16 +1,14 @@
 var debug = require('debug')('sand');
-var zlib = require('zlib');
 
-var query = require('./query_db');
-var generateMissingRegions = require('./region_functions').generateMissingRegions;
 var reservedAreas = require('./caches').getReservedAreas();
+var alterRegion = require('./alter_region');
 
 var globalFunctions = require('../shared/global_functions');
 var brushes = require('../shared/footprint_functions');
 var RegionNode = require('../shared/RegionNode');
 var pointInsidePolygon = require('../shared/shared_rock_functions').pointInsidePolygon;
 
-var footprintBuffer = {};
+var footprintBuffers = {};
 
 function processFootprint(footprintData) {
 	var area = globalFunctions.createBoundingBox(
@@ -20,81 +18,47 @@ function processFootprint(footprintData) {
 
 	var regionNames = globalFunctions.findRegionsInRect(area);
 	regionNames.forEach(function (regionName) {
-		if (footprintBuffer[regionName] === undefined) {
-			footprintBuffer[regionName] = {
+		if (footprintBuffers[regionName] === undefined) {
+			footprintBuffers[regionName] = {
 				buffer: [],
-				locked: false,
-				lastFlushTimestamp: 0
+				locked: false
 			};
 		}
 
-		footprintBuffer[regionName].buffer.push(footprintData);
+		footprintBuffers[regionName].buffer.push(footprintData);
 
-		if (!footprintBuffer[regionName].locked) {
-			flushFootprintBuffer(regionName);
-		}
+		tryFlushPrintBuffer(regionName);
 	});
 }
 
-function flushFootprintBuffer(regionName) {
-	if (footprintBuffer[regionName].buffer.length === 0
-		|| footprintBuffer[regionName].locked) {
+function tryFlushPrintBuffer(regionName) {
+	if (footprintBuffers[regionName].buffer.length === 0) {
+		return;
+	} else if (footprintBuffers[regionName].locked) {
 		return;
 	}
 
-	var printsToApply = footprintBuffer[regionName].buffer;
-	footprintBuffer[regionName].buffer = [];
-	footprintBuffer[regionName].locked = true;
+	var printsToApply = footprintBuffers[regionName].buffer;
+	footprintBuffers[regionName].buffer = [];
+	footprintBuffers[regionName].locked = true;
 
-	generateMissingRegions(regionName, function () {
-		query('select region_data from regions where region_name = $1', [regionName], function (error, result) {
-			if (error) {
-				debug("error for region: " + regionName);
-				throw error;
-			}
+	alterRegion(regionName, transformFunction, onSuccess);
 
-			var compressedData = result.rows[0].region_data;
-			zlib.unzip(compressedData, function (err, regionData) {
-				if (err) {
-					debug("error for region: " + regionName);
-					throw err;
-				}
+	function transformFunction(regionData) {
+		applyPrintsToRegion(printsToApply, regionName, regionData);
+	}
 
-				try {
-					regionData = JSON.parse(regionData);
-				} catch (error) {
-					debug("error for region: " + regionName + " with regionData: " + regionData);
-					throw error;
-				}
+	function onSuccess() {
+		footprintBuffers[regionName].locked = false;
 
-				applyPrintsToRegion(printsToApply, regionName, regionData);
-
-				regionData = JSON.stringify(regionData);
-				zlib.gzip(regionData, function (error, compressedData) {
-					if (error) {
-						throw error;
-					}
-
-					query('update regions set region_data = $2 where region_name = $1', [regionName, compressedData], function (error) {
-						if (error) {
-							throw error;
-						}
-
-						footprintBuffer[regionName].locked = false;
-						footprintBuffer[regionName].lastFlushTimestamp = Date.now();
-
-						if (footprintBuffer[regionName].buffer.length > 0) {
-							setTimeout(flushFootprintBuffer(regionName), 10000);
-						}
-					});
-				});
-			});
-		});
-	});
+		if (footprintBuffers[regionName].buffer.length > 0) {
+			setTimeout(tryFlushPrintBuffer(regionName), 10000);
+		}
+	}
 }
 
 function applyPrintsToRegion(prints, regionName, regionData) {
-	var ignoredPrints = "";
+	var excludedPrints = [];
 	prints.forEach(function (print) {
 		var notInReservedArea = true;
 		for (var id in reservedAreas) {
@@ -109,18 +73,22 @@ function applyPrintsToRegion(prints, regionName, regionData) {
 
 		if (notInReservedArea) {
 			var region = new RegionNode(regionName);
-			brushes[print.brush].apply(
+			brushes[print.brush].applyBrush(
 				regionData,
 				globalFunctions.toLocalCoordinates(print.location, region),
 				print.additionalData
 			);
 		} else {
-			ignoredPrints += "(" + print.location.x + ", " + print.location.y + "), ";
+			excludedPrints.push(print.location);
 		}
 	});
 
-	if (ignoredPrints.length !== 0) {
-		debug("footprints: " + ignoredPrints + " are inside a reserved area. Not writing them to disk.");
+	if (excludedPrints.length !== 0) {
+		debug("footprints: "
+			+ JSON.stringify(excludedPrints)
+			+ " are inside a reserved area in region: "
+			+ regionName
+			+ ". Not writing them to disk.");
 	}
 }
 

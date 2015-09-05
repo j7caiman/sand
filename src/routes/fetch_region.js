@@ -2,7 +2,7 @@ var router = require('express').Router();
 var stream = require('stream');
 
 var query = require('../server/query_db');
-var regionFunctions = require('../server/region_functions');
+var generateMissingRegions = require('../server/generate_regions');
 var globalFunctions = require('../shared/global_functions');
 
 router.get('/', function (req, res) {
@@ -17,7 +17,7 @@ router.get('/', function (req, res) {
 		}
 	})();
 
-	regionFunctions.generateMissingRegions(regionName, onRegionCreationComplete);
+	generateMissingRegions(regionName, onRegionCreationComplete);
 
 	function onRegionCreationComplete() {
 		query('select region_data from regions where region_name = $1', [regionName], function (error, result) {

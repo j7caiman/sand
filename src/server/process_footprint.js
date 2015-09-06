@@ -7,6 +7,7 @@ var globalFunctions = require('../shared/global_functions');
 var brushes = require('../shared/footprint_functions');
 var RegionNode = require('../shared/RegionNode');
 var pointInsidePolygon = require('../shared/shared_rock_functions').pointInsidePolygon;
+var fadeRegions = require('./fade_regions');
 
 var footprintBuffers = {};
 
@@ -50,6 +51,8 @@ function tryFlushPrintBuffer(regionName) {
 
 	function onSuccess() {
 		footprintBuffers[regionName].locked = false;
+
+		fadeRegions.addRegionToBeFaded(regionName);
 
 		if (footprintBuffers[regionName].buffer.length > 0) {
 			setTimeout(tryFlushPrintBuffer(regionName), 10000);

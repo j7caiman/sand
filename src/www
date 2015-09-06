@@ -2,6 +2,7 @@
 var debug = require('debug')('sand');
 var app = require('./app');
 var multiplayer = require('./server/multiplayer');
+var fadeRegions = require('./server/fade_regions');
 
 app.set('port', process.env.PORT || 3000);
 
@@ -10,3 +11,4 @@ var server = app.listen(app.get('port'), function () {
 });
 
 multiplayer.initMultiplayer(server);
+fadeRegions.initialize();

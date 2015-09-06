@@ -14,6 +14,8 @@ sand.inventory = (function () {
 	var buttonFillColor = cc.color(229, 229, 229, 255);
 	var buttonStrokeColor = cc.color(81, 81, 81, 255);
 	var buttonStrokeWidth = 2;
+	var defaultOpacityLevel = 2;
+	var defaultStrokeRadiusLevel = 0;
 
 	function initializeOnLogin() {
 		inventoryNode = new cc.DrawNode();
@@ -52,14 +54,16 @@ sand.inventory = (function () {
 		}
 
 		selectedOpacityNode = new cc.DrawNode();
-		selectedOpacityNode.setPosition(opacityButtons[2]);
+		selectedOpacityNode.setPosition(opacityButtons[defaultOpacityLevel]);
+		sand.paintbrushModule.onOpacityButtonClicked(defaultOpacityLevel);
 		selectedOpacityNode.setAnchorPoint(0, 0);
 		selectedOpacityNode.setZOrder(sand.entitiesLayer.zOrders.itemsInInventory);
 		selectedOpacityNode.drawRect({x: 0, y: 0}, {x: 20, y: 20}, undefined, 2, cc.color(34, 198, 255, 255));
 		sand.entitiesLayer.addChild(selectedOpacityNode);
 
 		selectedStrokeRadiusNode = new cc.DrawNode();
-		selectedStrokeRadiusNode.setPosition(strokeRadiusButtons[0]);
+		selectedStrokeRadiusNode.setPosition(strokeRadiusButtons[defaultStrokeRadiusLevel]);
+		sand.paintbrushModule.onStrokeRadiusButtonClicked(defaultStrokeRadiusLevel);
 		selectedStrokeRadiusNode.setAnchorPoint(0, 0);
 		selectedStrokeRadiusNode.setZOrder(sand.entitiesLayer.zOrders.itemsInInventory);
 		selectedStrokeRadiusNode.drawRect({x: 0, y: 0}, {x: 20, y: 20}, undefined, 2, cc.color(34, 198, 255, 255));

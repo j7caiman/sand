@@ -50,15 +50,16 @@ exports.initMultiplayer = function (server) {
 
 			socket.on('rockPickedUp', function (data) {
 				caches.rockPickedUpUpdate(data.uuid, data.rockId, function (reservedAreaId, rockIds) {
-					var dataToEmit = {
+					socket.broadcast.emit('rockPickedUp', {
 						rockId: data.rockId
-					};
+					});
 
 					if (reservedAreaId !== undefined && rockIds !== undefined) {
-						dataToEmit.reservedAreaId = reservedAreaId;
-						dataToEmit.deactiveatedRockIds = rockIds;
+						io.emit('areaRemoved', {
+							reservedAreaId: reservedAreaId,
+							deactivatedRockIds: rockIds
+						});
 					}
-					socket.broadcast.emit('rockPickedUp', dataToEmit);
 				});
 			});
 

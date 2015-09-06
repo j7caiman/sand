@@ -5,8 +5,6 @@ sand.constants = sand.constants || require("./global_constants");
 
 sand.brushes = (function () {
 	var painting = (function () {
-		var radius = 2;
-
 		// a buffer containing all previous strokes from the current elephant path
 		// used to make sure the painting doesn't overlap itself
 		var previousStrokeBuffer = {};
@@ -16,17 +14,13 @@ sand.brushes = (function () {
 				previousStrokeBuffer = {};
 			}
 
-			radius = additionalData.radius;
-			var darkenBy = additionalData.opacity;
-
-			darkenSand(regionData, positionOnCanvas, darkenBy);
+			darkenSand(regionData, positionOnCanvas, additionalData.radius, additionalData.opacity);
 		}
 
-		function darkenSand(regionData, positionOnCanvas, darkenBy) {
-			var sandGrainWidth = sand.constants.kCanvasWidth / sand.constants.kRegionWidth; // blocks are square
+		function darkenSand(regionData, positionOnCanvas, radius, darkenBy) {
 			var pointOfImpact = {
-				x: Math.floor(positionOnCanvas.x / sandGrainWidth),
-				y: Math.floor(positionOnCanvas.y / sandGrainWidth)
+				x: Math.floor(positionOnCanvas.x / sand.constants.kSandGrainWidth),
+				y: Math.floor(positionOnCanvas.y / sand.constants.kSandGrainWidth)
 			};
 
 			var bounds = computeBounds(pointOfImpact, radius);
@@ -48,7 +42,6 @@ sand.brushes = (function () {
 		return {
 			name: "painting",
 			frequency: 4,
-			radius: radius,
 			applyBrush: applyBrush
 		}
 	})();
@@ -130,10 +123,9 @@ sand.brushes = (function () {
 	 * emboss: if true, raises the ground instead of lowering it
 	 */
 	function imprintSphere(regionData, positionOnCanvas, radius, pointOfImpactZ, emboss) {
-		var sandGrainWidth = sand.constants.kCanvasWidth / sand.constants.kRegionWidth; // blocks are square
 		var pointOfImpact = {
-			x: Math.floor(positionOnCanvas.x / sandGrainWidth),
-			y: Math.floor(positionOnCanvas.y / sandGrainWidth),
+			x: Math.floor(positionOnCanvas.x / sand.constants.kSandGrainWidth),
+			y: Math.floor(positionOnCanvas.y / sand.constants.kSandGrainWidth),
 			z: pointOfImpactZ
 		};
 
@@ -180,11 +172,20 @@ sand.brushes = (function () {
 		};
 	}
 
+	function getRadiusForPrint(print) {
+		if (print.additionalData !== undefined && print.additionalData.radius !== undefined) {
+			return print.additionalData.radius;
+		} else {
+			return sand.brushes[print.brush].radius;
+		}
+	}
+
 	return {
 		painting: painting,
 		walking: walking,
 		shovelIn: shovelIn,
-		shovelOut: shovelOut
+		shovelOut: shovelOut,
+		getRadiusForPrint: getRadiusForPrint
 	}
 })();
 

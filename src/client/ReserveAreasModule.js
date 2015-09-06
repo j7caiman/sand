@@ -141,13 +141,6 @@ sand.reserveAreasModule = (function () {
 		});
 
 		sand.socket.on('rockPickedUp', function (data) {
-			if (data.reservedAreaId !== undefined) {
-				reservedAreas.remove(data.reservedAreaId);
-				data.deactiveatedRockIds.forEach(function (rockId) {
-					rocksOnGround.deactivate(rockId);
-				});
-			}
-
 			rocksOnGround.remove(data.rockId);
 		});
 
@@ -155,6 +148,13 @@ sand.reserveAreasModule = (function () {
 			reservedAreas.add(data.reservedAreaId, data.path);
 			data.rockIds.forEach(function (rockId) {
 				rocksOnGround.activate(rockId);
+			});
+		});
+
+		sand.socket.on('areaRemoved', function (data) {
+			reservedAreas.remove(data.reservedAreaId);
+			data.deactivatedRockIds.forEach(function (rockId) {
+				rocksOnGround.deactivate(rockId);
 			});
 		});
 
@@ -214,7 +214,7 @@ sand.reserveAreasModule = (function () {
 	// modifies selectedRockId
 	function wereRocksOnGroundClicked(position) {
 		return rockIdsOwnedByPlayer.some(function (rockId) {
-			if(rocksOnGround.wasClicked(rockId, position)) {
+			if (rocksOnGround.wasClicked(rockId, position)) {
 				selectedRockId = rockId;
 				return true;
 			}
@@ -310,8 +310,6 @@ sand.reserveAreasModule = (function () {
 		footprintTimeouts.forEach(function (timeoutId) {
 			clearTimeout(timeoutId);
 		});
-
-		reservedAreas.remove(sand.uuid);
 
 		rockIdsOwnedByPlayer.forEach(function (rockId) {
 			rocksOnGround.deactivate(rockId);

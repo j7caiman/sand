@@ -90,7 +90,7 @@ var GameScene = cc.Scene.extend({
 				|| (sand.globalFunctions.calculateDistance(this._lastPrint, printLocation) >= frequency)) {
 
 				if (!sand.flying) {
-					if(brush === sand.brushes.painting.name) {
+					if (brush === sand.brushes.painting.name) {
 						sand.globalFunctions.addFootprintToQueue(printLocation, brush, sand.paintbrushModule.getCurrentPaintbrushData());
 					} else {
 						sand.globalFunctions.addFootprintToQueue(printLocation, brush);
@@ -164,10 +164,8 @@ var GameScene = cc.Scene.extend({
 			sand.batchedFootprints.forEach(function (print) {
 				sand.modifyRegion.makeFootprint(print);
 
-				var area = sand.globalFunctions.createBoundingBox(
-					print.location,
-					sand.constants.kAffectedRegionWidth / 2
-				);
+				var radius = sand.brushes.getRadiusForPrint(print) * sand.constants.kSandGrainWidth;
+				var area = sand.globalFunctions.createBoundingBox(print.location, radius);
 				sand.canvasUpdate.updateHtmlCanvases(area);
 			}, this);
 

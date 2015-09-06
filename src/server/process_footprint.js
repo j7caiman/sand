@@ -13,7 +13,7 @@ var footprintBuffers = {};
 function processFootprint(footprintData) {
 	var area = globalFunctions.createBoundingBox(
 		footprintData.location,
-		brushes[footprintData.brush].radius
+		brushes.getRadiusForPrint(footprintData)
 	);
 
 	var regionNames = globalFunctions.findRegionsInRect(area);

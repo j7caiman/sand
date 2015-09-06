@@ -200,10 +200,9 @@ sand.duneFunctions = (function () {
 
 	function createCone(regionData, positionOnCanvas, highestPoint, isAdditive) {
 		var angleOfRepose = Math.PI / 4;
-		var sandGrainWidth = sand.constants.kCanvasWidth / sand.constants.kRegionWidth; // blocks are square
 		var positionOnRegion = {
-			x: Math.floor(positionOnCanvas.x / sandGrainWidth),
-			y: Math.floor(positionOnCanvas.y / sandGrainWidth),
+			x: Math.floor(positionOnCanvas.x / sand.constants.kSandGrainWidth),
+			y: Math.floor(positionOnCanvas.y / sand.constants.kSandGrainWidth),
 			z: highestPoint
 		};
 

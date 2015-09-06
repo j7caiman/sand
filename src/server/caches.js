@@ -67,9 +67,39 @@ var users = (function () {
 		}
 	})();
 
+	var reservedAreas = (function () {
+		var map = {};
+
+		function getAll() {
+			return map;
+		}
+
+		function exists(userId) {
+			return map[userId] !== undefined;
+		}
+
+		function add(userId, path) {
+			map[userId] = path;
+		}
+
+		function remove(userId) {
+			delete map[userId];
+		}
+
+		return {
+			getAll: getAll,
+			exists: exists,
+			add: add,
+			remove: remove
+		}
+	})();
+
 	function User(userId, reservedArea, rocks) {
 		this._id = userId;
-		this._reservedArea = reservedArea;
+
+		if(reservedArea !== undefined) {
+			reservedAreas.add(userId, reservedArea);
+		}
 
 		this._rocks = {};
 		rocks.forEach(function (rock) {
@@ -109,23 +139,20 @@ var users = (function () {
 				return rocksOnGroundIds;
 			}
 		},
-		getReservedArea: function () {
-			return this._reservedArea;
-		},
-		reservedAreaExists: function () {
-			return this._reservedArea !== undefined;
-		},
 		getAllRocks: function () {
 			return this._rocks;
 		},
 		addRock: function (rock) {
 			this._rocks[rock.id] = new Rock(rock.x, rock.y);
 		},
+		reservedAreaExists: function () {
+			return reservedAreas.exists(this._id);
+		},
 		addReservedArea: function (path) {
-			this._reservedArea = path;
+			reservedAreas.add(this._id, path);
 		},
 		removeReservedArea: function () {
-			delete this._reservedArea;
+			reservedAreas.remove(this._id);
 		}
 	};
 
@@ -170,17 +197,7 @@ var users = (function () {
 	}
 
 	function getReservedAreas() {
-		var reservedAreas = {};
-		for (var userId in map) {
-			if (map.hasOwnProperty(userId)) {
-				var user = get(userId);
-				if (user.reservedAreaExists()) {
-					reservedAreas[userId] = user.getReservedArea();
-				}
-			}
-		}
-
-		return reservedAreas;
+		return reservedAreas.getAll();
 	}
 
 	function getRocksOnGround() {

@@ -5,7 +5,7 @@ sand.constants = sand.constants || require("./../shared/global_constants");
 
 sand.modifyRegion = sand.modifyRegion || {};
 
-var kMaxRockEdgeWidth = 1000;
+var kMaxRockEdgeWidth = 2500;
 var kMaxRockArea = kMaxRockEdgeWidth * kMaxRockEdgeWidth;
 
 sand.modifyRegion.getReservedPerimeterIfValid = function (points) {

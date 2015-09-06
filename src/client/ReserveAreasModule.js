@@ -316,6 +316,16 @@ sand.reserveAreasModule = (function () {
 		});
 	}
 
+	function _retrieveAllRocks() {
+		for (var i = 0; i < rockIdsOwnedByPlayer.length; i++) {
+			var rockId = rockIdsOwnedByPlayer[i];
+			if(rockIdsInPocket.indexOf(rockId) === -1) {
+				selectedRockId = rockId;
+				pickRockUpFromGround()
+			}
+		}
+	}
+
 	function onRockButtonClicked() {
 		sand.elephants.stopPlayerElephant();
 		if (isRockSelected) {
@@ -360,6 +370,7 @@ sand.reserveAreasModule = (function () {
 		onRockButtonClicked: onRockButtonClicked,
 		mainLoopUpdate: mainLoopUpdate,
 		getScrollableSprites: rocksOnGround.getAllSprites,
-		isInsideReservedArea: reservedAreas.containsPoint
+		isInsideReservedArea: reservedAreas.containsPoint,
+		_retrieveAllRocks: _retrieveAllRocks
 	}
 })();

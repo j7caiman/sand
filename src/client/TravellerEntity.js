@@ -141,6 +141,12 @@ sand.traveller = (function () {
 			speechBox.show();
 		}
 
+		if(speechBox.is(':visible')) {
+			setSpeechBoxPosition();
+		}
+	}
+
+	function setSpeechBoxPosition() {
 		var position = travellerSprite.getPosition();
 		position.y = window.innerHeight - position.y; // cocos2d y coordinates are inverted relative to HTML coordinates
 

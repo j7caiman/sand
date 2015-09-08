@@ -1,6 +1,8 @@
 var debug = require('debug')('sand');
-var processFootprint = require('./process_footprint');
+
 var caches = require('./caches');
+var processFootprint = require('./process_footprint');
+var buriedItems = require('./buried_items');
 
 exports.initMultiplayer = function (server) {
 	caches.initialize(onCacheInitializationComplete);
@@ -80,6 +82,17 @@ exports.initMultiplayer = function (server) {
 						rockIds: rockIds
 					});
 				})
+			});
+
+			socket.on('digUpItem', function (data) {
+				if (caches.isUuidValid(data.uuid)) {
+					var itemText = buriedItems.getBuriedItem();
+					if(itemText !== undefined) {
+						socket.emit('itemFound', {
+							itemText: itemText
+						});
+					}
+				}
 			})
 		});
 	}

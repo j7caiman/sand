@@ -8,7 +8,8 @@ sand.constants = {
 	kElephantSpeed: 50,
 	kScrollSpeed: 80,
 	kBeginScrollThreshold: 150, // distance from edge to start scrolling toward player
-	kElephantHeightOffset: 22 // vertical distance from bottom of elephant to display inventory items
+	kElephantHeightOffset: 22, // vertical distance from bottom of elephant to display inventory items
+	kSpeechBoxOffset: {x: -20, y: -40}
 };
 
 var module = module || {};

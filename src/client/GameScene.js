@@ -174,6 +174,7 @@ var GameScene = cc.Scene.extend({
 
 		sand.reserveAreasModule.mainLoopUpdate();
 		sand.traveller.mainLoopUpdate();
+		sand.elephants.mainLoopUpdate();
 
 		this.updateBackgroundSpriteLocations();
 	},

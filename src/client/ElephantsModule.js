@@ -3,6 +3,9 @@ sand.elephants = (function () {
 	var otherPlayers = {};
 	var shovelSprite;
 
+	var buriedItemTextBox;
+	var buriedItemTextField;
+
 	// constants
 	var elephantFrames;
 	var shovelUpStrokeDelayMillis = 500;
@@ -15,6 +18,7 @@ sand.elephants = (function () {
 	var shovelOutStrokeOccurring = false;
 	var digDownGlobalPosition;
 	var currentFramesData; // shows the current direction the elephant sprite is facing
+	var playerLocationOnItemFound;
 
 	var brushWhileMoving;
 
@@ -136,6 +140,11 @@ sand.elephants = (function () {
 		shovelSprite.setVisible(false);
 		sand.entitiesLayer.addChild(shovelSprite);
 
+		buriedItemTextBox = $('#buriedItemTextBox');
+		buriedItemTextField = $('#buriedItemTextField');
+		buriedItemTextBox.hide();
+
+
 		sand.socket.on('playerMoved', function (playerData) {
 			createOrMoveOtherPlayerToLocation(playerData);
 		});
@@ -147,6 +156,23 @@ sand.elephants = (function () {
 				delete otherPlayers[uuid];
 			}
 		});
+
+		sand.socket.on('itemFound', function (data) {
+			buriedItemTextField.html(data.itemText);
+			playerLocationOnItemFound = playerSprite.getPosition();
+			sand.globalFunctions.moveTextBoxNearPosition(buriedItemTextBox, playerLocationOnItemFound);
+			buriedItemTextBox.show();
+		})
+	}
+
+	function mainLoopUpdate() {
+		if (buriedItemTextBox.is(':visible')) {
+			if (sand.globalFunctions.getApproximateDistance(playerSprite, playerLocationOnItemFound) > 100) {
+				buriedItemTextBox.hide();
+			} else {
+				sand.globalFunctions.moveTextBoxNearPosition(buriedItemTextBox, playerLocationOnItemFound);
+			}
+		}
 	}
 
 	function initializeOnSocketConnect(players) {
@@ -311,6 +337,8 @@ sand.elephants = (function () {
 		shovelSprite.setVisible(true);
 
 		var digUpGlobalPosition = sand.globalFunctions.convertOnScreenPositionToGlobalCoordinates(digUpPosition);
+
+		sand.socket.emit('digUpItem', {uuid: sand.uuid});
 		sand.globalFunctions.addFootprintToQueue(digUpGlobalPosition, sand.brushes.shovelOut.name);
 
 		setTimeout(function () {
@@ -544,6 +572,7 @@ sand.elephants = (function () {
 		handleOnTouchMovedEvent: handleOnTouchMovedEvent,
 		handleOnTouchEndedEvent: handleOnTouchEndedEvent,
 		movePlayerElephantToLocation: movePlayerElephantToLocation,
-		stopPlayerElephant: stopPlayerElephant
+		stopPlayerElephant: stopPlayerElephant,
+		mainLoopUpdate: mainLoopUpdate
 	};
 })();

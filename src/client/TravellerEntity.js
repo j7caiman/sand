@@ -21,10 +21,6 @@ sand.traveller = (function () {
 	};
 	var speechBubbleVisibleDistance = 140;
 	var openSpeechBoxDistance = 80;
-	var speechBoxOffset = {
-		x: -20,
-		y: -40
-	};
 	var gifts = {
 		nothing: "nothing",
 		shovel: "shovel",
@@ -142,44 +138,17 @@ sand.traveller = (function () {
 		}
 
 		if(speechBox.is(':visible')) {
-			setSpeechBoxPosition();
+			sand.globalFunctions.moveTextBoxNearPosition(speechBox, travellerSprite.getPosition());
 		}
-	}
-
-	function setSpeechBoxPosition() {
-		var position = travellerSprite.getPosition();
-		position.y = window.innerHeight - position.y; // cocos2d y coordinates are inverted relative to HTML coordinates
-
-		position.x += speechBoxOffset.x;
-		position.y += speechBoxOffset.y - speechBox.height();
-
-		if (speechBox.width() + position.x > window.innerWidth) {
-			position.x = window.innerWidth - speechBox.width();
-		} else if (position.x < 0) {
-			position.x = 0;
-		}
-
-		if (speechBox.height() + position.y > window.innerHeight) {
-			position.y = window.innerHeight - speechBox.height();
-		} else if (position.y < 0) {
-			position.y = 0;
-		}
-
-		speechBox.css({
-			left: position.x,
-			top: position.y
-		});
 	}
 
 	function mainLoopUpdate() {
-		var approximateDistanceFromPlayer =
-			Math.abs(travellerSprite.getPositionX() - sand.elephants.getPlayerSprite().getPositionX())
-			+ Math.abs(travellerSprite.getPositionY() - sand.elephants.getPlayerSprite().getPositionY());
+		var approximateDistanceFromPlayer = sand.globalFunctions.getApproximateDistance(
+			travellerSprite, sand.elephants.getPlayerSprite());
 
 		walkAimlesslyEnabled = approximateDistanceFromPlayer > speechBubbleVisibleDistance;
 
 		updateSpeechBubble(approximateDistanceFromPlayer);
-
 		updateSpeechBox(approximateDistanceFromPlayer);
 	}
 

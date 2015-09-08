@@ -56,14 +56,9 @@ var users = (function () {
 			map[uuid] = userId;
 		}
 
-		function remove(uuid) {
-			delete map[uuid];
-		}
-
 		return {
 			get: get,
-			add: add,
-			remove: remove
+			add: add
 		}
 	})();
 
@@ -97,7 +92,7 @@ var users = (function () {
 	function User(userId, reservedArea, rocks) {
 		this._id = userId;
 
-		if(reservedArea !== undefined) {
+		if (reservedArea !== undefined) {
 			reservedAreas.add(userId, reservedArea);
 		}
 
@@ -196,6 +191,10 @@ var users = (function () {
 		}
 	}
 
+	function existsByUuid(uuid) {
+		return uuidToUserIdMap.get(uuid) !== undefined;
+	}
+
 	function getReservedAreas() {
 		return reservedAreas.getAll();
 	}
@@ -243,6 +242,7 @@ var users = (function () {
 		get: get,
 		exists: exists,
 		getByUuid: getByUuid,
+		existsByUuid: existsByUuid,
 		getReservedAreas: getReservedAreas,
 		getRocksOnGround: getRocksOnGround,
 		getActivatedRockIds: getActivatedRockIds
@@ -252,11 +252,11 @@ var users = (function () {
 function validateRockId(uuid, rockId) {
 	var user = users.getByUuid(uuid);
 	if (user === undefined) {
-		debug("rockPutDownUpdate: user not found, uuid: " + uuid);
+		debug("user not found, uuid: " + uuid);
 		return false;
 	}
 	if (!user.hasRock(rockId)) {
-		debug("rockPutDownUpdate: user: " + user.getId() + " with uuid: " + uuid + " does not own rock: " + rockId);
+		debug("user: " + user.getId() + " with uuid: " + uuid + " does not own rock: " + rockId);
 		return false;
 	}
 
@@ -295,6 +295,7 @@ module.exports = {
 	removePlayer: uuidToPositionMap.remove,
 
 	addLoggedInUser: users.add,
+	isUuidValid: users.existsByUuid,
 	getRocksOnGround: users.getRocksOnGround,
 	getActivatedRockIds: users.getActivatedRockIds,
 	getReservedAreas: users.getReservedAreas,

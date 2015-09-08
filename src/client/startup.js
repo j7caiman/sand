@@ -199,3 +199,32 @@ sand.globalFunctions.convertOnScreenPositionToGlobalCoordinates = function (onSc
 sand.globalFunctions.mod = function (a, n) {
 	return ((a % n) + n) % n;
 };
+
+sand.globalFunctions.getApproximateDistance = function (point1, point2) {
+	return Math.abs(point1.x - point2.x) + Math.abs(point1.y - point2.y);
+};
+
+sand.globalFunctions.moveTextBoxNearPosition = function (textBox, position) {
+	var newPosition = {x: position.x, y: position.y};
+	newPosition.y = window.innerHeight - newPosition.y; // cocos2d y coordinates are inverted relative to HTML coordinates
+
+	newPosition.x += sand.constants.kSpeechBoxOffset.x;
+	newPosition.y += sand.constants.kSpeechBoxOffset.y - textBox.height();
+
+	if (textBox.width() + newPosition.x > window.innerWidth) {
+		newPosition.x = window.innerWidth - textBox.width();
+	} else if (newPosition.x < 0) {
+		newPosition.x = 0;
+	}
+
+	if (textBox.height() + newPosition.y > window.innerHeight) {
+		newPosition.y = window.innerHeight - textBox.height();
+	} else if (newPosition.y < 0) {
+		newPosition.y = 0;
+	}
+
+	textBox.css({
+		left: newPosition.x,
+		top: newPosition.y
+	});
+};

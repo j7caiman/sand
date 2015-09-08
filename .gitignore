@@ -3,6 +3,7 @@ sand.iml
 npm-debug.log
 node_modules
 
+resources/
 public/images/
 public/stylesheets/style.css
 public/javascripts/min.js

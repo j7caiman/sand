@@ -157,22 +157,23 @@ sand.globalFunctions._fly = function (disable) {
 };
 
 sand.globalFunctions.addFootprintToQueue = function (location, brushStrokeType, additionalData) {
+	var roundedLocation = {
+		x: Math.round(location.x),
+		y: Math.round(location.y)
+	};
+
+	var print = {
+		location: roundedLocation,
+		brush: brushStrokeType
+	};
+
+	if (additionalData !== undefined) {
+		print.additionalData = additionalData;
+	}
+
+	sand.batchedFootprints.push(print);
+
 	if (!sand.reserveAreasModule.isInsideReservedArea(location)) {
-		var roundedLocation = {
-			x: Math.round(location.x),
-			y: Math.round(location.y)
-		};
-
-		var print = {
-			location: roundedLocation,
-			brush: brushStrokeType
-		};
-
-		if (additionalData !== undefined) {
-			print.additionalData = additionalData;
-		}
-
-		sand.batchedFootprints.push(print);
 		sand.socket.emit('footprint', print);
 	}
 };

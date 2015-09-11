@@ -87,13 +87,17 @@ exports.initMultiplayer = function (server) {
 			socket.on('digUpItem', function (data) {
 				if (caches.isUuidValid(data.uuid)) {
 					var itemText = buriedItems.getBuriedItem();
-					if(itemText !== undefined) {
+					if (itemText !== undefined) {
 						socket.emit('itemFound', {
 							itemText: itemText
 						});
 					}
 				}
-			})
+			});
+
+			socket.on('buryItem', function (data) {
+				caches.processBuriedItem(data.uuid, data.text);
+			});
 		});
 	}
 };

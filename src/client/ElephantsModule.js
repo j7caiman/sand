@@ -144,6 +144,30 @@ sand.elephants = (function () {
 		buriedItemTextField = $('#buriedItemTextField');
 		buriedItemTextBox.hide();
 
+		$('#buryItemsYes').click(function () {
+			$('.buriedItemOptions').hide();
+			$('#buryItemYesOption').show();
+		});
+
+		$('#buryItemsNo').click(function () {
+			$('.buriedItemOptions').hide();
+			$('#buryItemNoOption').show();
+		});
+
+		$('#doBuryItemButton').click(function () {
+			var textArea = $('#itemToBuryText');
+			var buriedMemoryText = textArea.val();
+			if (buriedMemoryText.length > 0) {
+				sand.socket.emit('buryItem', {
+					uuid: sand.uuid,
+					text: buriedMemoryText
+				});
+				textArea.val('');
+			}
+
+			$('.buriedItemOptions').hide();
+			$('#buryItemCompleteOption').show();
+		});
 
 		sand.socket.on('playerMoved', function (playerData) {
 			createOrMoveOtherPlayerToLocation(playerData);
@@ -158,7 +182,9 @@ sand.elephants = (function () {
 		});
 
 		sand.socket.on('itemFound', function (data) {
+			$('.buriedItemOptions').hide();
 			buriedItemTextField.html(data.itemText);
+			buriedItemTextField.show();
 			playerLocationOnItemFound = playerSprite.getPosition();
 			sand.globalFunctions.moveTextBoxNearPosition(buriedItemTextBox, playerLocationOnItemFound);
 			buriedItemTextBox.show();
@@ -169,6 +195,7 @@ sand.elephants = (function () {
 		if (buriedItemTextBox.is(':visible')) {
 			if (sand.globalFunctions.getApproximateDistance(playerSprite, playerLocationOnItemFound) > 100) {
 				buriedItemTextBox.hide();
+				$('.buriedItemOptions').hide();
 			} else {
 				sand.globalFunctions.moveTextBoxNearPosition(buriedItemTextBox, playerLocationOnItemFound);
 			}
@@ -338,8 +365,22 @@ sand.elephants = (function () {
 
 		var digUpGlobalPosition = sand.globalFunctions.convertOnScreenPositionToGlobalCoordinates(digUpPosition);
 
-		sand.socket.emit('digUpItem', {uuid: sand.uuid});
-		sand.globalFunctions.addFootprintToQueue(digUpGlobalPosition, sand.brushes.shovelOut.name);
+		sand.globalFunctions.addFootprintToQueue(
+			digUpGlobalPosition,
+			sand.brushes.shovelOut.name,
+			{
+				shovelOutCallback: function (digDepth) {
+					if (digDepth > 10) {
+						playerLocationOnItemFound = playerSprite.getPosition();
+						$('.buriedItemOptions').hide();
+						$('#buryItemPrompt').show();
+						buriedItemTextBox.show();
+					} else {
+						sand.socket.emit('digUpItem', {uuid: sand.uuid});
+					}
+				}
+			}
+		);
 
 		setTimeout(function () {
 			shovelSprite.setVisible(false);

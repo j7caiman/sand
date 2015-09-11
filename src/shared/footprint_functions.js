@@ -90,14 +90,30 @@ sand.brushes = (function () {
 	var shovelOut = (function () {
 		var radius = 5;
 
-		function applyBrush(regionData, positionOnCanvas) {
+		function applyBrush(regionData, positionOnCanvas, additionalData) {
 			imprintSphere(
 				regionData,
 				positionOnCanvas,
 				radius,
 				1.5,
 				true
-			)
+			);
+
+			if (additionalData.shovelOutCallback !== undefined) {
+				var pointOfImpact = {
+					x: Math.floor(positionOnCanvas.x / sand.constants.kSandGrainWidth),
+					y: Math.floor(positionOnCanvas.y / sand.constants.kSandGrainWidth)
+				};
+
+				if (pointOfImpact.x > 0
+					&& pointOfImpact.y > 0
+					&& pointOfImpact.x < sand.constants.kRegionWidth
+					&& pointOfImpact.y < sand.constants.kRegionWidth
+				) {
+					var digDepth = regionData[pointOfImpact.y][pointOfImpact.x][0];
+					additionalData.shovelOutCallback(digDepth);
+				}
+			}
 		}
 
 		return {

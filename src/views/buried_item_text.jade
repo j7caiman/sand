@@ -1,2 +1,21 @@
 div#buriedItemTextBox
-	p.fieldText#buriedItemTextField
+	p#buriedItemTextField.fieldText.buriedItemOptions
+
+	div#buryItemPrompt.buriedItemOptions
+		p.fieldText.
+			After digging for some time, the sand opens a small pocket for you to place a memory of your own. Do you leave anything?
+		a#buryItemsYes.textButton yes
+		a#buryItemsNo.textButton no
+		<br/>
+	div#buryItemYesOption.buriedItemOptions
+		p.fieldText.
+			What will you bury?
+		textarea#itemToBuryText.inputBox
+		a#doBuryItemButton.textButton bury
+		<br/>
+	div#buryItemNoOption.buriedItemOptions
+		p.fieldText.
+			You walk away. All is quiet.
+	div#buryItemCompleteOption.buriedItemOptions
+		p.fieldText.
+			You pat down the ground, concealing the buried memory. All is quiet.

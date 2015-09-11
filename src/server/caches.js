@@ -372,5 +372,15 @@ module.exports = {
 			user.addReservedArea(path);
 			onSuccess(user.getId(), path, rockIds);
 		});
+	},
+
+	processBuriedItem: function(uuid, text) {
+		var user = users.getByUuid(uuid);
+		if (user === undefined) {
+			debug("processBuriedItem: user not found, uuid: " + uuid);
+			return;
+		}
+
+		rockDAO.storeBuriedItem(user.getId(), text);
 	}
 };

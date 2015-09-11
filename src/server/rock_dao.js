@@ -126,7 +126,11 @@ module.exports = {
 		});
 	},
 
-	parseReservedAreaIfPresent: parseReservedAreaIfPresent
+	parseReservedAreaIfPresent: parseReservedAreaIfPresent,
+
+	storeBuriedItem: function (userId, text) {
+		query('insert into memories (user_id, memory_text) values ($1, $2)', [userId, text]);
+	}
 };
 
 function parseReservedAreaIfPresent(path) {
